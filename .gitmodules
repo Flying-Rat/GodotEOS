@@ -1,0 +1,4 @@
+[submodule "godot_epic_extension/godot-cpp"]
+	path = godot_epic_extension/godot-cpp
+	url = https://github.com/godotengine/godot-cpp
+	branch = 4.2
