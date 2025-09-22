@@ -41,3 +41,6 @@ godot_epic_extension/src/gen
 
 # Ignore temp libraries
 ~*.dll
+
+# Exception: Allow specific file in demo/bin
+!godot_epic_extension/demo/bin/godotepic.gdextension
