@@ -1,0 +1,118 @@
+[gd_scene load_steps=2 format=3 uid="uid://b6ag7wphgp6m0"]
+
+[ext_resource type="Script" uid="uid://xd4v7ogdrv48" path="res://scripts/main_demo.gd" id="1_2v3c4"]
+
+[node name="MainDemo" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_2v3c4")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+
+[node name="Title" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "GodotEpic - Epic Online Services Demo"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="StatusLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Status: Not Logged In"
+
+[node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="LoginSection" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="LoginLabel" type="Label" parent="VBoxContainer/LoginSection"]
+layout_mode = 2
+text = "Authentication:"
+
+[node name="LoginContainer" type="HBoxContainer" parent="VBoxContainer/LoginSection"]
+layout_mode = 2
+
+[node name="LoginButton" type="Button" parent="VBoxContainer/LoginSection/LoginContainer"]
+layout_mode = 2
+text = "Login with Epic Games"
+
+[node name="LogoutButton" type="Button" parent="VBoxContainer/LoginSection/LoginContainer"]
+layout_mode = 2
+text = "Logout"
+disabled = true
+
+[node name="HSeparator3" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="FeaturesSection" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="FeaturesLabel" type="Label" parent="VBoxContainer/FeaturesSection"]
+layout_mode = 2
+text = "EOS Features (Login Required):"
+
+[node name="FeaturesGrid" type="GridContainer" parent="VBoxContainer/FeaturesSection"]
+layout_mode = 2
+columns = 3
+
+[node name="AchievementButton" type="Button" parent="VBoxContainer/FeaturesSection/FeaturesGrid"]
+layout_mode = 2
+text = "Unlock Achievement"
+disabled = true
+
+[node name="StatsButton" type="Button" parent="VBoxContainer/FeaturesSection/FeaturesGrid"]
+layout_mode = 2
+text = "Update Stats"
+disabled = true
+
+[node name="LeaderboardButton" type="Button" parent="VBoxContainer/FeaturesSection/FeaturesGrid"]
+layout_mode = 2
+text = "Leaderboard Test"
+disabled = true
+
+[node name="SaveButton" type="Button" parent="VBoxContainer/FeaturesSection/FeaturesGrid"]
+layout_mode = 2
+text = "Save to Cloud"
+disabled = true
+
+[node name="LoadButton" type="Button" parent="VBoxContainer/FeaturesSection/FeaturesGrid"]
+layout_mode = 2
+text = "Load from Cloud"
+disabled = true
+
+[node name="HSeparator4" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="OutputSection" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="OutputLabel" type="Label" parent="VBoxContainer/OutputSection"]
+layout_mode = 2
+text = "Output Log:"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer/OutputSection"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="OutputText" type="RichTextLabel" parent="VBoxContainer/OutputSection/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+bbcode_enabled = true
+text = "Welcome to GodotEpic Demo!
+"
+scroll_following = true

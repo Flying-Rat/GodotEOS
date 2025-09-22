@@ -1,11 +1,11 @@
 # Godot 4+ specific ignores
 .godot/
-.nomedia
+/android/
 
 # Godot-specific ignores
 .import/
 export.cfg
-export_credentials.cfg
+# export_presets.cfg
 
 # Imported translations (automatically generated from CSV files)
 *.translation
@@ -14,3 +14,30 @@ export_credentials.cfg
 .mono/
 data_*/
 mono_crash.*.json
+project/.vscode/settings.json
+/.vs
+
+builds/
+.sconsign.dblite
+
+#ignore demo build outputs
+godot_epic_extension/demo/bin/
+
+# Ignore secrets files
+*.secrets
+tests/*.secrets
+**/*.secrets
+
+# Build artifacts
+*.obj
+*.exp
+*.lib
+**/bin/
+**/.sconsign.dblite
+**/.godot/
+
+# Godot-cpp generated files
+godot_epic_extension/src/gen
+
+# Ignore temp libraries
+~*.dll
