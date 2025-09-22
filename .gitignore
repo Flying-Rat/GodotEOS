@@ -20,8 +20,11 @@ project/.vscode/settings.json
 builds/
 .sconsign.dblite
 
-#ignore demo build outputs
+# Ignore demo build outputs
 godot_epic_extension/demo/bin/
+
+# Ignore EOS SDK
+eos_sdk/
 
 # Ignore secrets files
 *.secrets
@@ -44,3 +47,5 @@ godot_epic_extension/src/gen
 
 # Exception: Allow specific file in demo/bin
 !godot_epic_extension/demo/bin/godotepic.gdextension
+!eos_sdk/put_eos_sdk_here
+
