@@ -4,6 +4,9 @@ entry_symbol = "godotepic_library_init"
 compatibility_minimum = "4.2"
 reloadable = true
 
+[icons]
+GodotEpic = "res://icon.svg"
+
 [libraries]
 
 macos.debug = "res://bin/libgodotepic.macos.template_debug.framework"
