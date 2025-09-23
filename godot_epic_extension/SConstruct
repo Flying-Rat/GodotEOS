@@ -49,4 +49,37 @@ else:
         source=sources,
     )
 
+# Copy EOSSDK libraries to demo/bin for all platforms
+import shutil
+
+def copy_eos_library(target, source, env):
+    platform = env["platform"]
+    
+    if platform == "windows":
+        eos_lib_src = os.path.join(eos_sdk, "Bin", "EOSSDK-Win64-Shipping.dll")
+        eos_lib_dst = os.path.join("demo", "bin", "EOSSDK-Win64-Shipping.dll")
+        lib_name = "EOSSDK-Win64-Shipping.dll"
+    elif platform == "linux":
+        eos_lib_src = os.path.join(eos_sdk, "Bin", "libEOSSDK-Linux-Shipping.so")
+        eos_lib_dst = os.path.join("demo", "bin", "libEOSSDK-Linux-Shipping.so")
+        lib_name = "libEOSSDK-Linux-Shipping.so"
+    elif platform == "macos":
+        eos_lib_src = os.path.join(eos_sdk, "Bin", "libEOSSDK-Mac-Shipping.dylib")
+        eos_lib_dst = os.path.join("demo", "bin", "libEOSSDK-Mac-Shipping.dylib")
+        lib_name = "libEOSSDK-Mac-Shipping.dylib"
+    else:
+        return  # Unsupported platform
+    
+    if os.path.exists(eos_lib_src):
+        # Ensure the destination directory exists
+        os.makedirs(os.path.dirname(eos_lib_dst), exist_ok=True)
+        shutil.copy2(eos_lib_src, eos_lib_dst)
+        print(f"Copied {lib_name} to demo/bin/")
+    else:
+        print(f"Warning: {lib_name} not found at {eos_lib_src}")
+
+# Add post-build action to copy the EOS SDK library for supported platforms
+if env["platform"] in ["windows", "linux", "macos"]:
+    env.AddPostAction(library, copy_eos_library)
+
 Default(library)
