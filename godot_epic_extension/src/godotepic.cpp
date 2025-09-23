@@ -89,6 +89,13 @@ bool GodotEpic::initialize_platform(const Dictionary& options) {
 	InitOptions.Reserved = nullptr;
 	InitOptions.SystemInitializeOptions = nullptr;
 
+	// Setup logging
+	EOS_EResult LogResult = EOS_Logging_SetCallback(logging_callback);
+	if (LogResult == EOS_EResult::EOS_Success) {
+		EOS_Logging_SetLogLevel(EOS_ELogCategory::EOS_LC_ALL_CATEGORIES,
+							   EOS_ELogLevel::EOS_LOG_Verbose);
+	}
+
 	EOS_EResult InitResult = EOS_Initialize(&InitOptions);
 	if (InitResult != EOS_EResult::EOS_Success) {
 		String error_msg = "Failed to initialize EOS SDK: " + String::num_int64(static_cast<int64_t>(InitResult));
@@ -124,7 +131,7 @@ bool GodotEpic::initialize_platform(const Dictionary& options) {
 	}
 
 	is_initialized = true;
-	ERR_PRINT("EOS Platform initialized successfully");
+	WARN_PRINT("EOS Platform initialized successfully");
 	return true;
 }
 
@@ -140,7 +147,7 @@ void GodotEpic::shutdown_platform() {
 
 	EOS_Shutdown();
 	is_initialized = false;
-	ERR_PRINT("EOS Platform shutdown complete");
+	WARN_PRINT("EOS Platform shutdown complete");
 }
 
 void GodotEpic::tick() {
@@ -176,9 +183,20 @@ void GodotEpic::login_with_epic_account(const String& email, const String& passw
 	// Set up credentials for Epic Account
 	EOS_Auth_Credentials credentials = {};
 	credentials.ApiVersion = EOS_AUTH_CREDENTIALS_API_LATEST;
-	credentials.Type = EOS_ELoginCredentialType::EOS_LCT_AccountPortal;
-	credentials.Id = nullptr;  // Will open Epic launcher/browser
-	credentials.Token = nullptr;
+
+	if (!email.is_empty() && !password.is_empty()) {
+		// Use email/password if provided
+		credentials.Type = EOS_ELoginCredentialType::EOS_LCT_Password;
+		credentials.Id = email.utf8().get_data();
+		credentials.Token = password.utf8().get_data();
+		ERR_PRINT("Epic Account login with email/password initiated");
+	} else {
+		// Use Account Portal (browser/launcher) - requires proper EOS setup
+		credentials.Type = EOS_ELoginCredentialType::EOS_LCT_AccountPortal;
+		credentials.Id = nullptr;
+		credentials.Token = nullptr;
+		ERR_PRINT("Epic Account login with Account Portal initiated - check browser/Epic launcher");
+	}
 
 	login_options.Credentials = &credentials;
 	login_options.ScopeFlags = EOS_EAuthScopeFlags::EOS_AS_BasicProfile | EOS_EAuthScopeFlags::EOS_AS_FriendsList;
@@ -206,14 +224,17 @@ void GodotEpic::login_with_device_id(const String& display_name) {
 	EOS_Auth_Credentials credentials = {};
 	credentials.ApiVersion = EOS_AUTH_CREDENTIALS_API_LATEST;
 	credentials.Type = EOS_ELoginCredentialType::EOS_LCT_Developer;
-	credentials.Id = "localhost:7777";  // Development host
-	credentials.Token = display_name.utf8().get_data();
+	credentials.Id = "localhost:6547";  // Default EOS Dev Auth Tool port
+
+	// Use display_name as credential name, or fallback to a default
+	String credential_name = display_name.is_empty() ? "TestUser" : display_name;
+	credentials.Token = credential_name.utf8().get_data();
 
 	login_options.Credentials = &credentials;
-	login_options.ScopeFlags = EOS_EAuthScopeFlags::EOS_AS_BasicProfile | EOS_EAuthScopeFlags::EOS_AS_FriendsList;
+	login_options.ScopeFlags = EOS_EAuthScopeFlags::EOS_AS_BasicProfile; // | EOS_EAuthScopeFlags::EOS_AS_FriendsList;
 
 	EOS_Auth_Login(auth_handle, &login_options, nullptr, auth_login_callback);
-	ERR_PRINT("Device ID login initiated");
+	WARN_PRINT("Device ID login initiated with credential: " + credential_name);
 }
 
 void GodotEpic::logout() {
@@ -473,7 +494,42 @@ void EOS_CALL GodotEpic::auth_login_callback(const EOS_Auth_LoginCallbackInfo* d
 		// Emit login completed signal
 		instance->emit_signal("login_completed", true, instance->current_username);
 	} else {
-		String error_msg = "Epic Account login failed: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
+		String error_msg = "Epic Account login failed: ";
+
+		// Provide more descriptive error messages
+		switch (data->ResultCode) {
+			case EOS_EResult::EOS_Invalid_Deployment:
+				error_msg += "Invalid deployment (32) - Check your deployment_id in EOS Developer Portal";
+				break;
+			case EOS_EResult::EOS_InvalidCredentials:
+				error_msg += "Invalid credentials (2) - Check your email/password";
+				break;
+			case EOS_EResult::EOS_InvalidUser:
+				error_msg += "Invalid user (3) - User may need to be linked";
+				break;
+			case EOS_EResult::EOS_MissingPermissions:
+				error_msg += "Missing permissions (6) - Check app permissions in EOS Developer Portal";
+				break;
+			case EOS_EResult::EOS_ApplicationSuspended:
+				error_msg += "Application suspended (40) - App may be suspended in EOS Developer Portal";
+				break;
+			case EOS_EResult::EOS_NetworkDisconnected:
+				error_msg += "Network disconnected (41) - Check internet connection";
+				break;
+			case EOS_EResult::EOS_NotConfigured:
+				error_msg += "Not configured (14) - Check your EOS app configuration";
+				break;
+			case EOS_EResult::EOS_Invalid_Sandbox:
+				error_msg += "Invalid sandbox (31) - Check your sandbox_id in EOS Developer Portal";
+				break;
+			case EOS_EResult::EOS_Invalid_Product:
+				error_msg += "Invalid product (33) - Check your product_id in EOS Developer Portal";
+				break;
+			default:
+				error_msg += String::num_int64(static_cast<int64_t>(data->ResultCode));
+				break;
+		}
+
 		ERR_PRINT(error_msg);
 
 		// Emit login failed signal
