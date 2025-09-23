@@ -23,8 +23,9 @@ builds/
 # Ignore demo build outputs
 godot_epic_extension/demo/bin/
 
-# Ignore EOS SDK
-eos_sdk/
+# Ignore EOS SDK contents but not the directory itself
+godot_epic_extension/eos_sdk/*
+!godot_epic_extension/eos_sdk/put_eos_sdk_here
 
 # Ignore secrets files
 *.secrets
@@ -47,5 +48,3 @@ godot_epic_extension/src/gen
 
 # Exception: Allow specific file in demo/bin
 !godot_epic_extension/demo/bin/godotepic.gdextension
-!godot_epic_extension/eos_sdk/put_eos_sdk_here
-
