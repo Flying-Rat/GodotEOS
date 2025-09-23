@@ -10,6 +10,7 @@ EOS_HPlatform GodotEpic::platform_handle = nullptr;
 bool GodotEpic::is_initialized = false;
 
 void GodotEpic::_bind_methods() {
+	ClassDB::bind_static_method("GodotEpic", D_METHOD("get_singleton"), &GodotEpic::get_singleton);
 	ClassDB::bind_method(D_METHOD("initialize_platform", "options"), &GodotEpic::initialize_platform);
 	ClassDB::bind_method(D_METHOD("shutdown_platform"), &GodotEpic::shutdown_platform);
 	ClassDB::bind_method(D_METHOD("tick"), &GodotEpic::tick);
