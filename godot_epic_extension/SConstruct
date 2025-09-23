@@ -12,8 +12,17 @@ env = SConscript("godot-cpp/SConstruct")
 # - CPPDEFINES are for pre-processor defines
 # - LINKFLAGS are for linking flags
 
-# tweak this if you want to use different folders, or more folders, to store your source code in.
-env.Append(CPPPATH=["src/"])
+# EOS SDK configuration
+eos_sdk = "eos_sdk"
+env.Append(CPPPATH=["src/", eos_sdk + "/Include"])
+
+if env["platform"] == "windows":
+    env.Append(LIBPATH=[eos_sdk + "/Lib"])
+    env.Append(LIBS=["EOSSDK-Win64-Shipping"])
+elif env["platform"] == "linux":
+    env.Append(LIBPATH=[eos_sdk + "/Bin"])
+    env.Append(LIBS=["EOSSDK-Linux-Shipping"])
+
 sources = Glob("src/*.cpp")
 
 if env["platform"] == "macos":
