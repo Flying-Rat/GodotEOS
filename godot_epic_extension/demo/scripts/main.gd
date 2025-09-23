@@ -54,7 +54,7 @@ func _input(event):
 				godot_epic.login_with_epic_account("", "")  # Will use browser/launcher
 			KEY_2:
 				print("Starting Device ID login...")
-				godot_epic.login_with_device_id("TestUser_" + str(randi() % 1000))
+				godot_epic.login_with_device_id("TestUser")
 			KEY_3:
 				if godot_epic.is_user_logged_in():
 					print("Logging out...")

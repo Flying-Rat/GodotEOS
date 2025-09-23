@@ -12,6 +12,7 @@
 #include <eos_auth.h>
 #include <eos_connect.h>
 #include <eos_friends.h>
+#include "sample_constants.h"
 
 namespace godot {
 

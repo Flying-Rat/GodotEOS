@@ -107,12 +107,12 @@ bool GodotEpic::initialize_platform(const Dictionary& options) {
 	EOS_Platform_Options PlatformOptions = {};
 	PlatformOptions.ApiVersion = EOS_PLATFORM_OPTIONS_API_LATEST;
 	PlatformOptions.bIsServer = false;
-	PlatformOptions.ProductId = init_options.product_id.utf8().get_data();
-	PlatformOptions.SandboxId = init_options.sandbox_id.utf8().get_data();
-	PlatformOptions.DeploymentId = init_options.deployment_id.utf8().get_data();
-	PlatformOptions.ClientCredentials.ClientId = init_options.client_id.utf8().get_data();
-	PlatformOptions.ClientCredentials.ClientSecret = init_options.client_secret.utf8().get_data();
-	PlatformOptions.EncryptionKey = init_options.encryption_key.utf8().get_data();
+	PlatformOptions.ProductId = SampleConstants::ProductId;
+	PlatformOptions.SandboxId = SampleConstants::SandboxId;
+	PlatformOptions.DeploymentId = SampleConstants::DeploymentId;
+	PlatformOptions.ClientCredentials.ClientId = SampleConstants::ClientCredentialsId;
+	PlatformOptions.ClientCredentials.ClientSecret = SampleConstants::ClientCredentialsSecret;
+	PlatformOptions.EncryptionKey = SampleConstants::EncryptionKey;
 	PlatformOptions.OverrideCountryCode = nullptr;
 	PlatformOptions.OverrideLocaleCode = nullptr;
 
@@ -121,13 +121,6 @@ bool GodotEpic::initialize_platform(const Dictionary& options) {
 		ERR_PRINT("Failed to create EOS Platform");
 		EOS_Shutdown();
 		return false;
-	}
-
-	// Setup logging
-	EOS_EResult LogResult = EOS_Logging_SetCallback(logging_callback);
-	if (LogResult == EOS_EResult::EOS_Success) {
-		EOS_Logging_SetLogLevel(EOS_ELogCategory::EOS_LC_ALL_CATEGORIES,
-							   EOS_ELogLevel::EOS_LOG_Verbose);
 	}
 
 	is_initialized = true;
@@ -199,7 +192,7 @@ void GodotEpic::login_with_epic_account(const String& email, const String& passw
 	}
 
 	login_options.Credentials = &credentials;
-	login_options.ScopeFlags = EOS_EAuthScopeFlags::EOS_AS_BasicProfile | EOS_EAuthScopeFlags::EOS_AS_FriendsList;
+	login_options.ScopeFlags = EOS_EAuthScopeFlags::EOS_AS_BasicProfile; // | EOS_EAuthScopeFlags::EOS_AS_FriendsList;
 
 	EOS_Auth_Login(auth_handle, &login_options, nullptr, auth_login_callback);
 	ERR_PRINT("Epic Account login initiated - check browser/Epic launcher");
@@ -224,7 +217,7 @@ void GodotEpic::login_with_device_id(const String& display_name) {
 	EOS_Auth_Credentials credentials = {};
 	credentials.ApiVersion = EOS_AUTH_CREDENTIALS_API_LATEST;
 	credentials.Type = EOS_ELoginCredentialType::EOS_LCT_Developer;
-	credentials.Id = "localhost:6547";  // Default EOS Dev Auth Tool port
+	credentials.Id = "localhost:7777";  // Default EOS Dev Auth Tool port
 
 	// Use display_name as credential name, or fallback to a default
 	String credential_name = display_name.is_empty() ? "TestUser" : display_name;
