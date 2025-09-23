@@ -47,5 +47,5 @@ godot_epic_extension/src/gen
 
 # Exception: Allow specific file in demo/bin
 !godot_epic_extension/demo/bin/godotepic.gdextension
-!eos_sdk/put_eos_sdk_here
+!godot_epic_extension/eos_sdk/put_eos_sdk_here
 
