@@ -43,6 +43,9 @@ tests/*.secrets
 # Godot-cpp generated files
 godot_epic_extension/src/gen
 
+# Ignore eos_samples
+godot_epic_extension/eos_samples
+
 # Ignore temp libraries
 ~*.dll
 

@@ -1,0 +1,25 @@
+EPIC ONLINE SERVICES SDK REQUIRED
+=====================================
+
+To build the GodotEpic extension, you need to download and extract the Epic Online Services (EOS) SDK here.
+
+DOWNLOAD INSTRUCTIONS:
+1. Go to https://dev.epicgames.com/
+2. Sign up for an Epic Games Developer account (if you don't have one)
+3. Navigate to "Epic Online Services" section
+4. Download the latest EOS SDK
+5. Extract the SDK contents to this directory
+
+
+IMPORTANT NOTES:
+- The EOS SDK is required for compilation and cannot be redistributed
+- Each developer must download their own copy from Epic Games
+- Make sure to download the SDK version compatible with your project
+- The build script will automatically copy runtime libraries to the output directory
+
+After extracting the EOS SDK, run the setup script:
+- Windows: .\setup_gdextension.ps1
+
+For more information, see:
+- GUIDE.md in the project root
+- https://dev.epicgames.com/docs/epic-online-services
