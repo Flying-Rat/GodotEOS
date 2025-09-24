@@ -12,6 +12,7 @@
 #include <eos_auth.h>
 #include <eos_connect.h>
 #include <eos_friends.h>
+#include <eos_achievements.h>
 #include "sample_constants.h"
 
 namespace godot {
@@ -42,6 +43,11 @@ private:
 	bool is_logged_in;
 	String current_username;
 
+	// Achievements state
+	EOS_NotificationId achievements_notification_id;
+	bool achievements_definitions_cached;
+	bool player_achievements_cached;
+
 	double time_passed;
 
 	// EOS logging callback
@@ -54,6 +60,12 @@ private:
 
 	// Friends callbacks
 	static void EOS_CALL friends_query_callback(const EOS_Friends_QueryFriendsCallbackInfo* data);
+
+	// Achievements callbacks
+	static void EOS_CALL achievements_query_definitions_callback(const EOS_Achievements_OnQueryDefinitionsCompleteCallbackInfo* data);
+	static void EOS_CALL achievements_query_player_callback(const EOS_Achievements_OnQueryPlayerAchievementsCompleteCallbackInfo* data);
+	static void EOS_CALL achievements_unlock_callback(const EOS_Achievements_OnUnlockAchievementsCompleteCallbackInfo* data);
+	static void EOS_CALL achievements_unlocked_notification(const EOS_Achievements_OnAchievementsUnlockedCallbackV2Info* data);
 
 	// Helper methods
 	EpicInitOptions _dict_to_init_options(const Dictionary& options_dict);
@@ -87,6 +99,16 @@ public:
 	void query_friends();
 	Array get_friends_list();
 	Dictionary get_friend_info(const String& friend_id);
+
+	// Achievements methods
+	void query_achievement_definitions();
+	void query_player_achievements();
+	void unlock_achievement(const String& achievement_id);
+	void unlock_achievements(const Array& achievement_ids);
+	Array get_achievement_definitions();
+	Array get_player_achievements();
+	Dictionary get_achievement_definition(const String& achievement_id);
+	Dictionary get_player_achievement(const String& achievement_id);
 
 	// Status methods
 	bool is_platform_initialized() const;

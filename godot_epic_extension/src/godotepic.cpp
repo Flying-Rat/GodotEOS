@@ -30,10 +30,24 @@ void GodotEpic::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_friends_list"), &GodotEpic::get_friends_list);
 	ClassDB::bind_method(D_METHOD("get_friend_info", "friend_id"), &GodotEpic::get_friend_info);
 
+	// Achievements methods
+	ClassDB::bind_method(D_METHOD("query_achievement_definitions"), &GodotEpic::query_achievement_definitions);
+	ClassDB::bind_method(D_METHOD("query_player_achievements"), &GodotEpic::query_player_achievements);
+	ClassDB::bind_method(D_METHOD("unlock_achievement", "achievement_id"), &GodotEpic::unlock_achievement);
+	ClassDB::bind_method(D_METHOD("unlock_achievements", "achievement_ids"), &GodotEpic::unlock_achievements);
+	ClassDB::bind_method(D_METHOD("get_achievement_definitions"), &GodotEpic::get_achievement_definitions);
+	ClassDB::bind_method(D_METHOD("get_player_achievements"), &GodotEpic::get_player_achievements);
+	ClassDB::bind_method(D_METHOD("get_achievement_definition", "achievement_id"), &GodotEpic::get_achievement_definition);
+	ClassDB::bind_method(D_METHOD("get_player_achievement", "achievement_id"), &GodotEpic::get_player_achievement);
+
 	// Signals
 	ADD_SIGNAL(MethodInfo("login_completed", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::STRING, "username")));
 	ADD_SIGNAL(MethodInfo("logout_completed", PropertyInfo(Variant::BOOL, "success")));
 	ADD_SIGNAL(MethodInfo("friends_updated", PropertyInfo(Variant::ARRAY, "friends_list")));
+	ADD_SIGNAL(MethodInfo("achievement_definitions_updated", PropertyInfo(Variant::ARRAY, "definitions")));
+	ADD_SIGNAL(MethodInfo("player_achievements_updated", PropertyInfo(Variant::ARRAY, "achievements")));
+	ADD_SIGNAL(MethodInfo("achievements_unlocked", PropertyInfo(Variant::ARRAY, "unlocked_achievement_ids")));
+	ADD_SIGNAL(MethodInfo("achievement_unlocked", PropertyInfo(Variant::STRING, "achievement_id"), PropertyInfo(Variant::INT, "unlock_time")));
 }
 
 GodotEpic::GodotEpic() {
@@ -46,6 +60,11 @@ GodotEpic::GodotEpic() {
 	product_user_id = nullptr;
 	is_logged_in = false;
 	current_username = "";
+
+	// Initialize achievements state
+	achievements_notification_id = EOS_INVALID_NOTIFICATIONID;
+	achievements_definitions_cached = false;
+	player_achievements_cached = false;
 }
 
 GodotEpic::~GodotEpic() {
@@ -123,6 +142,26 @@ bool GodotEpic::initialize_platform(const Dictionary& options) {
 		return false;
 	}
 
+	// Register for achievement unlock notifications
+	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_handle);
+	if (achievements_handle) {
+		EOS_Achievements_AddNotifyAchievementsUnlockedV2Options notify_options = {};
+		notify_options.ApiVersion = EOS_ACHIEVEMENTS_ADDNOTIFYACHIEVEMENTSUNLOCKEDV2_API_LATEST;
+
+		achievements_notification_id = EOS_Achievements_AddNotifyAchievementsUnlockedV2(
+			achievements_handle,
+			&notify_options,
+			nullptr,
+			achievements_unlocked_notification
+		);
+
+		if (achievements_notification_id != EOS_INVALID_NOTIFICATIONID) {
+			WARN_PRINT("Achievement unlock notifications registered successfully");
+		} else {
+			WARN_PRINT("Failed to register achievement unlock notifications");
+		}
+	}
+
 	is_initialized = true;
 	WARN_PRINT("EOS Platform initialized successfully");
 	return true;
@@ -131,6 +170,16 @@ bool GodotEpic::initialize_platform(const Dictionary& options) {
 void GodotEpic::shutdown_platform() {
 	if (!is_initialized) {
 		return;
+	}
+
+	// Unregister achievement notifications before shutdown
+	if (platform_handle && achievements_notification_id != EOS_INVALID_NOTIFICATIONID) {
+		EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_handle);
+		if (achievements_handle) {
+			EOS_Achievements_RemoveNotifyAchievementsUnlocked(achievements_handle, achievements_notification_id);
+			WARN_PRINT("Achievement unlock notifications unregistered");
+		}
+		achievements_notification_id = EOS_INVALID_NOTIFICATIONID;
 	}
 
 	if (platform_handle) {
@@ -173,7 +222,7 @@ void GodotEpic::login_with_epic_account(const String& email, const String& passw
 	EOS_Auth_LoginOptions login_options = {};
 	login_options.ApiVersion = EOS_AUTH_LOGIN_API_LATEST;
 
-	// Set up credentials for Epic Account
+	// Try different credential types based on parameters
 	EOS_Auth_Credentials credentials = {};
 	credentials.ApiVersion = EOS_AUTH_CREDENTIALS_API_LATEST;
 
@@ -400,6 +449,319 @@ Dictionary GodotEpic::get_friend_info(const String& friend_id) {
 	return friend_info;
 }
 
+// Achievements methods
+void GodotEpic::query_achievement_definitions() {
+	if (!platform_handle || !product_user_id) {
+		ERR_PRINT("Platform not initialized or user not logged in");
+		return;
+	}
+
+	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_handle);
+	if (!achievements_handle) {
+		ERR_PRINT("Failed to get Achievements interface");
+		return;
+	}
+
+	EOS_Achievements_QueryDefinitionsOptions query_options = {};
+	query_options.ApiVersion = EOS_ACHIEVEMENTS_QUERYDEFINITIONS_API_LATEST;
+	query_options.LocalUserId = product_user_id;
+	query_options.EpicUserId_DEPRECATED = nullptr;
+	query_options.HiddenAchievementIds_DEPRECATED = nullptr;
+	query_options.HiddenAchievementsCount_DEPRECATED = 0;
+
+	EOS_Achievements_QueryDefinitions(achievements_handle, &query_options, nullptr, achievements_query_definitions_callback);
+	WARN_PRINT("Achievement definitions query initiated");
+}
+
+void GodotEpic::query_player_achievements() {
+	if (!platform_handle || !product_user_id) {
+		ERR_PRINT("Platform not initialized or user not logged in");
+		return;
+	}
+
+	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_handle);
+	if (!achievements_handle) {
+		ERR_PRINT("Failed to get Achievements interface");
+		return;
+	}
+
+	EOS_Achievements_QueryPlayerAchievementsOptions query_options = {};
+	query_options.ApiVersion = EOS_ACHIEVEMENTS_QUERYPLAYERACHIEVEMENTS_API_LATEST;
+	query_options.TargetUserId = product_user_id;
+	query_options.LocalUserId = product_user_id;
+
+	EOS_Achievements_QueryPlayerAchievements(achievements_handle, &query_options, nullptr, achievements_query_player_callback);
+	WARN_PRINT("Player achievements query initiated");
+}
+
+void GodotEpic::unlock_achievement(const String& achievement_id) {
+	Array achievement_ids;
+	achievement_ids.push_back(achievement_id);
+	unlock_achievements(achievement_ids);
+}
+
+void GodotEpic::unlock_achievements(const Array& achievement_ids) {
+	if (!platform_handle || !product_user_id) {
+		ERR_PRINT("Platform not initialized or user not logged in");
+		return;
+	}
+
+	if (achievement_ids.size() == 0) {
+		ERR_PRINT("No achievement IDs provided");
+		return;
+	}
+
+	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_handle);
+	if (!achievements_handle) {
+		ERR_PRINT("Failed to get Achievements interface");
+		return;
+	}
+
+	// Convert Godot Array to C array
+	std::vector<const char*> achievement_id_ptrs;
+	std::vector<String> achievement_id_strings;
+
+	for (int i = 0; i < achievement_ids.size(); i++) {
+		String achievement_id = achievement_ids[i];
+		achievement_id_strings.push_back(achievement_id);
+		achievement_id_ptrs.push_back(achievement_id_strings[i].utf8().get_data());
+	}
+
+	EOS_Achievements_UnlockAchievementsOptions unlock_options = {};
+	unlock_options.ApiVersion = EOS_ACHIEVEMENTS_UNLOCKACHIEVEMENTS_API_LATEST;
+	unlock_options.UserId = product_user_id;
+	unlock_options.AchievementIds = achievement_id_ptrs.data();
+	unlock_options.AchievementsCount = achievement_ids.size();
+
+	EOS_Achievements_UnlockAchievements(achievements_handle, &unlock_options, nullptr, achievements_unlock_callback);
+	WARN_PRINT("Achievement unlock initiated for " + String::num_int64(achievement_ids.size()) + " achievements");
+}
+
+Array GodotEpic::get_achievement_definitions() {
+	Array definitions_array;
+
+	if (!platform_handle) {
+		ERR_PRINT("Platform not initialized");
+		return definitions_array;
+	}
+
+	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_handle);
+	if (!achievements_handle) {
+		ERR_PRINT("Failed to get Achievements interface");
+		return definitions_array;
+	}
+
+	EOS_Achievements_GetAchievementDefinitionCountOptions count_options = {};
+	count_options.ApiVersion = EOS_ACHIEVEMENTS_GETACHIEVEMENTDEFINITIONCOUNT_API_LATEST;
+
+	uint32_t definitions_count = EOS_Achievements_GetAchievementDefinitionCount(achievements_handle, &count_options);
+
+	for (uint32_t i = 0; i < definitions_count; i++) {
+		EOS_Achievements_CopyAchievementDefinitionV2ByIndexOptions copy_options = {};
+		copy_options.ApiVersion = EOS_ACHIEVEMENTS_COPYACHIEVEMENTDEFINITIONV2BYINDEX_API_LATEST;
+		copy_options.AchievementIndex = i;
+
+		EOS_Achievements_DefinitionV2* definition = nullptr;
+		EOS_EResult result = EOS_Achievements_CopyAchievementDefinitionV2ByIndex(achievements_handle, &copy_options, &definition);
+
+		if (result == EOS_EResult::EOS_Success && definition) {
+			Dictionary definition_dict;
+			definition_dict["achievement_id"] = String(definition->AchievementId ? definition->AchievementId : "");
+			definition_dict["unlocked_display_name"] = String(definition->UnlockedDisplayName ? definition->UnlockedDisplayName : "");
+			definition_dict["unlocked_description"] = String(definition->UnlockedDescription ? definition->UnlockedDescription : "");
+			definition_dict["locked_display_name"] = String(definition->LockedDisplayName ? definition->LockedDisplayName : "");
+			definition_dict["locked_description"] = String(definition->LockedDescription ? definition->LockedDescription : "");
+			definition_dict["flavor_text"] = String(definition->FlavorText ? definition->FlavorText : "");
+			definition_dict["unlocked_icon_url"] = String(definition->UnlockedIconURL ? definition->UnlockedIconURL : "");
+			definition_dict["locked_icon_url"] = String(definition->LockedIconURL ? definition->LockedIconURL : "");
+			definition_dict["is_hidden"] = definition->bIsHidden == EOS_TRUE;
+
+			// Add stat thresholds
+			Array stat_thresholds;
+			for (uint32_t j = 0; j < definition->StatThresholdsCount; j++) {
+				Dictionary threshold_dict;
+				threshold_dict["name"] = String(definition->StatThresholds[j].Name ? definition->StatThresholds[j].Name : "");
+				threshold_dict["threshold"] = definition->StatThresholds[j].Threshold;
+				stat_thresholds.push_back(threshold_dict);
+			}
+			definition_dict["stat_thresholds"] = stat_thresholds;
+
+			definitions_array.push_back(definition_dict);
+
+			// Release the definition
+			EOS_Achievements_DefinitionV2_Release(definition);
+		}
+	}
+
+	return definitions_array;
+}
+
+Array GodotEpic::get_player_achievements() {
+	Array achievements_array;
+
+	if (!platform_handle || !product_user_id) {
+		ERR_PRINT("Platform not initialized or user not logged in");
+		return achievements_array;
+	}
+
+	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_handle);
+	if (!achievements_handle) {
+		ERR_PRINT("Failed to get Achievements interface");
+		return achievements_array;
+	}
+
+	EOS_Achievements_GetPlayerAchievementCountOptions count_options = {};
+	count_options.ApiVersion = EOS_ACHIEVEMENTS_GETPLAYERACHIEVEMENTCOUNT_API_LATEST;
+	count_options.UserId = product_user_id;
+
+	uint32_t achievements_count = EOS_Achievements_GetPlayerAchievementCount(achievements_handle, &count_options);
+
+	for (uint32_t i = 0; i < achievements_count; i++) {
+		EOS_Achievements_CopyPlayerAchievementByIndexOptions copy_options = {};
+		copy_options.ApiVersion = EOS_ACHIEVEMENTS_COPYPLAYERACHIEVEMENTBYINDEX_API_LATEST;
+		copy_options.TargetUserId = product_user_id;
+		copy_options.AchievementIndex = i;
+		copy_options.LocalUserId = product_user_id;
+
+		EOS_Achievements_PlayerAchievement* achievement = nullptr;
+		EOS_EResult result = EOS_Achievements_CopyPlayerAchievementByIndex(achievements_handle, &copy_options, &achievement);
+
+		if (result == EOS_EResult::EOS_Success && achievement) {
+			Dictionary achievement_dict;
+			achievement_dict["achievement_id"] = String(achievement->AchievementId ? achievement->AchievementId : "");
+			achievement_dict["progress"] = achievement->Progress;
+			achievement_dict["unlock_time"] = achievement->UnlockTime;
+			achievement_dict["is_unlocked"] = achievement->UnlockTime != EOS_ACHIEVEMENTS_ACHIEVEMENT_UNLOCKTIME_UNDEFINED;
+			achievement_dict["display_name"] = String(achievement->DisplayName ? achievement->DisplayName : "");
+			achievement_dict["description"] = String(achievement->Description ? achievement->Description : "");
+			achievement_dict["icon_url"] = String(achievement->IconURL ? achievement->IconURL : "");
+			achievement_dict["flavor_text"] = String(achievement->FlavorText ? achievement->FlavorText : "");
+
+			// Add stat info
+			Array stat_info;
+			for (int32_t j = 0; j < achievement->StatInfoCount; j++) {
+				Dictionary stat_dict;
+				stat_dict["name"] = String(achievement->StatInfo[j].Name ? achievement->StatInfo[j].Name : "");
+				stat_dict["current_value"] = achievement->StatInfo[j].CurrentValue;
+				stat_dict["threshold_value"] = achievement->StatInfo[j].ThresholdValue;
+				stat_info.push_back(stat_dict);
+			}
+			achievement_dict["stat_info"] = stat_info;
+
+			achievements_array.push_back(achievement_dict);
+
+			// Release the achievement
+			EOS_Achievements_PlayerAchievement_Release(achievement);
+		}
+	}
+
+	return achievements_array;
+}
+
+Dictionary GodotEpic::get_achievement_definition(const String& achievement_id) {
+	Dictionary definition_dict;
+
+	if (!platform_handle) {
+		ERR_PRINT("Platform not initialized");
+		return definition_dict;
+	}
+
+	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_handle);
+	if (!achievements_handle) {
+		ERR_PRINT("Failed to get Achievements interface");
+		return definition_dict;
+	}
+
+	EOS_Achievements_CopyAchievementDefinitionV2ByAchievementIdOptions copy_options = {};
+	copy_options.ApiVersion = EOS_ACHIEVEMENTS_COPYACHIEVEMENTDEFINITIONV2BYACHIEVEMENTID_API_LATEST;
+	copy_options.AchievementId = achievement_id.utf8().get_data();
+
+	EOS_Achievements_DefinitionV2* definition = nullptr;
+	EOS_EResult result = EOS_Achievements_CopyAchievementDefinitionV2ByAchievementId(achievements_handle, &copy_options, &definition);
+
+	if (result == EOS_EResult::EOS_Success && definition) {
+		definition_dict["achievement_id"] = String(definition->AchievementId ? definition->AchievementId : "");
+		definition_dict["unlocked_display_name"] = String(definition->UnlockedDisplayName ? definition->UnlockedDisplayName : "");
+		definition_dict["unlocked_description"] = String(definition->UnlockedDescription ? definition->UnlockedDescription : "");
+		definition_dict["locked_display_name"] = String(definition->LockedDisplayName ? definition->LockedDisplayName : "");
+		definition_dict["locked_description"] = String(definition->LockedDescription ? definition->LockedDescription : "");
+		definition_dict["flavor_text"] = String(definition->FlavorText ? definition->FlavorText : "");
+		definition_dict["unlocked_icon_url"] = String(definition->UnlockedIconURL ? definition->UnlockedIconURL : "");
+		definition_dict["locked_icon_url"] = String(definition->LockedIconURL ? definition->LockedIconURL : "");
+		definition_dict["is_hidden"] = definition->bIsHidden == EOS_TRUE;
+
+		// Add stat thresholds
+		Array stat_thresholds;
+		for (uint32_t j = 0; j < definition->StatThresholdsCount; j++) {
+			Dictionary threshold_dict;
+			threshold_dict["name"] = String(definition->StatThresholds[j].Name ? definition->StatThresholds[j].Name : "");
+			threshold_dict["threshold"] = definition->StatThresholds[j].Threshold;
+			stat_thresholds.push_back(threshold_dict);
+		}
+		definition_dict["stat_thresholds"] = stat_thresholds;
+
+		// Release the definition
+		EOS_Achievements_DefinitionV2_Release(definition);
+	} else {
+		ERR_PRINT("Failed to get achievement definition for ID: " + achievement_id);
+	}
+
+	return definition_dict;
+}
+
+Dictionary GodotEpic::get_player_achievement(const String& achievement_id) {
+	Dictionary achievement_dict;
+
+	if (!platform_handle || !product_user_id) {
+		ERR_PRINT("Platform not initialized or user not logged in");
+		return achievement_dict;
+	}
+
+	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_handle);
+	if (!achievements_handle) {
+		ERR_PRINT("Failed to get Achievements interface");
+		return achievement_dict;
+	}
+
+	EOS_Achievements_CopyPlayerAchievementByAchievementIdOptions copy_options = {};
+	copy_options.ApiVersion = EOS_ACHIEVEMENTS_COPYPLAYERACHIEVEMENTBYACHIEVEMENTID_API_LATEST;
+	copy_options.TargetUserId = product_user_id;
+	copy_options.AchievementId = achievement_id.utf8().get_data();
+	copy_options.LocalUserId = product_user_id;
+
+	EOS_Achievements_PlayerAchievement* achievement = nullptr;
+	EOS_EResult result = EOS_Achievements_CopyPlayerAchievementByAchievementId(achievements_handle, &copy_options, &achievement);
+
+	if (result == EOS_EResult::EOS_Success && achievement) {
+		achievement_dict["achievement_id"] = String(achievement->AchievementId ? achievement->AchievementId : "");
+		achievement_dict["progress"] = achievement->Progress;
+		achievement_dict["unlock_time"] = achievement->UnlockTime;
+		achievement_dict["is_unlocked"] = achievement->UnlockTime != EOS_ACHIEVEMENTS_ACHIEVEMENT_UNLOCKTIME_UNDEFINED;
+		achievement_dict["display_name"] = String(achievement->DisplayName ? achievement->DisplayName : "");
+		achievement_dict["description"] = String(achievement->Description ? achievement->Description : "");
+		achievement_dict["icon_url"] = String(achievement->IconURL ? achievement->IconURL : "");
+		achievement_dict["flavor_text"] = String(achievement->FlavorText ? achievement->FlavorText : "");
+
+		// Add stat info
+		Array stat_info;
+		for (int32_t j = 0; j < achievement->StatInfoCount; j++) {
+			Dictionary stat_dict;
+			stat_dict["name"] = String(achievement->StatInfo[j].Name ? achievement->StatInfo[j].Name : "");
+			stat_dict["current_value"] = achievement->StatInfo[j].CurrentValue;
+			stat_dict["threshold_value"] = achievement->StatInfo[j].ThresholdValue;
+			stat_info.push_back(stat_dict);
+		}
+		achievement_dict["stat_info"] = stat_info;
+
+		// Release the achievement
+		EOS_Achievements_PlayerAchievement_Release(achievement);
+	} else {
+		ERR_PRINT("Failed to get player achievement for ID: " + achievement_id);
+	}
+
+	return achievement_dict;
+}
+
 // Static logging callback
 void EOS_CALL GodotEpic::logging_callback(const EOS_LogMessage* message) {
 	if (!message || !message->Message) {
@@ -587,6 +949,96 @@ void EOS_CALL GodotEpic::friends_query_callback(const EOS_Friends_QueryFriendsCa
 		Array empty_friends;
 		instance->emit_signal("friends_updated", empty_friends);
 	}
+}
+
+// Achievements callbacks
+void EOS_CALL GodotEpic::achievements_query_definitions_callback(const EOS_Achievements_OnQueryDefinitionsCompleteCallbackInfo* data) {
+	if (!data || !instance) {
+		return;
+	}
+
+	if (data->ResultCode == EOS_EResult::EOS_Success) {
+		WARN_PRINT("Achievement definitions query successful");
+		instance->achievements_definitions_cached = true;
+
+		// Get updated achievement definitions and emit signal
+		Array definitions = instance->get_achievement_definitions();
+		instance->emit_signal("achievement_definitions_updated", definitions);
+	} else {
+		String error_msg = "Achievement definitions query failed: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
+		ERR_PRINT(error_msg);
+		instance->achievements_definitions_cached = false;
+
+		// Emit empty array on failure
+		Array empty_definitions;
+		instance->emit_signal("achievement_definitions_updated", empty_definitions);
+	}
+}
+
+void EOS_CALL GodotEpic::achievements_query_player_callback(const EOS_Achievements_OnQueryPlayerAchievementsCompleteCallbackInfo* data) {
+	if (!data || !instance) {
+		return;
+	}
+
+	if (data->ResultCode == EOS_EResult::EOS_Success) {
+		WARN_PRINT("Player achievements query successful");
+		instance->player_achievements_cached = true;
+
+		// Get updated player achievements and emit signal
+		Array achievements = instance->get_player_achievements();
+		instance->emit_signal("player_achievements_updated", achievements);
+	} else {
+		String error_msg = "Player achievements query failed: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
+		ERR_PRINT(error_msg);
+		instance->player_achievements_cached = false;
+
+		// Emit empty array on failure
+		Array empty_achievements;
+		instance->emit_signal("player_achievements_updated", empty_achievements);
+	}
+}
+
+void EOS_CALL GodotEpic::achievements_unlock_callback(const EOS_Achievements_OnUnlockAchievementsCompleteCallbackInfo* data) {
+	if (!data || !instance) {
+		return;
+	}
+
+	if (data->ResultCode == EOS_EResult::EOS_Success) {
+		String success_msg = "Achievements unlocked successfully: " + String::num_int64(data->AchievementsCount) + " achievements";
+		WARN_PRINT(success_msg);
+
+		// We don't know which specific achievements were unlocked from this callback,
+		// but we can trigger a refresh of player achievements
+		instance->query_player_achievements();
+
+		// Emit generic unlock signal
+		Array unlocked_ids; // We'd need to track which IDs we sent to populate this properly
+		instance->emit_signal("achievements_unlocked", unlocked_ids);
+	} else {
+		String error_msg = "Achievement unlock failed: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
+		ERR_PRINT(error_msg);
+
+		// Emit empty array on failure
+		Array empty_unlocked;
+		instance->emit_signal("achievements_unlocked", empty_unlocked);
+	}
+}
+
+void EOS_CALL GodotEpic::achievements_unlocked_notification(const EOS_Achievements_OnAchievementsUnlockedCallbackV2Info* data) {
+	if (!data || !instance) {
+		return;
+	}
+
+	String achievement_id = String(data->AchievementId ? data->AchievementId : "");
+	int64_t unlock_time = data->UnlockTime;
+
+	WARN_PRINT("Achievement unlocked notification: " + achievement_id);
+
+	// Emit specific achievement unlock signal
+	instance->emit_signal("achievement_unlocked", achievement_id, unlock_time);
+
+	// Also refresh player achievements to get updated progress
+	instance->query_player_achievements();
 }
 
 // Helper methods
