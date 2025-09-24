@@ -4,3 +4,167 @@
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_lhqeq")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="UI" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Background" type="ColorRect" parent="CanvasLayer/UI"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.1, 0.1, 1)
+
+[node name="MainContainer" type="HBoxContainer" parent="CanvasLayer/UI"]
+layout_mode = 2
+offset_right = 1152.0
+offset_bottom = 687.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ButtonsPanel" type="VBoxContainer" parent="CanvasLayer/UI/MainContainer"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+size_flags_horizontal = 0
+
+[node name="Title" type="Label" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+layout_mode = 2
+theme_type_variation = &"HeaderMedium"
+text = "GodotEpic Demo"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+layout_mode = 2
+
+[node name="StatusLabel" type="Label" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+layout_mode = 2
+theme_type_variation = &"TooltipLabel"
+text = "Initializing..."
+
+[node name="HSeparator2" type="HSeparator" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+layout_mode = 2
+
+[node name="AuthGroup" type="VBoxContainer" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+layout_mode = 2
+
+[node name="AuthLabel" type="Label" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup"]
+layout_mode = 2
+theme_type_variation = &"HeaderSmall"
+text = "Authentication"
+
+[node name="LoginEpicButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup"]
+layout_mode = 2
+text = "1 - Login with Epic Account"
+
+[node name="LoginDeviceButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup"]
+layout_mode = 2
+text = "2 - Login with Device ID (TestUser123)"
+
+[node name="LoginDevice2Button" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup"]
+layout_mode = 2
+text = "Alt+2 - Login with Device ID (Player1)"
+
+[node name="LogoutButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup"]
+layout_mode = 2
+text = "3 - Logout"
+
+[node name="HSeparator3" type="HSeparator" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+layout_mode = 2
+
+[node name="FriendsGroup" type="VBoxContainer" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+layout_mode = 2
+
+[node name="FriendsLabel" type="Label" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/FriendsGroup"]
+layout_mode = 2
+theme_type_variation = &"HeaderSmall"
+text = "Friends"
+
+[node name="QueryFriendsButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/FriendsGroup"]
+layout_mode = 2
+text = "4 - Query Friends"
+
+[node name="GetFriendsButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/FriendsGroup"]
+layout_mode = 2
+text = "5 - Get Current Friends"
+
+[node name="HSeparator4" type="HSeparator" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+layout_mode = 2
+
+[node name="AchievementsGroup" type="VBoxContainer" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+layout_mode = 2
+
+[node name="AchievementsLabel" type="Label" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup"]
+layout_mode = 2
+theme_type_variation = &"HeaderSmall"
+text = "Achievements"
+
+[node name="QueryAchDefsButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup"]
+layout_mode = 2
+text = "6 - Query Achievement Definitions"
+
+[node name="QueryPlayerAchButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup"]
+layout_mode = 2
+text = "7 - Query Player Achievements"
+
+[node name="GetAchDefsButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup"]
+layout_mode = 2
+text = "8 - Get Current Achievement Definitions"
+
+[node name="GetPlayerAchButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup"]
+layout_mode = 2
+text = "9 - Get Current Player Achievements"
+
+[node name="UnlockTestButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup"]
+layout_mode = 2
+text = "0 - Unlock Test Achievement"
+
+[node name="GetSpecificDefButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup"]
+layout_mode = 2
+text = "Q - Get Specific Achievement Definition"
+
+[node name="GetSpecificPlayerButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup"]
+layout_mode = 2
+text = "W - Get Specific Player Achievement"
+
+[node name="HSeparator5" type="HSeparator" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+layout_mode = 2
+
+[node name="ClearOutputButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+layout_mode = 2
+text = "Clear Output"
+
+[node name="VSeparator" type="VSeparator" parent="CanvasLayer/UI/MainContainer"]
+layout_mode = 2
+
+[node name="OutputPanel" type="VBoxContainer" parent="CanvasLayer/UI/MainContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="OutputLabel" type="Label" parent="CanvasLayer/UI/MainContainer/OutputPanel"]
+layout_mode = 2
+theme_type_variation = &"HeaderMedium"
+text = "Output"
+
+[node name="OutputScroll" type="ScrollContainer" parent="CanvasLayer/UI/MainContainer/OutputPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="OutputText" type="RichTextLabel" parent="CanvasLayer/UI/MainContainer/OutputPanel/OutputScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+bbcode_enabled = true
+text = "GodotEpic Demo Starting...
+"
+scroll_following = true
+
+[node name="Camera2D" type="Camera2D" parent="."]
