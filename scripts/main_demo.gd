@@ -23,7 +23,7 @@ func _ready():
 	leaderboard_button.pressed.connect(_on_leaderboard_pressed)
 	save_button.pressed.connect(_on_save_pressed)
 	load_button.pressed.connect(_on_load_pressed)
-	
+
 	# Connect EOS signals
 	EpicOS.login_completed.connect(_on_login_completed)
 	EpicOS.achievement_unlocked.connect(_on_achievement_unlocked)
@@ -31,11 +31,11 @@ func _ready():
 	EpicOS.leaderboard_retrieved.connect(_on_leaderboard_retrieved)
 	EpicOS.file_saved.connect(_on_file_saved)
 	EpicOS.file_loaded.connect(_on_file_loaded)
-	
+
 	# Initial setup
 	EpicOS.set_debug_mode(true)
 	EpicOS.initialize()
-	
+
 	update_ui_state()
 	_add_output("GodotEpic Demo Started")
 	_add_output("Initialize EOS and try logging in!")
@@ -44,14 +44,14 @@ func update_ui_state():
 	var logged_in = EpicOS.is_logged_in()
 	login_button.disabled = logged_in
 	logout_button.disabled = not logged_in
-	
+
 	# Feature buttons only available when logged in
 	achievement_button.disabled = not logged_in
 	stats_button.disabled = not logged_in
 	leaderboard_button.disabled = not logged_in
 	save_button.disabled = not logged_in
 	load_button.disabled = not logged_in
-	
+
 	status_label.text = "Status: " + ("Logged In" if logged_in else "Not Logged In")
 
 func _add_output(message: String):
@@ -66,6 +66,8 @@ func _add_output(message: String):
 # UI Event Handlers
 func _on_login_pressed():
 	_add_output("Starting login process...")
+	_add_output("Note: For Device ID login, make sure EOS Dev Auth Tool is running on localhost:7777")
+	_add_output("For Epic Account login, it will open browser or use Epic Launcher")
 	EpicOS.login()
 
 func _on_logout_pressed():
@@ -81,7 +83,7 @@ func _on_stats_pressed():
 	_add_output("Updating stats...")
 	var random_score = randi_range(100, 1000)
 	EpicOS.update_stat("demo_score", random_score)
-	
+
 	# Also get current stats
 	var stats = EpicOS.get_stats()
 	_add_output("Current stats: " + str(stats))
@@ -110,8 +112,19 @@ func _on_load_pressed():
 func _on_login_completed(success: bool, user_info: Dictionary):
 	if success:
 		_add_output("Login successful! Welcome " + user_info.display_name)
+		_add_output("Epic Account ID: " + str(user_info.get("epic_account_id", "Not available")))
+		_add_output("Product User ID: " + str(user_info.get("product_user_id", "Not set - Connect service failed")))
+
+		if user_info.has("product_user_id") and user_info.product_user_id != "":
+			_add_output("✓ Cross-platform features enabled")
+		else:
+			_add_output("⚠ Cross-platform features disabled (Connect login failed)")
 	else:
-		_add_output("Login failed!")
+		_add_output("Login failed! Check the error message above for details.")
+		_add_output("Common issues:")
+		_add_output("- Error 10: For Device ID, run EOS Dev Auth Tool on localhost:7777")
+		_add_output("- Error 10: Check email/password format for Epic Account login")
+		_add_output("- Error 32: Check deployment_id in EOS Developer Portal")
 	update_ui_state()
 
 func _on_achievement_unlocked(achievement_id: String):
