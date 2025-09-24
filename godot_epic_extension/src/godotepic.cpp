@@ -41,7 +41,7 @@ void GodotEpic::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_player_achievement", "achievement_id"), &GodotEpic::get_player_achievement);
 
 	// Signals
-	ADD_SIGNAL(MethodInfo("login_completed", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::STRING, "username")));
+	ADD_SIGNAL(MethodInfo("login_completed", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::DICTIONARY, "user_info")));
 	ADD_SIGNAL(MethodInfo("logout_completed", PropertyInfo(Variant::BOOL, "success")));
 	ADD_SIGNAL(MethodInfo("friends_updated", PropertyInfo(Variant::ARRAY, "friends_list")));
 	ADD_SIGNAL(MethodInfo("achievement_definitions_updated", PropertyInfo(Variant::ARRAY, "definitions")));
@@ -241,10 +241,9 @@ void GodotEpic::login_with_epic_account(const String& email, const String& passw
 	}
 
 	login_options.Credentials = &credentials;
-	login_options.ScopeFlags = EOS_EAuthScopeFlags::EOS_AS_BasicProfile; // | EOS_EAuthScopeFlags::EOS_AS_FriendsList;
+	login_options.ScopeFlags = EOS_EAuthScopeFlags::EOS_AS_BasicProfile | EOS_EAuthScopeFlags::EOS_AS_FriendsList | EOS_EAuthScopeFlags::EOS_AS_Presence;
 
 	EOS_Auth_Login(auth_handle, &login_options, nullptr, auth_login_callback);
-	ERR_PRINT("Epic Account login initiated - check browser/Epic launcher");
 }
 
 void GodotEpic::login_with_device_id(const String& display_name) {
@@ -831,28 +830,51 @@ void EOS_CALL GodotEpic::auth_login_callback(const EOS_Auth_LoginCallbackInfo* d
 		// Now login to Connect service for cross-platform features
 		EOS_HConnect connect_handle = EOS_Platform_GetConnectInterface(platform_handle);
 		if (connect_handle) {
-			EOS_Connect_LoginOptions connect_options = {};
-			connect_options.ApiVersion = EOS_CONNECT_LOGIN_API_LATEST;
+			// Get Auth Token for Connect login (not Epic Account ID)
+			EOS_Auth_Token* auth_token = nullptr;
+			EOS_Auth_CopyUserAuthTokenOptions copy_options = {};
+			copy_options.ApiVersion = EOS_AUTH_COPYUSERAUTHTOKEN_API_LATEST;
 
-			EOS_Connect_Credentials connect_credentials = {};
-			connect_credentials.ApiVersion = EOS_CONNECT_CREDENTIALS_API_LATEST;
-			connect_credentials.Type = EOS_EExternalCredentialType::EOS_ECT_EPIC;
-			connect_credentials.Token = nullptr;  // Will use current Epic session
+			EOS_EResult copy_result = EOS_Auth_CopyUserAuthToken(auth_handle, &copy_options, data->LocalUserId, &auth_token);
 
-			connect_options.Credentials = &connect_credentials;
+			if (copy_result == EOS_EResult::EOS_Success && auth_token) {
+				EOS_Connect_LoginOptions connect_options = {};
+				connect_options.ApiVersion = EOS_CONNECT_LOGIN_API_LATEST;
 
-			EOS_Connect_Login(connect_handle, &connect_options, nullptr, connect_login_callback);
+				EOS_Connect_Credentials connect_credentials = {};
+				connect_credentials.ApiVersion = EOS_CONNECT_CREDENTIALS_API_LATEST;
+				connect_credentials.Type = EOS_EExternalCredentialType::EOS_ECT_EPIC;
+				connect_credentials.Token = auth_token->AccessToken;  // Use Auth Token instead of Account ID
+
+				connect_options.Credentials = &connect_credentials;
+
+				EOS_Connect_Login(connect_handle, &connect_options, nullptr, connect_login_callback);
+
+				// Clean up the auth token
+				EOS_Auth_Token_Release(auth_token);
+			} else {
+				ERR_PRINT("Failed to copy Auth Token for Connect login - skipping Connect service");
+				// Emit success anyway since Auth login succeeded, but without Connect features
+				Dictionary user_info;
+				user_info["display_name"] = instance->current_username;
+				user_info["epic_account_id"] = instance->get_epic_account_id();
+				user_info["product_user_id"] = "";  // Empty since Connect failed
+
+				instance->emit_signal("login_completed", true, user_info);
+			}
 		}
 
-		ERR_PRINT("Epic Account login successful!");
+		ERR_PRINT("Epic Account login successful - initiating Connect login...");
 
-		// Emit login completed signal
-		instance->emit_signal("login_completed", true, instance->current_username);
+		// Don't emit login signal yet - wait for Connect login to complete
 	} else {
 		String error_msg = "Epic Account login failed: ";
 
 		// Provide more descriptive error messages
 		switch (data->ResultCode) {
+			case EOS_EResult::EOS_InvalidParameters:
+				error_msg += "Invalid parameters (10) - For Device ID login, make sure EOS Dev Auth Tool is running on localhost:7777. For Epic Account login, check email/password format";
+				break;
 			case EOS_EResult::EOS_Invalid_Deployment:
 				error_msg += "Invalid deployment (32) - Check your deployment_id in EOS Developer Portal";
 				break;
@@ -888,7 +910,8 @@ void EOS_CALL GodotEpic::auth_login_callback(const EOS_Auth_LoginCallbackInfo* d
 		ERR_PRINT(error_msg);
 
 		// Emit login failed signal
-		instance->emit_signal("login_completed", false, "");
+		Dictionary empty_user_info;
+		instance->emit_signal("login_completed", false, empty_user_info);
 	}
 }
 
@@ -898,7 +921,7 @@ void EOS_CALL GodotEpic::auth_logout_callback(const EOS_Auth_LogoutCallbackInfo*
 	}
 
 	if (data->ResultCode == EOS_EResult::EOS_Success) {
-		instance->epic_account_id = nullptr;
+		instance->epic_account_id = data->LocalUserId;
 		instance->product_user_id = nullptr;
 		instance->is_logged_in = false;
 		instance->current_username = "";
@@ -923,10 +946,57 @@ void EOS_CALL GodotEpic::connect_login_callback(const EOS_Connect_LoginCallbackI
 
 	if (data->ResultCode == EOS_EResult::EOS_Success) {
 		instance->product_user_id = data->LocalUserId;
-		ERR_PRINT("Connect login successful - cross-platform features enabled");
+		WARN_PRINT("Connect login successful - cross-platform features enabled");
+
+		// Now both Auth and Connect logins are complete, emit the signal
+		Dictionary user_info;
+		user_info["display_name"] = instance->current_username;
+		user_info["epic_account_id"] = instance->get_epic_account_id();
+		user_info["product_user_id"] = instance->get_product_user_id();
+
+		instance->emit_signal("login_completed", true, user_info);
 	} else {
-		String error_msg = "Connect login failed: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
-		WARN_PRINT(error_msg);
+		String error_msg = "Connect login failed: ";
+
+		// Provide more descriptive error messages for Connect login
+		switch (data->ResultCode) {
+			case EOS_EResult::EOS_InvalidParameters:
+				error_msg += "Invalid parameters (10) - Connect login requires valid Epic Account ID from Auth login";
+				break;
+			case EOS_EResult::EOS_InvalidUser:
+				error_msg += "Invalid user (3) - User may need to be linked or created in Connect service";
+				break;
+			case EOS_EResult::EOS_NotFound:
+				error_msg += "User not found (13) - User account may need to be created in Connect service";
+				break;
+			case EOS_EResult::EOS_DuplicateNotAllowed:
+				error_msg += "Duplicate not allowed (15) - User may already be logged in";
+				break;
+			case EOS_EResult::EOS_Connect_ExternalTokenValidationFailed:
+				error_msg += "External token validation failed (7000) - Epic Account ID token was rejected by Connect service. Try using Auth Token instead of Account ID";
+				break;
+			case EOS_EResult::EOS_Connect_InvalidToken:
+				error_msg += "Invalid token (7003) - The provided token is not valid for Connect service";
+				break;
+			case EOS_EResult::EOS_Connect_UnsupportedTokenType:
+				error_msg += "Unsupported token type (7004) - Connect service doesn't support this token type";
+				break;
+			case EOS_EResult::EOS_Connect_AuthExpired:
+				error_msg += "Auth expired (7002) - The authentication token has expired";
+				break;
+			default:
+				error_msg += String::num_int64(static_cast<int64_t>(data->ResultCode));
+				break;
+		}		ERR_PRINT(error_msg);
+
+		// Connect failed, but Auth succeeded - still emit login signal but without product_user_id
+		ERR_PRINT("Login completed with Epic Account only (no cross-platform features)");
+		Dictionary user_info;
+		user_info["display_name"] = instance->current_username;
+		user_info["epic_account_id"] = instance->get_epic_account_id();
+		user_info["product_user_id"] = "";  // Empty since Connect failed
+
+		instance->emit_signal("login_completed", true, user_info);
 	}
 }
 
@@ -1045,30 +1115,62 @@ void EOS_CALL GodotEpic::achievements_unlocked_notification(const EOS_Achievemen
 EpicInitOptions GodotEpic::_dict_to_init_options(const Dictionary& options_dict) {
 	EpicInitOptions options;
 
+	// Use values from dictionary if provided, otherwise use SampleConstants as fallback
 	if (options_dict.has("product_name")) {
 		options.product_name = options_dict["product_name"];
+	} else {
+		options.product_name = String::utf8(SampleConstants::GameName);
 	}
+
 	if (options_dict.has("product_version")) {
 		options.product_version = options_dict["product_version"];
 	}
+	// product_version keeps default "1.0.0"
+
 	if (options_dict.has("product_id")) {
 		options.product_id = options_dict["product_id"];
+	} else {
+		options.product_id = String::utf8(SampleConstants::ProductId);
 	}
+
 	if (options_dict.has("sandbox_id")) {
 		options.sandbox_id = options_dict["sandbox_id"];
+	} else {
+		options.sandbox_id = String::utf8(SampleConstants::SandboxId);
 	}
+
 	if (options_dict.has("deployment_id")) {
 		options.deployment_id = options_dict["deployment_id"];
+	} else {
+		options.deployment_id = String::utf8(SampleConstants::DeploymentId);
 	}
+
 	if (options_dict.has("client_id")) {
 		options.client_id = options_dict["client_id"];
+	} else {
+		options.client_id = String::utf8(SampleConstants::ClientCredentialsId);
 	}
+
 	if (options_dict.has("client_secret")) {
 		options.client_secret = options_dict["client_secret"];
+	} else {
+		options.client_secret = String::utf8(SampleConstants::ClientCredentialsSecret);
 	}
+
 	if (options_dict.has("encryption_key")) {
 		options.encryption_key = options_dict["encryption_key"];
+	} else {
+		options.encryption_key = String::utf8(SampleConstants::EncryptionKey);
 	}
+
+	// Debug print to verify values are being set correctly
+	ERR_PRINT("EOS Init Options:");
+	ERR_PRINT("  Product ID: " + options.product_id);
+	ERR_PRINT("  Sandbox ID: " + options.sandbox_id);
+	ERR_PRINT("  Deployment ID: " + options.deployment_id);
+	ERR_PRINT("  Client ID: " + options.client_id);
+	ERR_PRINT("  Client Secret: " + String(options.client_secret.is_empty() ? "EMPTY" : "SET"));
+	ERR_PRINT("  Encryption Key: " + String(options.encryption_key.is_empty() ? "EMPTY" : "SET"));
 
 	return options;
 }
