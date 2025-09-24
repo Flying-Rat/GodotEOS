@@ -230,19 +230,33 @@ func _input(event):
 
 
 # Signal handlers
-func _on_login_completed(success: bool, username: String):
+func _on_login_completed(success: bool, user_info: Dictionary):
 	if success:
-		status_label.text = "✅ Logged In: " + username
+		var display_name = user_info.get("display_name", "Unknown User")
+		var epic_account_id = user_info.get("epic_account_id", "Not available")
+		var product_user_id = user_info.get("product_user_id", "")
+
+		status_label.text = "✅ Logged In: " + display_name
 		add_output_line("[color=green]✅ Login successful![/color]")
-		add_output_line("[b]Username:[/b] " + username)
-		add_output_line("[b]Epic Account ID:[/b] " + godot_epic.get_epic_account_id())
-		add_output_line("[b]Product User ID:[/b] " + godot_epic.get_product_user_id())
+		add_output_line("[b]Username:[/b] " + display_name)
+		add_output_line("[b]Epic Account ID:[/b] " + epic_account_id)
+		add_output_line("[b]Product User ID:[/b] " + product_user_id)
+
+		if product_user_id != "":
+			add_output_line("[color=green]✓ Cross-platform features enabled[/color]")
+		else:
+			add_output_line("[color=orange]⚠ Cross-platform features disabled (Connect service failed)[/color]")
+
 		add_output_line("")
-		add_output_line("[color=green]🎉 You can now use all features![/color]")
+		add_output_line("[color=green]🎉 You can now use available features![/color]")
 		update_button_states()
 	else:
 		status_label.text = "❌ Login Failed"
-		add_output_line("[color=red]❌ Login failed![/color]")
+		add_output_line("[color=red]❌ Login failed! Check the error message above for details.[/color]")
+		add_output_line("[color=yellow]Common issues:[/color]")
+		add_output_line("• [color=yellow]Error 10: For Device ID, run EOS Dev Auth Tool on localhost:7777[/color]")
+		add_output_line("• [color=yellow]Error 10: Check email/password format for Epic Account login[/color]")
+		add_output_line("• [color=yellow]Error 32: Check deployment_id in EOS Developer Portal[/color]")
 		update_button_states()
 
 
