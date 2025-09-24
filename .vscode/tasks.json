@@ -1,0 +1,218 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Demo Project",
+			"type": "shell",
+			"command": "godot",
+			"args": [],
+			"options": {
+				"cwd": "${workspaceFolder}/godot_epic_extension/demo"
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			},
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Run Demo Editor",
+			"type": "shell",
+			"command": "godot",
+			"args": [
+				"-e"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/godot_epic_extension/demo"
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			},
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Build GDExtension - Debug (Windows x64)",
+			"type": "shell",
+			"command": "scons",
+			"args": [
+				"platform=windows",
+				"target=template_debug",
+				"arch=x86_64"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/godot_epic_extension"
+			},
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build GDExtension - Release (Windows x64)",
+			"type": "shell",
+			"command": "scons",
+			"args": [
+				"platform=windows",
+				"target=template_release",
+				"arch=x86_64"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/godot_epic_extension"
+			},
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build GDExtension - Debug (Windows x86)",
+			"type": "shell",
+			"command": "scons",
+			"args": [
+				"platform=windows",
+				"target=template_debug",
+				"arch=x86_32"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/godot_epic_extension"
+			},
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build GDExtension - Release (Windows x86)",
+			"type": "shell",
+			"command": "scons",
+			"args": [
+				"platform=windows",
+				"target=template_release",
+				"arch=x86_32"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/godot_epic_extension"
+			},
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build GDExtension - Debug (Linux x64)",
+			"type": "shell",
+			"command": "scons",
+			"args": [
+				"platform=linux",
+				"target=template_debug",
+				"arch=x86_64"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/godot_epic_extension"
+			},
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build GDExtension - Release (Linux x64)",
+			"type": "shell",
+			"command": "scons",
+			"args": [
+				"platform=linux",
+				"target=template_release",
+				"arch=x86_64"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/godot_epic_extension"
+			},
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build GDExtension - Debug (macOS)",
+			"type": "shell",
+			"command": "scons",
+			"args": [
+				"platform=macos",
+				"target=template_debug",
+				"arch=universal"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/godot_epic_extension"
+			},
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build GDExtension - Release (macOS)",
+			"type": "shell",
+			"command": "scons",
+			"args": [
+				"platform=macos",
+				"target=template_release",
+				"arch=universal"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/godot_epic_extension"
+			},
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build GDExtension - Clean",
+			"type": "shell",
+			"command": "scons",
+			"args": [
+				"--clean"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/godot_epic_extension"
+			},
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build GDExtension - All Platforms (Debug)",
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"Build GDExtension - Debug (Windows x64)",
+				"Build GDExtension - Debug (Linux x64)",
+				"Build GDExtension - Debug (macOS)"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Setup GDExtension",
+			"type": "shell",
+			"command": "powershell.exe",
+			"args": [
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"${workspaceFolder}/godot_epic_extension/setup_gdextension.ps1"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/godot_epic_extension"
+			},
+			"problemMatcher": [],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			}
+		},
+		{
+			"label": "Build GDExtension - All Platforms (Release)",
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"Build GDExtension - Release (Windows x64)",
+				"Build GDExtension - Release (Linux x64)",
+				"Build GDExtension - Release (macOS)"
+			],
+			"group": "build"
+		}
+	]
+}
