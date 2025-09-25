@@ -2,6 +2,14 @@
 #include "Platform.h"
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/error_macros.hpp>
+#include "SubsystemManager.h"
+#include "IAuthenticationSubsystem.h"
+#include "IAchievementsSubsystem.h"
+#include "ILeaderboardsSubsystem.h"
+#include "PlatformSubsystem.h"
+#include "AuthenticationSubsystem.h"
+#include "AchievementsSubsystem.h"
+#include "LeaderboardsSubsystem.h"
 
 using namespace godot;
 
@@ -39,8 +47,18 @@ void GodotEpic::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_achievement_definition", "achievement_id"), &GodotEpic::get_achievement_definition);
 	ClassDB::bind_method(D_METHOD("get_player_achievement", "achievement_id"), &GodotEpic::get_player_achievement);
 
-	// Test method for IPlatform::get() functionality
-	ClassDB::bind_method(D_METHOD("test_iplatform_get_access"), &GodotEpic::test_iplatform_get_access);
+	// Leaderboards methods
+	ClassDB::bind_method(D_METHOD("query_leaderboard_definitions"), &GodotEpic::query_leaderboard_definitions);
+	ClassDB::bind_method(D_METHOD("query_leaderboard_ranks", "leaderboard_id", "limit"), &GodotEpic::query_leaderboard_ranks);
+	ClassDB::bind_method(D_METHOD("query_leaderboard_user_scores", "leaderboard_id", "user_ids"), &GodotEpic::query_leaderboard_user_scores);
+	ClassDB::bind_method(D_METHOD("ingest_stat", "stat_name", "value"), &GodotEpic::ingest_stat);
+	ClassDB::bind_method(D_METHOD("ingest_stats", "stats"), &GodotEpic::ingest_stats);
+	ClassDB::bind_method(D_METHOD("get_leaderboard_definitions"), &GodotEpic::get_leaderboard_definitions);
+	ClassDB::bind_method(D_METHOD("get_leaderboard_ranks"), &GodotEpic::get_leaderboard_ranks);
+	ClassDB::bind_method(D_METHOD("get_leaderboard_user_scores"), &GodotEpic::get_leaderboard_user_scores);
+
+	// Test method for SubsystemManager functionality
+	ClassDB::bind_method(D_METHOD("test_subsystem_manager"), &GodotEpic::test_subsystem_manager);
 
 	// Signals
 	ADD_SIGNAL(MethodInfo("login_completed", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::DICTIONARY, "user_info")));
@@ -50,6 +68,10 @@ void GodotEpic::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("player_achievements_updated", PropertyInfo(Variant::ARRAY, "achievements")));
 	ADD_SIGNAL(MethodInfo("achievements_unlocked", PropertyInfo(Variant::ARRAY, "unlocked_achievement_ids")));
 	ADD_SIGNAL(MethodInfo("achievement_unlocked", PropertyInfo(Variant::STRING, "achievement_id"), PropertyInfo(Variant::INT, "unlock_time")));
+	ADD_SIGNAL(MethodInfo("leaderboard_definitions_updated", PropertyInfo(Variant::ARRAY, "definitions")));
+	ADD_SIGNAL(MethodInfo("leaderboard_ranks_updated", PropertyInfo(Variant::ARRAY, "ranks")));
+	ADD_SIGNAL(MethodInfo("leaderboard_user_scores_updated", PropertyInfo(Variant::DICTIONARY, "user_scores")));
+	ADD_SIGNAL(MethodInfo("stats_ingested", PropertyInfo(Variant::ARRAY, "stat_names")));
 }
 
 GodotEpic::GodotEpic() {
@@ -122,24 +144,22 @@ bool GodotEpic::initialize_platform(const Dictionary& options) {
 		return false;
 	}
 
-	// Register for achievement unlock notifications
-	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_instance->get_platform_handle());
-	if (achievements_handle) {
-		EOS_Achievements_AddNotifyAchievementsUnlockedV2Options notify_options = {};
-		notify_options.ApiVersion = EOS_ACHIEVEMENTS_ADDNOTIFYACHIEVEMENTSUNLOCKEDV2_API_LATEST;
+	// Register subsystems with SubsystemManager
+	SubsystemManager* manager = SubsystemManager::GetInstance();
 
-		achievements_notification_id = EOS_Achievements_AddNotifyAchievementsUnlockedV2(
-			achievements_handle,
-			&notify_options,
-			nullptr,
-			achievements_unlocked_notification
-		);
+	// Register PlatformSubsystem first (needed by other subsystems)
+	manager->RegisterSubsystem<IPlatformSubsystem, PlatformSubsystem>("PlatformSubsystem");
 
-		if (achievements_notification_id != EOS_INVALID_NOTIFICATIONID) {
-			WARN_PRINT("Achievement unlock notifications registered successfully");
-		} else {
-			WARN_PRINT("Failed to register achievement unlock notifications");
-		}
+	// Register other subsystems
+	manager->RegisterSubsystem<IAuthenticationSubsystem, AuthenticationSubsystem>("AuthenticationSubsystem");
+	manager->RegisterSubsystem<IAchievementsSubsystem, AchievementsSubsystem>("AchievementsSubsystem");
+	manager->RegisterSubsystem<ILeaderboardsSubsystem, LeaderboardsSubsystem>("LeaderboardsSubsystem");
+
+	// Initialize all subsystems
+	if (!manager->InitializeAll()) {
+		ERR_PRINT("Failed to initialize subsystems");
+		platform_instance.reset();
+		return false;
 	}
 
 	return true;
@@ -150,15 +170,9 @@ void GodotEpic::shutdown_platform() {
 		return;
 	}
 
-	// Unregister achievement notifications before shutdown
-	if (platform_instance->get_platform_handle() && achievements_notification_id != EOS_INVALID_NOTIFICATIONID) {
-		EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_instance->get_platform_handle());
-		if (achievements_handle) {
-			EOS_Achievements_RemoveNotifyAchievementsUnlocked(achievements_handle, achievements_notification_id);
-			WARN_PRINT("Achievement unlock notifications unregistered");
-		}
-		achievements_notification_id = EOS_INVALID_NOTIFICATIONID;
-	}
+	// Shutdown all subsystems
+	SubsystemManager* manager = SubsystemManager::GetInstance();
+	manager->ShutdownAll();
 
 	platform_instance->shutdown();
 	platform_instance.reset();
@@ -170,6 +184,10 @@ void GodotEpic::tick() {
 	if (platform_instance) {
 		platform_instance->tick();
 	}
+
+	// Tick all subsystems
+	SubsystemManager* manager = SubsystemManager::GetInstance();
+	manager->TickAll(time_passed);
 }
 
 bool GodotEpic::is_platform_initialized() const {
@@ -182,134 +200,74 @@ EOS_HPlatform GodotEpic::get_platform_handle() const {
 
 // Authentication methods
 void GodotEpic::login_with_epic_account(const String& email, const String& password) {
-	if (!platform_instance || !platform_instance->get_platform_handle()) {
-		ERR_PRINT("EOS Platform not initialized");
+	auto auth = SubsystemManager::GetInstance()->GetSubsystem<IAuthenticationSubsystem>();
+	if (!auth) {
+		ERR_PRINT("AuthenticationSubsystem not available");
+		Dictionary empty_user_info;
+		emit_signal("login_completed", false, empty_user_info);
 		return;
 	}
 
-	EOS_HAuth auth_handle = EOS_Platform_GetAuthInterface(platform_instance->get_platform_handle());
-	if (!auth_handle) {
-		ERR_PRINT("Failed to get Auth interface");
-		return;
+	Dictionary credentials;
+	credentials["email"] = email;
+	credentials["password"] = password;
+
+	if (!auth->Login("epic_account", credentials)) {
+		ERR_PRINT("AuthenticationSubsystem login failed");
+		Dictionary empty_user_info;
+		emit_signal("login_completed", false, empty_user_info);
 	}
-
-	EOS_Auth_LoginOptions login_options = {};
-	login_options.ApiVersion = EOS_AUTH_LOGIN_API_LATEST;
-
-	// Try different credential types based on parameters
-	EOS_Auth_Credentials credentials = {};
-	credentials.ApiVersion = EOS_AUTH_CREDENTIALS_API_LATEST;
-
-	if (!email.is_empty() && !password.is_empty()) {
-		// Use email/password if provided
-		credentials.Type = EOS_ELoginCredentialType::EOS_LCT_Password;
-		credentials.Id = email.utf8().get_data();
-		credentials.Token = password.utf8().get_data();
-		ERR_PRINT("Epic Account login with email/password initiated");
-	} else {
-		// Use Account Portal (browser/launcher) - requires proper EOS setup
-		credentials.Type = EOS_ELoginCredentialType::EOS_LCT_AccountPortal;
-		credentials.Id = nullptr;
-		credentials.Token = nullptr;
-		ERR_PRINT("Epic Account login with Account Portal initiated - check browser/Epic launcher");
-	}
-
-	login_options.Credentials = &credentials;
-	login_options.ScopeFlags = EOS_EAuthScopeFlags::EOS_AS_BasicProfile | EOS_EAuthScopeFlags::EOS_AS_FriendsList | EOS_EAuthScopeFlags::EOS_AS_Presence;
-
-	EOS_Auth_Login(auth_handle, &login_options, nullptr, auth_login_callback);
 }
 
 void GodotEpic::login_with_device_id(const String& display_name) {
-	if (!platform_instance || !platform_instance->get_platform_handle()) {
-		ERR_PRINT("EOS Platform not initialized");
+	auto auth = SubsystemManager::GetInstance()->GetSubsystem<IAuthenticationSubsystem>();
+	if (!auth) {
+		ERR_PRINT("AuthenticationSubsystem not available");
+		Dictionary empty_user_info;
+		emit_signal("login_completed", false, empty_user_info);
 		return;
 	}
 
-	EOS_HAuth auth_handle = EOS_Platform_GetAuthInterface(platform_instance->get_platform_handle());
-	if (!auth_handle) {
-		ERR_PRINT("Failed to get Auth interface");
-		return;
+	if (!auth->Login("device_id", Dictionary())) {
+		ERR_PRINT("AuthenticationSubsystem device ID login failed");
+		Dictionary empty_user_info;
+		emit_signal("login_completed", false, empty_user_info);
 	}
-
-	EOS_Auth_LoginOptions login_options = {};
-	login_options.ApiVersion = EOS_AUTH_LOGIN_API_LATEST;
-
-	// Set up credentials for Device ID (development only)
-	EOS_Auth_Credentials credentials = {};
-	credentials.ApiVersion = EOS_AUTH_CREDENTIALS_API_LATEST;
-	credentials.Type = EOS_ELoginCredentialType::EOS_LCT_Developer;
-	credentials.Id = "localhost:7777";  // Default EOS Dev Auth Tool port
-
-	// Use display_name as credential name, or fallback to a default
-	String credential_name = display_name.is_empty() ? "TestUser" : display_name;
-	credentials.Token = credential_name.utf8().get_data();
-
-	login_options.Credentials = &credentials;
-	login_options.ScopeFlags = EOS_EAuthScopeFlags::EOS_AS_BasicProfile; // | EOS_EAuthScopeFlags::EOS_AS_FriendsList;
-
-	EOS_Auth_Login(auth_handle, &login_options, nullptr, auth_login_callback);
-	WARN_PRINT("Device ID login initiated with credential: " + credential_name);
+	WARN_PRINT("Device ID login initiated with display name: " + display_name);
 }
 
 void GodotEpic::logout() {
-	if (!platform_instance || !platform_instance->get_platform_handle() || !is_logged_in) {
-		ERR_PRINT("Not logged in or platform not initialized");
+	auto auth = SubsystemManager::GetInstance()->GetSubsystem<IAuthenticationSubsystem>();
+	if (!auth) {
+		ERR_PRINT("AuthenticationSubsystem not available");
+		emit_signal("logout_completed", false);
 		return;
 	}
 
-	EOS_HAuth auth_handle = EOS_Platform_GetAuthInterface(platform_instance->get_platform_handle());
-	if (!auth_handle) {
-		ERR_PRINT("Failed to get Auth interface");
-		return;
+	if (!auth->Logout()) {
+		ERR_PRINT("AuthenticationSubsystem logout failed");
+		emit_signal("logout_completed", false);
 	}
-
-	EOS_Auth_LogoutOptions logout_options = {};
-	logout_options.ApiVersion = EOS_AUTH_LOGOUT_API_LATEST;
-	logout_options.LocalUserId = epic_account_id;
-
-	EOS_Auth_Logout(auth_handle, &logout_options, nullptr, auth_logout_callback);
-	ERR_PRINT("Logout initiated");
 }
 
 bool GodotEpic::is_user_logged_in() const {
-	return is_logged_in;
+	auto auth = SubsystemManager::GetInstance()->GetSubsystem<IAuthenticationSubsystem>();
+	return auth ? auth->IsLoggedIn() : false;
 }
 
 String GodotEpic::get_current_username() const {
-	return current_username;
+	auto auth = SubsystemManager::GetInstance()->GetSubsystem<IAuthenticationSubsystem>();
+	return auth ? auth->GetDisplayName() : "";
 }
 
 String GodotEpic::get_epic_account_id() const {
-	if (!epic_account_id) {
-		return "";
-	}
-
-	static char account_id_str[EOS_EPICACCOUNTID_MAX_LENGTH + 1];
-	int32_t buffer_size = sizeof(account_id_str);
-
-	EOS_EResult result = EOS_EpicAccountId_ToString(epic_account_id, account_id_str, &buffer_size);
-	if (result == EOS_EResult::EOS_Success) {
-		return String::utf8(account_id_str);
-	}
-
-	return "";
+	auto auth = SubsystemManager::GetInstance()->GetSubsystem<IAuthenticationSubsystem>();
+	return auth ? auth->GetEpicAccountId() : "";
 }
 
 String GodotEpic::get_product_user_id() const {
-	if (!product_user_id) {
-		return "";
-	}
-
-	static char user_id_str[EOS_PRODUCTUSERID_MAX_LENGTH + 1];
-	int32_t buffer_size = sizeof(user_id_str);
-
-	EOS_EResult result = EOS_ProductUserId_ToString(product_user_id, user_id_str, &buffer_size);
-	if (result == EOS_EResult::EOS_Success) {
-		return String::utf8(user_id_str);
-	}
-
-	return "";
+	auto auth = SubsystemManager::GetInstance()->GetSubsystem<IAuthenticationSubsystem>();
+	return auth ? auth->GetProductUserId() : "";
 }
 
 // Friends methods
@@ -424,44 +382,35 @@ Dictionary GodotEpic::get_friend_info(const String& friend_id) {
 
 // Achievements methods
 void GodotEpic::query_achievement_definitions() {
-	if (!platform_instance || !platform_instance->get_platform_handle() || !product_user_id) {
-		ERR_PRINT("Platform not initialized or user not logged in");
+	auto achievements = SubsystemManager::GetInstance()->GetSubsystem<IAchievementsSubsystem>();
+	if (!achievements) {
+		ERR_PRINT("AchievementsSubsystem not available");
+		Array empty_definitions;
+		emit_signal("achievement_definitions_updated", empty_definitions);
 		return;
 	}
 
-	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_instance->get_platform_handle());
-	if (!achievements_handle) {
-		ERR_PRINT("Failed to get Achievements interface");
-		return;
+	if (!achievements->QueryAchievementDefinitions()) {
+		ERR_PRINT("AchievementsSubsystem query definitions failed");
+		Array empty_definitions;
+		emit_signal("achievement_definitions_updated", empty_definitions);
 	}
-
-	EOS_Achievements_QueryDefinitionsOptions query_options = {};
-	query_options.ApiVersion = EOS_ACHIEVEMENTS_QUERYDEFINITIONS_API_LATEST;
-	query_options.LocalUserId = product_user_id;
-
-	EOS_Achievements_QueryDefinitions(achievements_handle, &query_options, nullptr, achievements_query_definitions_callback);
-	WARN_PRINT("Achievement definitions query initiated");
 }
 
 void GodotEpic::query_player_achievements() {
-	if (!platform_instance || !platform_instance->get_platform_handle() || !product_user_id) {
-		ERR_PRINT("Platform not initialized or user not logged in");
+	auto achievements = SubsystemManager::GetInstance()->GetSubsystem<IAchievementsSubsystem>();
+	if (!achievements) {
+		ERR_PRINT("AchievementsSubsystem not available");
+		Array empty_achievements;
+		emit_signal("player_achievements_updated", empty_achievements);
 		return;
 	}
 
-	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_instance->get_platform_handle());
-	if (!achievements_handle) {
-		ERR_PRINT("Failed to get Achievements interface");
-		return;
+	if (!achievements->QueryPlayerAchievements()) {
+		ERR_PRINT("AchievementsSubsystem query player achievements failed");
+		Array empty_achievements;
+		emit_signal("player_achievements_updated", empty_achievements);
 	}
-
-	EOS_Achievements_QueryPlayerAchievementsOptions query_options = {};
-	query_options.ApiVersion = EOS_ACHIEVEMENTS_QUERYPLAYERACHIEVEMENTS_API_LATEST;
-	query_options.TargetUserId = product_user_id;
-	query_options.LocalUserId = product_user_id;
-
-	EOS_Achievements_QueryPlayerAchievements(achievements_handle, &query_options, nullptr, achievements_query_player_callback);
-	WARN_PRINT("Player achievements query initiated");
 }
 
 void GodotEpic::unlock_achievement(const String& achievement_id) {
@@ -471,265 +420,39 @@ void GodotEpic::unlock_achievement(const String& achievement_id) {
 }
 
 void GodotEpic::unlock_achievements(const Array& achievement_ids) {
-	if (!platform_instance || !platform_instance->get_platform_handle() || !product_user_id) {
-		ERR_PRINT("Platform not initialized or user not logged in");
+	auto achievements = SubsystemManager::GetInstance()->GetSubsystem<IAchievementsSubsystem>();
+	if (!achievements) {
+		ERR_PRINT("AchievementsSubsystem not available");
+		Array empty_unlocked;
+		emit_signal("achievements_unlocked", empty_unlocked);
 		return;
 	}
 
-	if (achievement_ids.size() == 0) {
-		ERR_PRINT("No achievement IDs provided");
-		return;
+	if (!achievements->UnlockAchievements(achievement_ids)) {
+		ERR_PRINT("AchievementsSubsystem unlock achievements failed");
+		Array empty_unlocked;
+		emit_signal("achievements_unlocked", empty_unlocked);
 	}
-
-	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_instance->get_platform_handle());
-	if (!achievements_handle) {
-		ERR_PRINT("Failed to get Achievements interface");
-		return;
-	}
-
-	// Convert Godot Array to C array
-	std::vector<const char*> achievement_id_ptrs;
-	std::vector<String> achievement_id_strings;
-
-	for (int i = 0; i < achievement_ids.size(); i++) {
-		String achievement_id = achievement_ids[i];
-		achievement_id_strings.push_back(achievement_id);
-		achievement_id_ptrs.push_back(achievement_id_strings[i].utf8().get_data());
-	}
-
-	EOS_Achievements_UnlockAchievementsOptions unlock_options = {};
-	unlock_options.ApiVersion = EOS_ACHIEVEMENTS_UNLOCKACHIEVEMENTS_API_LATEST;
-	unlock_options.UserId = product_user_id;
-	unlock_options.AchievementIds = achievement_id_ptrs.data();
-	unlock_options.AchievementsCount = achievement_ids.size();
-
-	EOS_Achievements_UnlockAchievements(achievements_handle, &unlock_options, nullptr, achievements_unlock_callback);
-	WARN_PRINT("Achievement unlock initiated for " + String::num_int64(achievement_ids.size()) + " achievements");
 }
 
 Array GodotEpic::get_achievement_definitions() {
-	Array definitions_array;
-
-	if (!platform_instance || !platform_instance->get_platform_handle()) {
-		ERR_PRINT("Platform not initialized");
-		return definitions_array;
-	}
-
-	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_instance->get_platform_handle());
-	if (!achievements_handle) {
-		ERR_PRINT("Failed to get Achievements interface");
-		return definitions_array;
-	}
-
-	EOS_Achievements_GetAchievementDefinitionCountOptions count_options = {};
-	count_options.ApiVersion = EOS_ACHIEVEMENTS_GETACHIEVEMENTDEFINITIONCOUNT_API_LATEST;
-
-	uint32_t definitions_count = EOS_Achievements_GetAchievementDefinitionCount(achievements_handle, &count_options);
-
-	for (uint32_t i = 0; i < definitions_count; i++) {
-		EOS_Achievements_CopyAchievementDefinitionV2ByIndexOptions copy_options = {};
-		copy_options.ApiVersion = EOS_ACHIEVEMENTS_COPYACHIEVEMENTDEFINITIONV2BYINDEX_API_LATEST;
-		copy_options.AchievementIndex = i;
-
-		EOS_Achievements_DefinitionV2* definition = nullptr;
-		EOS_EResult result = EOS_Achievements_CopyAchievementDefinitionV2ByIndex(achievements_handle, &copy_options, &definition);
-
-		if (result == EOS_EResult::EOS_Success && definition) {
-			Dictionary definition_dict;
-			definition_dict["achievement_id"] = String(definition->AchievementId ? definition->AchievementId : "");
-			definition_dict["unlocked_display_name"] = String(definition->UnlockedDisplayName ? definition->UnlockedDisplayName : "");
-			definition_dict["unlocked_description"] = String(definition->UnlockedDescription ? definition->UnlockedDescription : "");
-			definition_dict["locked_display_name"] = String(definition->LockedDisplayName ? definition->LockedDisplayName : "");
-			definition_dict["locked_description"] = String(definition->LockedDescription ? definition->LockedDescription : "");
-			definition_dict["flavor_text"] = String(definition->FlavorText ? definition->FlavorText : "");
-			definition_dict["unlocked_icon_url"] = String(definition->UnlockedIconURL ? definition->UnlockedIconURL : "");
-			definition_dict["locked_icon_url"] = String(definition->LockedIconURL ? definition->LockedIconURL : "");
-			definition_dict["is_hidden"] = definition->bIsHidden == EOS_TRUE;
-
-			// Add stat thresholds
-			Array stat_thresholds;
-			for (uint32_t j = 0; j < definition->StatThresholdsCount; j++) {
-				Dictionary threshold_dict;
-				threshold_dict["name"] = String(definition->StatThresholds[j].Name ? definition->StatThresholds[j].Name : "");
-				threshold_dict["threshold"] = definition->StatThresholds[j].Threshold;
-				stat_thresholds.push_back(threshold_dict);
-			}
-			definition_dict["stat_thresholds"] = stat_thresholds;
-
-			definitions_array.push_back(definition_dict);
-
-			// Release the definition
-			EOS_Achievements_DefinitionV2_Release(definition);
-		}
-	}
-
-	return definitions_array;
+	auto achievements = SubsystemManager::GetInstance()->GetSubsystem<IAchievementsSubsystem>();
+	return achievements ? achievements->GetAchievementDefinitions() : Array();
 }
 
 Array GodotEpic::get_player_achievements() {
-	Array achievements_array;
-
-	if (!platform_instance || !platform_instance->get_platform_handle() || !product_user_id) {
-		ERR_PRINT("Platform not initialized or user not logged in");
-		return achievements_array;
-	}
-
-	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_instance->get_platform_handle());
-	if (!achievements_handle) {
-		ERR_PRINT("Failed to get Achievements interface");
-		return achievements_array;
-	}
-
-	EOS_Achievements_GetPlayerAchievementCountOptions count_options = {};
-	count_options.ApiVersion = EOS_ACHIEVEMENTS_GETPLAYERACHIEVEMENTCOUNT_API_LATEST;
-	count_options.UserId = product_user_id;
-
-	uint32_t achievements_count = EOS_Achievements_GetPlayerAchievementCount(achievements_handle, &count_options);
-
-	for (uint32_t i = 0; i < achievements_count; i++) {
-		EOS_Achievements_CopyPlayerAchievementByIndexOptions copy_options = {};
-		copy_options.ApiVersion = EOS_ACHIEVEMENTS_COPYPLAYERACHIEVEMENTBYINDEX_API_LATEST;
-		copy_options.TargetUserId = product_user_id;
-		copy_options.AchievementIndex = i;
-		copy_options.LocalUserId = product_user_id;
-
-		EOS_Achievements_PlayerAchievement* achievement = nullptr;
-		EOS_EResult result = EOS_Achievements_CopyPlayerAchievementByIndex(achievements_handle, &copy_options, &achievement);
-
-		if (result == EOS_EResult::EOS_Success && achievement) {
-			Dictionary achievement_dict;
-			achievement_dict["achievement_id"] = String(achievement->AchievementId ? achievement->AchievementId : "");
-			achievement_dict["progress"] = achievement->Progress;
-			achievement_dict["unlock_time"] = achievement->UnlockTime;
-			achievement_dict["is_unlocked"] = achievement->UnlockTime != EOS_ACHIEVEMENTS_ACHIEVEMENT_UNLOCKTIME_UNDEFINED;
-			achievement_dict["display_name"] = String(achievement->DisplayName ? achievement->DisplayName : "");
-			achievement_dict["description"] = String(achievement->Description ? achievement->Description : "");
-			achievement_dict["icon_url"] = String(achievement->IconURL ? achievement->IconURL : "");
-			achievement_dict["flavor_text"] = String(achievement->FlavorText ? achievement->FlavorText : "");
-
-			// Add stat info
-			Array stat_info;
-			for (int32_t j = 0; j < achievement->StatInfoCount; j++) {
-				Dictionary stat_dict;
-				stat_dict["name"] = String(achievement->StatInfo[j].Name ? achievement->StatInfo[j].Name : "");
-				stat_dict["current_value"] = achievement->StatInfo[j].CurrentValue;
-				stat_dict["threshold_value"] = achievement->StatInfo[j].ThresholdValue;
-				stat_info.push_back(stat_dict);
-			}
-			achievement_dict["stat_info"] = stat_info;
-
-			achievements_array.push_back(achievement_dict);
-
-			// Release the achievement
-			EOS_Achievements_PlayerAchievement_Release(achievement);
-		}
-	}
-
-	return achievements_array;
+	auto achievements = SubsystemManager::GetInstance()->GetSubsystem<IAchievementsSubsystem>();
+	return achievements ? achievements->GetPlayerAchievements() : Array();
 }
 
 Dictionary GodotEpic::get_achievement_definition(const String& achievement_id) {
-	Dictionary definition_dict;
-
-	if (!platform_instance || !platform_instance->get_platform_handle()) {
-		ERR_PRINT("Platform not initialized");
-		return definition_dict;
-	}
-
-	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_instance->get_platform_handle());
-	if (!achievements_handle) {
-		ERR_PRINT("Failed to get Achievements interface");
-		return definition_dict;
-	}
-
-	EOS_Achievements_CopyAchievementDefinitionV2ByAchievementIdOptions copy_options = {};
-	copy_options.ApiVersion = EOS_ACHIEVEMENTS_COPYACHIEVEMENTDEFINITIONV2BYACHIEVEMENTID_API_LATEST;
-	copy_options.AchievementId = achievement_id.utf8().get_data();
-
-	EOS_Achievements_DefinitionV2* definition = nullptr;
-	EOS_EResult result = EOS_Achievements_CopyAchievementDefinitionV2ByAchievementId(achievements_handle, &copy_options, &definition);
-
-	if (result == EOS_EResult::EOS_Success && definition) {
-		definition_dict["achievement_id"] = String(definition->AchievementId ? definition->AchievementId : "");
-		definition_dict["unlocked_display_name"] = String(definition->UnlockedDisplayName ? definition->UnlockedDisplayName : "");
-		definition_dict["unlocked_description"] = String(definition->UnlockedDescription ? definition->UnlockedDescription : "");
-		definition_dict["locked_display_name"] = String(definition->LockedDisplayName ? definition->LockedDisplayName : "");
-		definition_dict["locked_description"] = String(definition->LockedDescription ? definition->LockedDescription : "");
-		definition_dict["flavor_text"] = String(definition->FlavorText ? definition->FlavorText : "");
-		definition_dict["unlocked_icon_url"] = String(definition->UnlockedIconURL ? definition->UnlockedIconURL : "");
-		definition_dict["locked_icon_url"] = String(definition->LockedIconURL ? definition->LockedIconURL : "");
-		definition_dict["is_hidden"] = definition->bIsHidden == EOS_TRUE;
-
-		// Add stat thresholds
-		Array stat_thresholds;
-		for (uint32_t j = 0; j < definition->StatThresholdsCount; j++) {
-			Dictionary threshold_dict;
-			threshold_dict["name"] = String(definition->StatThresholds[j].Name ? definition->StatThresholds[j].Name : "");
-			threshold_dict["threshold"] = definition->StatThresholds[j].Threshold;
-			stat_thresholds.push_back(threshold_dict);
-		}
-		definition_dict["stat_thresholds"] = stat_thresholds;
-
-		// Release the definition
-		EOS_Achievements_DefinitionV2_Release(definition);
-	} else {
-		ERR_PRINT("Failed to get achievement definition for ID: " + achievement_id);
-	}
-
-	return definition_dict;
+	auto achievements = SubsystemManager::GetInstance()->GetSubsystem<IAchievementsSubsystem>();
+	return achievements ? achievements->GetAchievementDefinition(achievement_id) : Dictionary();
 }
 
 Dictionary GodotEpic::get_player_achievement(const String& achievement_id) {
-	Dictionary achievement_dict;
-
-	if (!platform_instance || !platform_instance->get_platform_handle() || !product_user_id) {
-		ERR_PRINT("Platform not initialized or user not logged in");
-		return achievement_dict;
-	}
-
-	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_instance->get_platform_handle());
-	if (!achievements_handle) {
-		ERR_PRINT("Failed to get Achievements interface");
-		return achievement_dict;
-	}
-
-	EOS_Achievements_CopyPlayerAchievementByAchievementIdOptions copy_options = {};
-	copy_options.ApiVersion = EOS_ACHIEVEMENTS_COPYPLAYERACHIEVEMENTBYACHIEVEMENTID_API_LATEST;
-	copy_options.TargetUserId = product_user_id;
-	copy_options.AchievementId = achievement_id.utf8().get_data();
-	copy_options.LocalUserId = product_user_id;
-
-	EOS_Achievements_PlayerAchievement* achievement = nullptr;
-	EOS_EResult result = EOS_Achievements_CopyPlayerAchievementByAchievementId(achievements_handle, &copy_options, &achievement);
-
-	if (result == EOS_EResult::EOS_Success && achievement) {
-		achievement_dict["achievement_id"] = String(achievement->AchievementId ? achievement->AchievementId : "");
-		achievement_dict["progress"] = achievement->Progress;
-		achievement_dict["unlock_time"] = achievement->UnlockTime;
-		achievement_dict["is_unlocked"] = achievement->UnlockTime != EOS_ACHIEVEMENTS_ACHIEVEMENT_UNLOCKTIME_UNDEFINED;
-		achievement_dict["display_name"] = String(achievement->DisplayName ? achievement->DisplayName : "");
-		achievement_dict["description"] = String(achievement->Description ? achievement->Description : "");
-		achievement_dict["icon_url"] = String(achievement->IconURL ? achievement->IconURL : "");
-		achievement_dict["flavor_text"] = String(achievement->FlavorText ? achievement->FlavorText : "");
-
-		// Add stat info
-		Array stat_info;
-		for (int32_t j = 0; j < achievement->StatInfoCount; j++) {
-			Dictionary stat_dict;
-			stat_dict["name"] = String(achievement->StatInfo[j].Name ? achievement->StatInfo[j].Name : "");
-			stat_dict["current_value"] = achievement->StatInfo[j].CurrentValue;
-			stat_dict["threshold_value"] = achievement->StatInfo[j].ThresholdValue;
-			stat_info.push_back(stat_dict);
-		}
-		achievement_dict["stat_info"] = stat_info;
-
-		// Release the achievement
-		EOS_Achievements_PlayerAchievement_Release(achievement);
-	} else {
-		ERR_PRINT("Failed to get player achievement for ID: " + achievement_id);
-	}
-
-	return achievement_dict;
+	auto achievements = SubsystemManager::GetInstance()->GetSubsystem<IAchievementsSubsystem>();
+	return achievements ? achievements->GetPlayerAchievement(achievement_id) : Dictionary();
 }
 
 // Static logging callback
@@ -1082,6 +805,102 @@ void EOS_CALL GodotEpic::achievements_unlocked_notification(const EOS_Achievemen
 	instance->query_player_achievements();
 }
 
+// Leaderboards methods
+void GodotEpic::query_leaderboard_definitions() {
+	auto leaderboards = SubsystemManager::GetInstance()->GetSubsystem<ILeaderboardsSubsystem>();
+	if (!leaderboards) {
+		ERR_PRINT("LeaderboardsSubsystem not available");
+		Array empty_definitions;
+		emit_signal("leaderboard_definitions_updated", empty_definitions);
+		return;
+	}
+
+	if (!leaderboards->QueryLeaderboardDefinitions()) {
+		ERR_PRINT("LeaderboardsSubsystem query definitions failed");
+		Array empty_definitions;
+		emit_signal("leaderboard_definitions_updated", empty_definitions);
+	}
+}
+
+void GodotEpic::query_leaderboard_ranks(const String& leaderboard_id, int limit) {
+	auto leaderboards = SubsystemManager::GetInstance()->GetSubsystem<ILeaderboardsSubsystem>();
+	if (!leaderboards) {
+		ERR_PRINT("LeaderboardsSubsystem not available");
+		Array empty_ranks;
+		emit_signal("leaderboard_ranks_updated", empty_ranks);
+		return;
+	}
+
+	if (!leaderboards->QueryLeaderboardRanks(leaderboard_id, limit)) {
+		ERR_PRINT("LeaderboardsSubsystem query ranks failed");
+		Array empty_ranks;
+		emit_signal("leaderboard_ranks_updated", empty_ranks);
+	}
+}
+
+void GodotEpic::query_leaderboard_user_scores(const String& leaderboard_id, const Array& user_ids) {
+	auto leaderboards = SubsystemManager::GetInstance()->GetSubsystem<ILeaderboardsSubsystem>();
+	if (!leaderboards) {
+		ERR_PRINT("LeaderboardsSubsystem not available");
+		Dictionary empty_scores;
+		emit_signal("leaderboard_user_scores_updated", empty_scores);
+		return;
+	}
+
+	if (!leaderboards->QueryLeaderboardUserScores(leaderboard_id, user_ids)) {
+		ERR_PRINT("LeaderboardsSubsystem query user scores failed");
+		Dictionary empty_scores;
+		emit_signal("leaderboard_user_scores_updated", empty_scores);
+	}
+}
+
+void GodotEpic::ingest_stat(const String& stat_name, int value) {
+	auto leaderboards = SubsystemManager::GetInstance()->GetSubsystem<ILeaderboardsSubsystem>();
+	if (!leaderboards) {
+		ERR_PRINT("LeaderboardsSubsystem not available");
+		Array empty_stats;
+		emit_signal("stats_ingested", empty_stats);
+		return;
+	}
+
+	if (!leaderboards->IngestStat(stat_name, value)) {
+		ERR_PRINT("LeaderboardsSubsystem ingest stat failed");
+		Array empty_stats;
+		emit_signal("stats_ingested", empty_stats);
+	}
+}
+
+void GodotEpic::ingest_stats(const Dictionary& stats) {
+	auto leaderboards = SubsystemManager::GetInstance()->GetSubsystem<ILeaderboardsSubsystem>();
+	if (!leaderboards) {
+		ERR_PRINT("LeaderboardsSubsystem not available");
+		Array empty_stats;
+		emit_signal("stats_ingested", empty_stats);
+		return;
+	}
+
+	if (!leaderboards->IngestStats(stats)) {
+		ERR_PRINT("LeaderboardsSubsystem ingest stats failed");
+		Array empty_stats;
+		emit_signal("stats_ingested", empty_stats);
+	}
+}
+
+Array GodotEpic::get_leaderboard_definitions() {
+	auto leaderboards = SubsystemManager::GetInstance()->GetSubsystem<ILeaderboardsSubsystem>();
+	return leaderboards ? leaderboards->GetLeaderboardDefinitions() : Array();
+}
+
+Array GodotEpic::get_leaderboard_ranks() {
+	auto leaderboards = SubsystemManager::GetInstance()->GetSubsystem<ILeaderboardsSubsystem>();
+	return leaderboards ? leaderboards->GetLeaderboardRanks() : Array();
+}
+
+Dictionary GodotEpic::get_leaderboard_user_scores() {
+	auto leaderboards = SubsystemManager::GetInstance()->GetSubsystem<ILeaderboardsSubsystem>();
+	return leaderboards ? leaderboards->GetLeaderboardUserScores() : Dictionary();
+}
+
 // Helper methods
 EpicInitOptions GodotEpic::_dict_to_init_options(const Dictionary& options_dict) {
 	EpicInitOptions options;
@@ -1186,19 +1005,80 @@ bool GodotEpic::_validate_init_options(const EpicInitOptions& options) {
 	return valid;
 }
 
-void GodotEpic::test_iplatform_get_access() {
-	WARN_PRINT("Testing IPlatform::get() access pattern...");
+void GodotEpic::test_subsystem_manager() {
+	WARN_PRINT("Testing SubsystemManager functionality...");
 
-	// Test the new IPlatform::get() static method
-	IPlatform* platform = IPlatform::get();
-	if (platform) {
-		EOS_HPlatform handle = platform->get_platform_handle();
-		if (handle) {
-			WARN_PRINT("✅ IPlatform::get()->get_platform_handle() works! Platform handle retrieved successfully.");
+	// Test 1: Get singleton instance
+	SubsystemManager* manager = SubsystemManager::GetInstance();
+	if (manager) {
+		WARN_PRINT("✅ SubsystemManager singleton created successfully");
+	} else {
+		ERR_PRINT("❌ Failed to get SubsystemManager singleton");
+		return;
+	}
+
+	// Test 2: Check current state (should be initialized with subsystems)
+	if (manager->IsInitialized()) {
+		WARN_PRINT("✅ SubsystemManager is initialized (as expected after platform init)");
+	} else {
+		WARN_PRINT("ℹ️  SubsystemManager not initialized (platform may not be initialized yet)");
+	}
+
+	int subsystem_count = manager->GetSubsystemCount();
+	if (subsystem_count > 0) {
+		WARN_PRINT("✅ SubsystemManager has " + String::num_int64(subsystem_count) + " subsystems registered");
+	} else {
+		WARN_PRINT("ℹ️  SubsystemManager has no subsystems (platform may not be initialized yet)");
+	}
+
+	// Test 3: Test subsystem access
+	auto platform_subsystem = manager->GetSubsystem<IPlatformSubsystem>();
+	if (platform_subsystem) {
+		WARN_PRINT("✅ PlatformSubsystem accessible via GetSubsystem<IPlatformSubsystem>()");
+		if (platform_subsystem->IsOnline()) {
+			WARN_PRINT("✅ PlatformSubsystem reports online status");
 		} else {
-			ERR_PRINT("❌ IPlatform::get() returned platform but get_platform_handle() returned null");
+			WARN_PRINT("ℹ️  PlatformSubsystem reports offline (may be expected)");
 		}
 	} else {
-		ERR_PRINT("❌ IPlatform::get() returned null - platform not initialized or registered");
+		ERR_PRINT("❌ PlatformSubsystem not accessible");
 	}
+
+	auto auth_subsystem = manager->GetSubsystem<IAuthenticationSubsystem>();
+	if (auth_subsystem) {
+		WARN_PRINT("✅ AuthenticationSubsystem accessible via GetSubsystem<IAuthenticationSubsystem>()");
+	} else {
+		WARN_PRINT("ℹ️  AuthenticationSubsystem not accessible (may not be initialized yet)");
+	}
+
+	auto achievements_subsystem = manager->GetSubsystem<IAchievementsSubsystem>();
+	if (achievements_subsystem) {
+		WARN_PRINT("✅ AchievementsSubsystem accessible via GetSubsystem<IAchievementsSubsystem>()");
+	} else {
+		WARN_PRINT("ℹ️  AchievementsSubsystem not accessible (may not be initialized yet)");
+	}
+
+	auto leaderboards_subsystem = manager->GetSubsystem<ILeaderboardsSubsystem>();
+	if (leaderboards_subsystem) {
+		WARN_PRINT("✅ LeaderboardsSubsystem accessible via GetSubsystem<ILeaderboardsSubsystem>()");
+	} else {
+		WARN_PRINT("ℹ️  LeaderboardsSubsystem not accessible (may not be initialized yet)");
+	}
+
+	// Test 4: Tick subsystems (should not crash)
+	manager->TickAll(0.016f); // 60 FPS delta
+	WARN_PRINT("✅ TickAll() completed without crash");
+
+	// Test 5: Test idempotent operations
+	bool init_result = manager->InitializeAll();
+	if (init_result) {
+		WARN_PRINT("✅ InitializeAll() succeeds when called multiple times (idempotent)");
+	} else {
+		ERR_PRINT("❌ InitializeAll() failed on subsequent call");
+	}
+
+	// Note: We don't test ShutdownAll() here as it would shut down the actual subsystems
+	// that are needed for the application to function
+
+	WARN_PRINT("SubsystemManager integration test completed!");
 }

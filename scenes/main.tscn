@@ -93,6 +93,10 @@ layout_mode = 2
 text = "Load from Cloud"
 disabled = true
 
+[node name="TestButton" type="Button" parent="VBoxContainer/FeaturesSection/FeaturesGrid"]
+layout_mode = 2
+text = "Test SubsystemManager"
+
 [node name="HSeparator4" type="HSeparator" parent="VBoxContainer"]
 layout_mode = 2
 

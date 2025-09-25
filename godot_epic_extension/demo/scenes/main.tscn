@@ -146,6 +146,10 @@ text = "Clear Output"
 layout_mode = 2
 text = "Test IPlatform::get()"
 
+[node name="TestSubsystemButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+layout_mode = 2
+text = "Test Subsystem Manager"
+
 [node name="VSeparator" type="VSeparator" parent="CanvasLayer/UI/MainContainer"]
 layout_mode = 2
 

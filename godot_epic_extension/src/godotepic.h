@@ -101,12 +101,22 @@ public:
 	Dictionary get_achievement_definition(const String& achievement_id);
 	Dictionary get_player_achievement(const String& achievement_id);
 
+	// Leaderboards methods
+	void query_leaderboard_definitions();
+	void query_leaderboard_ranks(const String& leaderboard_id, int limit = 100);
+	void query_leaderboard_user_scores(const String& leaderboard_id, const Array& user_ids);
+	void ingest_stat(const String& stat_name, int value);
+	void ingest_stats(const Dictionary& stats);
+	Array get_leaderboard_definitions();
+	Array get_leaderboard_ranks();
+	Dictionary get_leaderboard_user_scores();
+
 	// Status methods
 	bool is_platform_initialized() const;
 	EOS_HPlatform get_platform_handle() const;
 
-	// Test method for IPlatform::get() functionality
-	void test_iplatform_get_access();
+	// Test method for SubsystemManager functionality
+	void test_subsystem_manager();
 };
 
 }

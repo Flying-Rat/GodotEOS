@@ -251,6 +251,13 @@ func load_file(filename: String):
 	print("EpicOS: Cloud load not yet implemented - add EOS Player Data Storage interface")
 	print("EpicOS: File: ", filename)
 
+func test_subsystem_manager():
+	"""Test the SubsystemManager functionality"""
+	if _godot_epic:
+		_godot_epic.test_subsystem_manager()
+	else:
+		print("EpicOS: ERROR - GodotEpic not available for testing")
+
 # =============================================================================
 # PROCESS HANDLING - Integrates with GDExtension ticking
 # =============================================================================
