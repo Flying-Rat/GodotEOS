@@ -51,7 +51,6 @@ func _ready():
 	get_specific_def_button.pressed.connect(_on_get_specific_def_pressed)
 	get_specific_player_button.pressed.connect(_on_get_specific_player_pressed)
 	clear_output_button.pressed.connect(_on_clear_output_pressed)
-	test_iplatform_button.pressed.connect(_on_test_iplatform_pressed)
 	test_subsystem_button.pressed.connect(_on_test_subsystem_pressed)
 
 	# Example initialization options for Epic Online Services
