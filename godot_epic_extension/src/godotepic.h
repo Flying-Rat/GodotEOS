@@ -104,6 +104,9 @@ public:
 	// Status methods
 	bool is_platform_initialized() const;
 	EOS_HPlatform get_platform_handle() const;
+
+	// Test method for IPlatform::get() functionality
+	void test_iplatform_get_access();
 };
 
 }

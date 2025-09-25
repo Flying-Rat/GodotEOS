@@ -39,6 +39,9 @@ void GodotEpic::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_achievement_definition", "achievement_id"), &GodotEpic::get_achievement_definition);
 	ClassDB::bind_method(D_METHOD("get_player_achievement", "achievement_id"), &GodotEpic::get_player_achievement);
 
+	// Test method for IPlatform::get() functionality
+	ClassDB::bind_method(D_METHOD("test_iplatform_get_access"), &GodotEpic::test_iplatform_get_access);
+
 	// Signals
 	ADD_SIGNAL(MethodInfo("login_completed", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::DICTIONARY, "user_info")));
 	ADD_SIGNAL(MethodInfo("logout_completed", PropertyInfo(Variant::BOOL, "success")));
@@ -162,8 +165,10 @@ void GodotEpic::shutdown_platform() {
 }
 
 void GodotEpic::tick() {
-	if (platform_instance && platform_instance->get_platform_handle()) {
-		EOS_Platform_Tick(platform_instance->get_platform_handle());
+	// Delegate ticking to the platform implementation. The platform is
+	// responsible for calling EOS_Platform_Tick when appropriate.
+	if (platform_instance) {
+		platform_instance->tick();
 	}
 }
 
@@ -433,9 +438,6 @@ void GodotEpic::query_achievement_definitions() {
 	EOS_Achievements_QueryDefinitionsOptions query_options = {};
 	query_options.ApiVersion = EOS_ACHIEVEMENTS_QUERYDEFINITIONS_API_LATEST;
 	query_options.LocalUserId = product_user_id;
-	query_options.EpicUserId_DEPRECATED = nullptr;
-	query_options.HiddenAchievementIds_DEPRECATED = nullptr;
-	query_options.HiddenAchievementsCount_DEPRECATED = 0;
 
 	EOS_Achievements_QueryDefinitions(achievements_handle, &query_options, nullptr, achievements_query_definitions_callback);
 	WARN_PRINT("Achievement definitions query initiated");
@@ -1182,4 +1184,21 @@ bool GodotEpic::_validate_init_options(const EpicInitOptions& options) {
 	}
 
 	return valid;
+}
+
+void GodotEpic::test_iplatform_get_access() {
+	WARN_PRINT("Testing IPlatform::get() access pattern...");
+
+	// Test the new IPlatform::get() static method
+	IPlatform* platform = IPlatform::get();
+	if (platform) {
+		EOS_HPlatform handle = platform->get_platform_handle();
+		if (handle) {
+			WARN_PRINT("✅ IPlatform::get()->get_platform_handle() works! Platform handle retrieved successfully.");
+		} else {
+			ERR_PRINT("❌ IPlatform::get() returned platform but get_platform_handle() returned null");
+		}
+	} else {
+		ERR_PRINT("❌ IPlatform::get() returned null - platform not initialized or registered");
+	}
 }

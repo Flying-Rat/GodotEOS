@@ -13,6 +13,8 @@ public:
 
     bool initialize(const EpicInitOptions& options) override;
     void shutdown() override;
+    // Process any EOS platform background work. Should be called regularly (eg. in the engine tick).
+    void tick() override;
     EOS_HPlatform get_platform_handle() const override;
     bool is_initialized() const override;
 

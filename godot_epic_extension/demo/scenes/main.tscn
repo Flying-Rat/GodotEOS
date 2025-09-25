@@ -142,6 +142,10 @@ layout_mode = 2
 layout_mode = 2
 text = "Clear Output"
 
+[node name="TestIPlatformButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+layout_mode = 2
+text = "Test IPlatform::get()"
+
 [node name="VSeparator" type="VSeparator" parent="CanvasLayer/UI/MainContainer"]
 layout_mode = 2
 

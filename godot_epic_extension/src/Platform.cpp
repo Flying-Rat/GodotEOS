@@ -1,4 +1,5 @@
 #include "Platform.h"
+#include "IPlatform.h"
 #include "../eos_sdk/Include/eos_sdk.h"
 #include "../eos_sdk/Include/eos_achievements.h"
 #include <godot_cpp/core/error_macros.hpp>
@@ -110,6 +111,7 @@ bool Platform::initialize(const EpicInitOptions& options) {
     }
 
     initialized = true;
+    IPlatform::set(this); // Automatically register as current instance
     WARN_PRINT("EOS Platform initialized successfully");
     return true;
 }
@@ -126,6 +128,7 @@ void Platform::shutdown() {
 
     EOS_Shutdown();
     initialized = false;
+    IPlatform::set(nullptr);  // Automatically unregister
     WARN_PRINT("EOS Platform shutdown complete");
 }
 
@@ -136,3 +139,12 @@ EOS_HPlatform Platform::get_platform_handle() const {
 bool Platform::is_initialized() const {
     return initialized;
 }
+
+void Platform::tick() {
+    if (platform_handle) {
+        EOS_Platform_Tick(platform_handle);
+    }
+}
+
+// Define the static instance and accessors declared in IPlatform.h
+// IPlatform static instance and accessors are defined in IPlatform.cpp

@@ -21,6 +21,7 @@ var godot_epic: GodotEpic = null
 @onready var get_specific_def_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup/GetSpecificDefButton
 @onready var get_specific_player_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup/GetSpecificPlayerButton
 @onready var clear_output_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/ClearOutputButton
+@onready var test_iplatform_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/TestIPlatformButton
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -50,6 +51,7 @@ func _ready():
 	get_specific_def_button.pressed.connect(_on_get_specific_def_pressed)
 	get_specific_player_button.pressed.connect(_on_get_specific_player_pressed)
 	clear_output_button.pressed.connect(_on_clear_output_pressed)
+	test_iplatform_button.pressed.connect(_on_test_iplatform_pressed)
 
 	# Example initialization options for Epic Online Services
 	var init_options = {
@@ -194,6 +196,10 @@ func _on_clear_output_pressed():
 	if output_text:
 		output_text.clear()
 		add_output_line("[i]Output cleared[/i]")
+
+func _on_test_iplatform_pressed():
+	add_output_line("[color=magenta]🧪 Testing IPlatform::get() access pattern...[/color]")
+	godot_epic.test_iplatform_get_access()
 
 func _input(event):
 	if event is InputEventKey and event.pressed:
