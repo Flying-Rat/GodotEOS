@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ISubsystem.h"
+#include "EpicInitOptions.h"
 #include <godot_cpp/variant/string.hpp>
 
 namespace godot {
@@ -15,26 +16,10 @@ class IPlatformSubsystem : public ISubsystem {
 public:
     /**
      * @brief Initialize the EOS platform with the given options.
-     * @param product_name Product name for EOS SDK.
-     * @param product_version Product version for EOS SDK.
-     * @param product_id Product ID from Epic Developer Portal.
-     * @param sandbox_id Sandbox ID from Epic Developer Portal.
-     * @param deployment_id Deployment ID from Epic Developer Portal.
-     * @param client_id Client ID from Epic Developer Portal.
-     * @param client_secret Client secret from Epic Developer Portal.
-     * @param encryption_key Encryption key for data protection.
+     * @param options EpicInitOptions struct containing all initialization parameters.
      * @return true if platform initialized successfully.
      */
-    virtual bool InitializePlatform(
-        const String& product_name,
-        const String& product_version,
-        const String& product_id,
-        const String& sandbox_id,
-        const String& deployment_id,
-        const String& client_id,
-        const String& client_secret,
-        const String& encryption_key
-    ) = 0;
+    virtual bool InitializePlatform(const EpicInitOptions& options) = 0;
 
     /**
      * @brief Get the EOS platform handle.

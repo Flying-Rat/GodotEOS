@@ -14,8 +14,7 @@
 #include <eos_friends.h>
 #include <eos_achievements.h>
 #include "EpicInitOptions.h"
-#include "IPlatform.h"
-#include <memory>
+#include "SubsystemManager.h"
 
 namespace godot {
 
@@ -24,9 +23,6 @@ class GodotEpic : public Object {
 
 private:
 	static GodotEpic* instance;
-
-	// Platform instance
-	std::unique_ptr<godot::IPlatform> platform_instance;
 
 	// Authentication state
 	EOS_EpicAccountId epic_account_id;
@@ -116,9 +112,9 @@ public:
 	EOS_HPlatform get_platform_handle() const;
 
 	// Test method for SubsystemManager functionality
-	void test_subsystem_manager();
+	Dictionary test_subsystem_manager();
 };
 
 }
 
-#endif
+#endif // GODOTEPIC_H

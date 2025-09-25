@@ -1,5 +1,4 @@
 #include "godotepic.h"
-#include "Platform.h"
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/error_macros.hpp>
 #include "SubsystemManager.h"
@@ -57,7 +56,6 @@ void GodotEpic::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_leaderboard_ranks"), &GodotEpic::get_leaderboard_ranks);
 	ClassDB::bind_method(D_METHOD("get_leaderboard_user_scores"), &GodotEpic::get_leaderboard_user_scores);
 
-	// Test method for SubsystemManager functionality
 	ClassDB::bind_method(D_METHOD("test_subsystem_manager"), &GodotEpic::test_subsystem_manager);
 
 	// Signals
@@ -78,9 +76,6 @@ GodotEpic::GodotEpic() {
 	// Initialize any variables here.
 	time_passed = 0.0;
 	instance = this;
-
-	// Initialize platform instance
-	platform_instance = nullptr;
 
 	// Initialize authentication state
 	epic_account_id = nullptr;
@@ -110,11 +105,6 @@ GodotEpic* GodotEpic::get_singleton() {
 }
 
 bool GodotEpic::initialize_platform(const Dictionary& options) {
-	if (platform_instance && platform_instance->is_initialized()) {
-		ERR_PRINT("EOS Platform already initialized");
-		return true;
-	}
-
 	// Convert dictionary to init options
 	EpicInitOptions init_options = _dict_to_init_options(options);
 
@@ -128,20 +118,11 @@ bool GodotEpic::initialize_platform(const Dictionary& options) {
 		return false;
 	}
 
-	// Create platform instance
-	platform_instance = std::make_unique<godot::Platform>();
-
 	// Setup logging
 	EOS_EResult LogResult = EOS_Logging_SetCallback(logging_callback);
 	if (LogResult == EOS_EResult::EOS_Success) {
 		EOS_Logging_SetLogLevel(EOS_ELogCategory::EOS_LC_ALL_CATEGORIES,
 							   EOS_ELogLevel::EOS_LOG_Verbose);
-	}
-
-	// Initialize platform
-	if (!platform_instance->initialize(init_options)) {
-		platform_instance.reset();
-		return false;
 	}
 
 	// Register subsystems with SubsystemManager
@@ -155,10 +136,21 @@ bool GodotEpic::initialize_platform(const Dictionary& options) {
 	manager->RegisterSubsystem<IAchievementsSubsystem, AchievementsSubsystem>("AchievementsSubsystem");
 	manager->RegisterSubsystem<ILeaderboardsSubsystem, LeaderboardsSubsystem>("LeaderboardsSubsystem");
 
+	// Initialize PlatformSubsystem with EpicInitOptions
+	auto platform_subsystem = manager->GetSubsystem<IPlatformSubsystem>();
+	if (!platform_subsystem) {
+		ERR_PRINT("Failed to get PlatformSubsystem");
+		return false;
+	}
+
+	if (!platform_subsystem->InitializePlatform(init_options)) {
+		ERR_PRINT("PlatformSubsystem initialization failed");
+		return false;
+	}
+
 	// Initialize all subsystems
 	if (!manager->InitializeAll()) {
 		ERR_PRINT("Failed to initialize subsystems");
-		platform_instance.reset();
 		return false;
 	}
 
@@ -166,36 +158,25 @@ bool GodotEpic::initialize_platform(const Dictionary& options) {
 }
 
 void GodotEpic::shutdown_platform() {
-	if (!platform_instance) {
-		return;
-	}
-
 	// Shutdown all subsystems
 	SubsystemManager* manager = SubsystemManager::GetInstance();
 	manager->ShutdownAll();
-
-	platform_instance->shutdown();
-	platform_instance.reset();
 }
 
 void GodotEpic::tick() {
-	// Delegate ticking to the platform implementation. The platform is
-	// responsible for calling EOS_Platform_Tick when appropriate.
-	if (platform_instance) {
-		platform_instance->tick();
-	}
-
 	// Tick all subsystems
 	SubsystemManager* manager = SubsystemManager::GetInstance();
 	manager->TickAll(time_passed);
 }
 
 bool GodotEpic::is_platform_initialized() const {
-	return platform_instance && platform_instance->is_initialized();
+	auto platform_subsystem = Get<IPlatformSubsystem>();
+	return platform_subsystem && platform_subsystem->GetPlatformHandle() != nullptr;
 }
 
 EOS_HPlatform GodotEpic::get_platform_handle() const {
-	return platform_instance ? platform_instance->get_platform_handle() : nullptr;
+	auto platform_subsystem = Get<IPlatformSubsystem>();
+	return platform_subsystem ? static_cast<EOS_HPlatform>(platform_subsystem->GetPlatformHandle()) : nullptr;
 }
 
 // Authentication methods
@@ -272,12 +253,13 @@ String GodotEpic::get_product_user_id() const {
 
 // Friends methods
 void GodotEpic::query_friends() {
-	if (!platform_instance || !platform_instance->get_platform_handle() || !epic_account_id) {
+	EOS_HPlatform platform_handle = get_platform_handle();
+	if (!platform_handle || !epic_account_id) {
 		ERR_PRINT("Platform not initialized or user not logged in");
 		return;
 	}
 
-	EOS_HFriends friends_handle = EOS_Platform_GetFriendsInterface(platform_instance->get_platform_handle());
+	EOS_HFriends friends_handle = EOS_Platform_GetFriendsInterface(platform_handle);
 	if (!friends_handle) {
 		ERR_PRINT("Failed to get Friends interface");
 		return;
@@ -294,12 +276,13 @@ void GodotEpic::query_friends() {
 Array GodotEpic::get_friends_list() {
 	Array friends_array;
 
-	if (!platform_instance || !platform_instance->get_platform_handle() || !epic_account_id) {
+	EOS_HPlatform platform_handle = get_platform_handle();
+	if (!platform_handle || !epic_account_id) {
 		ERR_PRINT("Platform not initialized or user not logged in");
 		return friends_array;
 	}
 
-	EOS_HFriends friends_handle = EOS_Platform_GetFriendsInterface(platform_instance->get_platform_handle());
+	EOS_HFriends friends_handle = EOS_Platform_GetFriendsInterface(platform_handle);
 	if (!friends_handle) {
 		ERR_PRINT("Failed to get Friends interface");
 		return friends_array;
@@ -365,7 +348,8 @@ Array GodotEpic::get_friends_list() {
 Dictionary GodotEpic::get_friend_info(const String& friend_id) {
 	Dictionary friend_info;
 
-	if (!platform_instance || !platform_instance->get_platform_handle() || !epic_account_id) {
+	EOS_HPlatform platform_handle = get_platform_handle();
+	if (!platform_handle || !epic_account_id) {
 		ERR_PRINT("Platform not initialized or user not logged in");
 		return friend_info;
 	}
@@ -501,7 +485,15 @@ void EOS_CALL GodotEpic::auth_login_callback(const EOS_Auth_LoginCallbackInfo* d
 		instance->is_logged_in = true;
 
 		// Get user info
-		EOS_HAuth auth_handle = EOS_Platform_GetAuthInterface(instance->platform_instance->get_platform_handle());
+		EOS_HPlatform platform_handle = instance->get_platform_handle();
+		if (!platform_handle) {
+			ERR_PRINT("Failed to get platform handle");
+			Dictionary empty_user_info;
+			instance->emit_signal("login_completed", false, empty_user_info);
+			return;
+		}
+
+		EOS_HAuth auth_handle = EOS_Platform_GetAuthInterface(platform_handle);
 		if (auth_handle) {
 			EOS_Auth_CopyUserAuthTokenOptions token_options = {};
 			token_options.ApiVersion = EOS_AUTH_COPYUSERAUTHTOKEN_API_LATEST;
@@ -522,7 +514,7 @@ void EOS_CALL GodotEpic::auth_login_callback(const EOS_Auth_LoginCallbackInfo* d
 		}
 
 		// Now login to Connect service for cross-platform features
-		EOS_HConnect connect_handle = EOS_Platform_GetConnectInterface(instance->platform_instance->get_platform_handle());
+		EOS_HConnect connect_handle = EOS_Platform_GetConnectInterface(platform_handle);
 		if (connect_handle) {
 			// Get Auth Token for Connect login (not Epic Account ID)
 			EOS_Auth_Token* auth_token = nullptr;
@@ -1005,80 +997,116 @@ bool GodotEpic::_validate_init_options(const EpicInitOptions& options) {
 	return valid;
 }
 
-void GodotEpic::test_subsystem_manager() {
+Dictionary GodotEpic::test_subsystem_manager() {
 	WARN_PRINT("Testing SubsystemManager functionality...");
+
+	Dictionary test_results;
+	Array test_messages;
+	bool all_tests_passed = true;
 
 	// Test 1: Get singleton instance
 	SubsystemManager* manager = SubsystemManager::GetInstance();
 	if (manager) {
-		WARN_PRINT("✅ SubsystemManager singleton created successfully");
+		test_messages.append("✅ SubsystemManager singleton created successfully");
+		test_results["singleton_created"] = true;
 	} else {
-		ERR_PRINT("❌ Failed to get SubsystemManager singleton");
-		return;
+		test_messages.append("❌ Failed to get SubsystemManager singleton");
+		test_results["singleton_created"] = false;
+		all_tests_passed = false;
+		test_results["all_tests_passed"] = all_tests_passed;
+		test_results["test_messages"] = test_messages;
+		return test_results;
 	}
 
 	// Test 2: Check current state (should be initialized with subsystems)
-	if (manager->IsInitialized()) {
-		WARN_PRINT("✅ SubsystemManager is initialized (as expected after platform init)");
+	bool is_initialized = manager->IsInitialized();
+	if (is_initialized) {
+		test_messages.append("✅ SubsystemManager is initialized (as expected after platform init)");
+		test_results["is_initialized"] = true;
 	} else {
-		WARN_PRINT("ℹ️  SubsystemManager not initialized (platform may not be initialized yet)");
+		test_messages.append("ℹ️  SubsystemManager not initialized (platform may not be initialized yet)");
+		test_results["is_initialized"] = false;
 	}
 
 	int subsystem_count = manager->GetSubsystemCount();
+	test_results["subsystem_count"] = subsystem_count;
 	if (subsystem_count > 0) {
-		WARN_PRINT("✅ SubsystemManager has " + String::num_int64(subsystem_count) + " subsystems registered");
+		test_messages.append("✅ SubsystemManager has " + String::num_int64(subsystem_count) + " subsystems registered");
+		test_results["has_subsystems"] = true;
 	} else {
-		WARN_PRINT("ℹ️  SubsystemManager has no subsystems (platform may not be initialized yet)");
+		test_messages.append("ℹ️  SubsystemManager has no subsystems (platform may not be initialized yet)");
+		test_results["has_subsystems"] = false;
 	}
 
 	// Test 3: Test subsystem access
 	auto platform_subsystem = manager->GetSubsystem<IPlatformSubsystem>();
 	if (platform_subsystem) {
-		WARN_PRINT("✅ PlatformSubsystem accessible via GetSubsystem<IPlatformSubsystem>()");
+		test_messages.append("✅ PlatformSubsystem accessible via GetSubsystem<IPlatformSubsystem>()");
+		test_results["platform_subsystem_accessible"] = true;
 		if (platform_subsystem->IsOnline()) {
-			WARN_PRINT("✅ PlatformSubsystem reports online status");
+			test_messages.append("✅ PlatformSubsystem reports online status");
+			test_results["platform_online"] = true;
 		} else {
-			WARN_PRINT("ℹ️  PlatformSubsystem reports offline (may be expected)");
+			test_messages.append("ℹ️  PlatformSubsystem reports offline (may be expected)");
+			test_results["platform_online"] = false;
 		}
 	} else {
-		ERR_PRINT("❌ PlatformSubsystem not accessible");
+		test_messages.append("❌ PlatformSubsystem not accessible");
+		test_results["platform_subsystem_accessible"] = false;
+		all_tests_passed = false;
 	}
 
 	auto auth_subsystem = manager->GetSubsystem<IAuthenticationSubsystem>();
 	if (auth_subsystem) {
-		WARN_PRINT("✅ AuthenticationSubsystem accessible via GetSubsystem<IAuthenticationSubsystem>()");
+		test_messages.append("✅ AuthenticationSubsystem accessible via GetSubsystem<IAuthenticationSubsystem>()");
+		test_results["auth_subsystem_accessible"] = true;
 	} else {
-		WARN_PRINT("ℹ️  AuthenticationSubsystem not accessible (may not be initialized yet)");
+		test_messages.append("ℹ️  AuthenticationSubsystem not accessible (may not be initialized yet)");
+		test_results["auth_subsystem_accessible"] = false;
 	}
 
 	auto achievements_subsystem = manager->GetSubsystem<IAchievementsSubsystem>();
 	if (achievements_subsystem) {
-		WARN_PRINT("✅ AchievementsSubsystem accessible via GetSubsystem<IAchievementsSubsystem>()");
+		test_messages.append("✅ AchievementsSubsystem accessible via GetSubsystem<IAchievementsSubsystem>()");
+		test_results["achievements_subsystem_accessible"] = true;
 	} else {
-		WARN_PRINT("ℹ️  AchievementsSubsystem not accessible (may not be initialized yet)");
+		test_messages.append("ℹ️  AchievementsSubsystem not accessible (may not be initialized yet)");
+		test_results["achievements_subsystem_accessible"] = false;
 	}
 
 	auto leaderboards_subsystem = manager->GetSubsystem<ILeaderboardsSubsystem>();
 	if (leaderboards_subsystem) {
-		WARN_PRINT("✅ LeaderboardsSubsystem accessible via GetSubsystem<ILeaderboardsSubsystem>()");
+		test_messages.append("✅ LeaderboardsSubsystem accessible via GetSubsystem<ILeaderboardsSubsystem>()");
+		test_results["leaderboards_subsystem_accessible"] = true;
 	} else {
-		WARN_PRINT("ℹ️  LeaderboardsSubsystem not accessible (may not be initialized yet)");
+		test_messages.append("ℹ️  LeaderboardsSubsystem not accessible (may not be initialized yet)");
+		test_results["leaderboards_subsystem_accessible"] = false;
 	}
 
 	// Test 4: Tick subsystems (should not crash)
 	manager->TickAll(0.016f); // 60 FPS delta
-	WARN_PRINT("✅ TickAll() completed without crash");
+	test_messages.append("✅ TickAll() completed without crash");
+	test_results["tick_completed"] = true;
 
 	// Test 5: Test idempotent operations
 	bool init_result = manager->InitializeAll();
 	if (init_result) {
-		WARN_PRINT("✅ InitializeAll() succeeds when called multiple times (idempotent)");
+		test_messages.append("✅ InitializeAll() succeeds when called multiple times (idempotent)");
+		test_results["idempotent_init"] = true;
 	} else {
-		ERR_PRINT("❌ InitializeAll() failed on subsequent call");
+		test_messages.append("❌ InitializeAll() failed on subsequent call");
+		test_results["idempotent_init"] = false;
+		all_tests_passed = false;
 	}
 
 	// Note: We don't test ShutdownAll() here as it would shut down the actual subsystems
 	// that are needed for the application to function
 
+	test_messages.append("SubsystemManager integration test completed!");
+	test_results["all_tests_passed"] = all_tests_passed;
+	test_results["test_messages"] = test_messages;
+
 	WARN_PRINT("SubsystemManager integration test completed!");
+	
+	return test_results;
 }

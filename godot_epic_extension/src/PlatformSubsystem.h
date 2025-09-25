@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IPlatformSubsystem.h"
+#include "EpicInitOptions.h"
 #include "../eos_sdk/Include/eos_types.h"
 #include <godot_cpp/variant/string.hpp>
 
@@ -24,17 +25,7 @@ public:
     const char* GetSubsystemName() const override { return "Platform"; }
 
     // IPlatformSubsystem interface
-    bool InitializePlatform(
-        const String& product_name,
-        const String& product_version,
-        const String& product_id,
-        const String& sandbox_id,
-        const String& deployment_id,
-        const String& client_id,
-        const String& client_secret,
-        const String& encryption_key
-    ) override;
-
+    bool InitializePlatform(const EpicInitOptions& options) override;
     void* GetPlatformHandle() const override;
     bool IsOnline() const override;
     void SetLogLevel(int level) override;
