@@ -24,7 +24,6 @@ builds/
 godot_epic_extension/demo/bin/
 
 # Ignore EOS SDK contents but not the directory itself
-godot_epic_extension/src/sample_constants.h
 godot_epic_extension/eos_sdk/*
 !godot_epic_extension/eos_sdk/put_eos_sdk_here
 
@@ -50,3 +49,4 @@ godot_epic_extension/src/gen
 # Exception: Allow specific file in demo/bin
 !godot_epic_extension/demo/bin/godotepic.gdextension
 .vscode/settings.json
+godot_epic_extension/eos_sample

@@ -1,4 +1,5 @@
 #include "godotepic.h"
+#include "Platform.h"
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/error_macros.hpp>
 
@@ -6,8 +7,6 @@ using namespace godot;
 
 // Static member definitions
 GodotEpic* GodotEpic::instance = nullptr;
-EOS_HPlatform GodotEpic::platform_handle = nullptr;
-bool GodotEpic::is_initialized = false;
 
 void GodotEpic::_bind_methods() {
 	ClassDB::bind_static_method("GodotEpic", D_METHOD("get_singleton"), &GodotEpic::get_singleton);
@@ -55,6 +54,9 @@ GodotEpic::GodotEpic() {
 	time_passed = 0.0;
 	instance = this;
 
+	// Initialize platform instance
+	platform_instance = nullptr;
+
 	// Initialize authentication state
 	epic_account_id = nullptr;
 	product_user_id = nullptr;
@@ -83,7 +85,7 @@ GodotEpic* GodotEpic::get_singleton() {
 }
 
 bool GodotEpic::initialize_platform(const Dictionary& options) {
-	if (is_initialized) {
+	if (platform_instance && platform_instance->is_initialized()) {
 		ERR_PRINT("EOS Platform already initialized");
 		return true;
 	}
@@ -91,22 +93,18 @@ bool GodotEpic::initialize_platform(const Dictionary& options) {
 	// Convert dictionary to init options
 	EpicInitOptions init_options = _dict_to_init_options(options);
 
+	// Debug: print product name/version we will pass to platform
+	ERR_PRINT("[initialize_platform] product_name: " + init_options.product_name);
+	ERR_PRINT("[initialize_platform] product_version: " + init_options.product_version);
+
 	// Validate options
 	if (!_validate_init_options(init_options)) {
 		ERR_PRINT("EOS Platform initialization failed: Invalid options");
 		return false;
 	}
 
-	// Initialize EOS SDK
-	EOS_InitializeOptions InitOptions = {};
-	InitOptions.ApiVersion = EOS_INITIALIZE_API_LATEST;
-	InitOptions.AllocateMemoryFunction = nullptr;  // Use default
-	InitOptions.ReallocateMemoryFunction = nullptr;
-	InitOptions.ReleaseMemoryFunction = nullptr;
-	InitOptions.ProductName = init_options.product_name.utf8().get_data();
-	InitOptions.ProductVersion = init_options.product_version.utf8().get_data();
-	InitOptions.Reserved = nullptr;
-	InitOptions.SystemInitializeOptions = nullptr;
+	// Create platform instance
+	platform_instance = std::make_unique<godot::Platform>();
 
 	// Setup logging
 	EOS_EResult LogResult = EOS_Logging_SetCallback(logging_callback);
@@ -115,35 +113,14 @@ bool GodotEpic::initialize_platform(const Dictionary& options) {
 							   EOS_ELogLevel::EOS_LOG_Verbose);
 	}
 
-	EOS_EResult InitResult = EOS_Initialize(&InitOptions);
-	if (InitResult != EOS_EResult::EOS_Success) {
-		String error_msg = "Failed to initialize EOS SDK: " + String::num_int64(static_cast<int64_t>(InitResult));
-		ERR_PRINT(error_msg);
-		return false;
-	}
-
-	// Create platform instance
-	EOS_Platform_Options PlatformOptions = {};
-	PlatformOptions.ApiVersion = EOS_PLATFORM_OPTIONS_API_LATEST;
-	PlatformOptions.bIsServer = false;
-	PlatformOptions.ProductId = SampleConstants::ProductId;
-	PlatformOptions.SandboxId = SampleConstants::SandboxId;
-	PlatformOptions.DeploymentId = SampleConstants::DeploymentId;
-	PlatformOptions.ClientCredentials.ClientId = SampleConstants::ClientCredentialsId;
-	PlatformOptions.ClientCredentials.ClientSecret = SampleConstants::ClientCredentialsSecret;
-	PlatformOptions.EncryptionKey = SampleConstants::EncryptionKey;
-	PlatformOptions.OverrideCountryCode = nullptr;
-	PlatformOptions.OverrideLocaleCode = nullptr;
-
-	platform_handle = EOS_Platform_Create(&PlatformOptions);
-	if (!platform_handle) {
-		ERR_PRINT("Failed to create EOS Platform");
-		EOS_Shutdown();
+	// Initialize platform
+	if (!platform_instance->initialize(init_options)) {
+		platform_instance.reset();
 		return false;
 	}
 
 	// Register for achievement unlock notifications
-	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_handle);
+	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_instance->get_platform_handle());
 	if (achievements_handle) {
 		EOS_Achievements_AddNotifyAchievementsUnlockedV2Options notify_options = {};
 		notify_options.ApiVersion = EOS_ACHIEVEMENTS_ADDNOTIFYACHIEVEMENTSUNLOCKEDV2_API_LATEST;
@@ -162,19 +139,17 @@ bool GodotEpic::initialize_platform(const Dictionary& options) {
 		}
 	}
 
-	is_initialized = true;
-	WARN_PRINT("EOS Platform initialized successfully");
 	return true;
 }
 
 void GodotEpic::shutdown_platform() {
-	if (!is_initialized) {
+	if (!platform_instance) {
 		return;
 	}
 
 	// Unregister achievement notifications before shutdown
-	if (platform_handle && achievements_notification_id != EOS_INVALID_NOTIFICATIONID) {
-		EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_handle);
+	if (platform_instance->get_platform_handle() && achievements_notification_id != EOS_INVALID_NOTIFICATIONID) {
+		EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_instance->get_platform_handle());
 		if (achievements_handle) {
 			EOS_Achievements_RemoveNotifyAchievementsUnlocked(achievements_handle, achievements_notification_id);
 			WARN_PRINT("Achievement unlock notifications unregistered");
@@ -182,38 +157,32 @@ void GodotEpic::shutdown_platform() {
 		achievements_notification_id = EOS_INVALID_NOTIFICATIONID;
 	}
 
-	if (platform_handle) {
-		EOS_Platform_Release(platform_handle);
-		platform_handle = nullptr;
-	}
-
-	EOS_Shutdown();
-	is_initialized = false;
-	WARN_PRINT("EOS Platform shutdown complete");
+	platform_instance->shutdown();
+	platform_instance.reset();
 }
 
 void GodotEpic::tick() {
-	if (platform_handle) {
-		EOS_Platform_Tick(platform_handle);
+	if (platform_instance && platform_instance->get_platform_handle()) {
+		EOS_Platform_Tick(platform_instance->get_platform_handle());
 	}
 }
 
 bool GodotEpic::is_platform_initialized() const {
-	return is_initialized;
+	return platform_instance && platform_instance->is_initialized();
 }
 
 EOS_HPlatform GodotEpic::get_platform_handle() const {
-	return platform_handle;
+	return platform_instance ? platform_instance->get_platform_handle() : nullptr;
 }
 
 // Authentication methods
 void GodotEpic::login_with_epic_account(const String& email, const String& password) {
-	if (!platform_handle) {
+	if (!platform_instance || !platform_instance->get_platform_handle()) {
 		ERR_PRINT("EOS Platform not initialized");
 		return;
 	}
 
-	EOS_HAuth auth_handle = EOS_Platform_GetAuthInterface(platform_handle);
+	EOS_HAuth auth_handle = EOS_Platform_GetAuthInterface(platform_instance->get_platform_handle());
 	if (!auth_handle) {
 		ERR_PRINT("Failed to get Auth interface");
 		return;
@@ -247,12 +216,12 @@ void GodotEpic::login_with_epic_account(const String& email, const String& passw
 }
 
 void GodotEpic::login_with_device_id(const String& display_name) {
-	if (!platform_handle) {
+	if (!platform_instance || !platform_instance->get_platform_handle()) {
 		ERR_PRINT("EOS Platform not initialized");
 		return;
 	}
 
-	EOS_HAuth auth_handle = EOS_Platform_GetAuthInterface(platform_handle);
+	EOS_HAuth auth_handle = EOS_Platform_GetAuthInterface(platform_instance->get_platform_handle());
 	if (!auth_handle) {
 		ERR_PRINT("Failed to get Auth interface");
 		return;
@@ -279,12 +248,12 @@ void GodotEpic::login_with_device_id(const String& display_name) {
 }
 
 void GodotEpic::logout() {
-	if (!platform_handle || !is_logged_in) {
+	if (!platform_instance || !platform_instance->get_platform_handle() || !is_logged_in) {
 		ERR_PRINT("Not logged in or platform not initialized");
 		return;
 	}
 
-	EOS_HAuth auth_handle = EOS_Platform_GetAuthInterface(platform_handle);
+	EOS_HAuth auth_handle = EOS_Platform_GetAuthInterface(platform_instance->get_platform_handle());
 	if (!auth_handle) {
 		ERR_PRINT("Failed to get Auth interface");
 		return;
@@ -340,12 +309,12 @@ String GodotEpic::get_product_user_id() const {
 
 // Friends methods
 void GodotEpic::query_friends() {
-	if (!platform_handle || !epic_account_id) {
+	if (!platform_instance || !platform_instance->get_platform_handle() || !epic_account_id) {
 		ERR_PRINT("Platform not initialized or user not logged in");
 		return;
 	}
 
-	EOS_HFriends friends_handle = EOS_Platform_GetFriendsInterface(platform_handle);
+	EOS_HFriends friends_handle = EOS_Platform_GetFriendsInterface(platform_instance->get_platform_handle());
 	if (!friends_handle) {
 		ERR_PRINT("Failed to get Friends interface");
 		return;
@@ -362,12 +331,12 @@ void GodotEpic::query_friends() {
 Array GodotEpic::get_friends_list() {
 	Array friends_array;
 
-	if (!platform_handle || !epic_account_id) {
+	if (!platform_instance || !platform_instance->get_platform_handle() || !epic_account_id) {
 		ERR_PRINT("Platform not initialized or user not logged in");
 		return friends_array;
 	}
 
-	EOS_HFriends friends_handle = EOS_Platform_GetFriendsInterface(platform_handle);
+	EOS_HFriends friends_handle = EOS_Platform_GetFriendsInterface(platform_instance->get_platform_handle());
 	if (!friends_handle) {
 		ERR_PRINT("Failed to get Friends interface");
 		return friends_array;
@@ -433,7 +402,7 @@ Array GodotEpic::get_friends_list() {
 Dictionary GodotEpic::get_friend_info(const String& friend_id) {
 	Dictionary friend_info;
 
-	if (!platform_handle || !epic_account_id) {
+	if (!platform_instance || !platform_instance->get_platform_handle() || !epic_account_id) {
 		ERR_PRINT("Platform not initialized or user not logged in");
 		return friend_info;
 	}
@@ -450,12 +419,12 @@ Dictionary GodotEpic::get_friend_info(const String& friend_id) {
 
 // Achievements methods
 void GodotEpic::query_achievement_definitions() {
-	if (!platform_handle || !product_user_id) {
+	if (!platform_instance || !platform_instance->get_platform_handle() || !product_user_id) {
 		ERR_PRINT("Platform not initialized or user not logged in");
 		return;
 	}
 
-	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_handle);
+	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_instance->get_platform_handle());
 	if (!achievements_handle) {
 		ERR_PRINT("Failed to get Achievements interface");
 		return;
@@ -473,12 +442,12 @@ void GodotEpic::query_achievement_definitions() {
 }
 
 void GodotEpic::query_player_achievements() {
-	if (!platform_handle || !product_user_id) {
+	if (!platform_instance || !platform_instance->get_platform_handle() || !product_user_id) {
 		ERR_PRINT("Platform not initialized or user not logged in");
 		return;
 	}
 
-	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_handle);
+	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_instance->get_platform_handle());
 	if (!achievements_handle) {
 		ERR_PRINT("Failed to get Achievements interface");
 		return;
@@ -500,7 +469,7 @@ void GodotEpic::unlock_achievement(const String& achievement_id) {
 }
 
 void GodotEpic::unlock_achievements(const Array& achievement_ids) {
-	if (!platform_handle || !product_user_id) {
+	if (!platform_instance || !platform_instance->get_platform_handle() || !product_user_id) {
 		ERR_PRINT("Platform not initialized or user not logged in");
 		return;
 	}
@@ -510,7 +479,7 @@ void GodotEpic::unlock_achievements(const Array& achievement_ids) {
 		return;
 	}
 
-	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_handle);
+	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_instance->get_platform_handle());
 	if (!achievements_handle) {
 		ERR_PRINT("Failed to get Achievements interface");
 		return;
@@ -539,12 +508,12 @@ void GodotEpic::unlock_achievements(const Array& achievement_ids) {
 Array GodotEpic::get_achievement_definitions() {
 	Array definitions_array;
 
-	if (!platform_handle) {
+	if (!platform_instance || !platform_instance->get_platform_handle()) {
 		ERR_PRINT("Platform not initialized");
 		return definitions_array;
 	}
 
-	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_handle);
+	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_instance->get_platform_handle());
 	if (!achievements_handle) {
 		ERR_PRINT("Failed to get Achievements interface");
 		return definitions_array;
@@ -598,12 +567,12 @@ Array GodotEpic::get_achievement_definitions() {
 Array GodotEpic::get_player_achievements() {
 	Array achievements_array;
 
-	if (!platform_handle || !product_user_id) {
+	if (!platform_instance || !platform_instance->get_platform_handle() || !product_user_id) {
 		ERR_PRINT("Platform not initialized or user not logged in");
 		return achievements_array;
 	}
 
-	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_handle);
+	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_instance->get_platform_handle());
 	if (!achievements_handle) {
 		ERR_PRINT("Failed to get Achievements interface");
 		return achievements_array;
@@ -660,12 +629,12 @@ Array GodotEpic::get_player_achievements() {
 Dictionary GodotEpic::get_achievement_definition(const String& achievement_id) {
 	Dictionary definition_dict;
 
-	if (!platform_handle) {
+	if (!platform_instance || !platform_instance->get_platform_handle()) {
 		ERR_PRINT("Platform not initialized");
 		return definition_dict;
 	}
 
-	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_handle);
+	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_instance->get_platform_handle());
 	if (!achievements_handle) {
 		ERR_PRINT("Failed to get Achievements interface");
 		return definition_dict;
@@ -711,12 +680,12 @@ Dictionary GodotEpic::get_achievement_definition(const String& achievement_id) {
 Dictionary GodotEpic::get_player_achievement(const String& achievement_id) {
 	Dictionary achievement_dict;
 
-	if (!platform_handle || !product_user_id) {
+	if (!platform_instance || !platform_instance->get_platform_handle() || !product_user_id) {
 		ERR_PRINT("Platform not initialized or user not logged in");
 		return achievement_dict;
 	}
 
-	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_handle);
+	EOS_HAchievements achievements_handle = EOS_Platform_GetAchievementsInterface(platform_instance->get_platform_handle());
 	if (!achievements_handle) {
 		ERR_PRINT("Failed to get Achievements interface");
 		return achievement_dict;
@@ -807,7 +776,7 @@ void EOS_CALL GodotEpic::auth_login_callback(const EOS_Auth_LoginCallbackInfo* d
 		instance->is_logged_in = true;
 
 		// Get user info
-		EOS_HAuth auth_handle = EOS_Platform_GetAuthInterface(platform_handle);
+		EOS_HAuth auth_handle = EOS_Platform_GetAuthInterface(instance->platform_instance->get_platform_handle());
 		if (auth_handle) {
 			EOS_Auth_CopyUserAuthTokenOptions token_options = {};
 			token_options.ApiVersion = EOS_AUTH_COPYUSERAUTHTOKEN_API_LATEST;
@@ -828,7 +797,7 @@ void EOS_CALL GodotEpic::auth_login_callback(const EOS_Auth_LoginCallbackInfo* d
 		}
 
 		// Now login to Connect service for cross-platform features
-		EOS_HConnect connect_handle = EOS_Platform_GetConnectInterface(platform_handle);
+		EOS_HConnect connect_handle = EOS_Platform_GetConnectInterface(instance->platform_instance->get_platform_handle());
 		if (connect_handle) {
 			// Get Auth Token for Connect login (not Epic Account ID)
 			EOS_Auth_Token* auth_token = nullptr;
@@ -1119,7 +1088,7 @@ EpicInitOptions GodotEpic::_dict_to_init_options(const Dictionary& options_dict)
 	if (options_dict.has("product_name")) {
 		options.product_name = options_dict["product_name"];
 	} else {
-		options.product_name = String::utf8(SampleConstants::GameName);
+		options.product_name = String();
 	}
 
 	if (options_dict.has("product_version")) {
@@ -1130,41 +1099,43 @@ EpicInitOptions GodotEpic::_dict_to_init_options(const Dictionary& options_dict)
 	if (options_dict.has("product_id")) {
 		options.product_id = options_dict["product_id"];
 	} else {
-		options.product_id = String::utf8(SampleConstants::ProductId);
+		options.product_id = String();
 	}
 
 	if (options_dict.has("sandbox_id")) {
 		options.sandbox_id = options_dict["sandbox_id"];
 	} else {
-		options.sandbox_id = String::utf8(SampleConstants::SandboxId);
+		options.sandbox_id = String();
 	}
 
 	if (options_dict.has("deployment_id")) {
 		options.deployment_id = options_dict["deployment_id"];
 	} else {
-		options.deployment_id = String::utf8(SampleConstants::DeploymentId);
+		options.deployment_id = String();
 	}
 
 	if (options_dict.has("client_id")) {
 		options.client_id = options_dict["client_id"];
 	} else {
-		options.client_id = String::utf8(SampleConstants::ClientCredentialsId);
+		options.client_id = String();
 	}
 
 	if (options_dict.has("client_secret")) {
 		options.client_secret = options_dict["client_secret"];
 	} else {
-		options.client_secret = String::utf8(SampleConstants::ClientCredentialsSecret);
+		options.client_secret = String();
 	}
 
 	if (options_dict.has("encryption_key")) {
 		options.encryption_key = options_dict["encryption_key"];
 	} else {
-		options.encryption_key = String::utf8(SampleConstants::EncryptionKey);
+		options.encryption_key = String();
 	}
 
 	// Debug print to verify values are being set correctly
 	ERR_PRINT("EOS Init Options:");
+	ERR_PRINT("  Product Name: " + options.product_name);
+	ERR_PRINT("  Product Version: " + options.product_version);
 	ERR_PRINT("  Product ID: " + options.product_id);
 	ERR_PRINT("  Sandbox ID: " + options.sandbox_id);
 	ERR_PRINT("  Deployment ID: " + options.deployment_id);

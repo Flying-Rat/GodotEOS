@@ -13,29 +13,20 @@
 #include <eos_connect.h>
 #include <eos_friends.h>
 #include <eos_achievements.h>
-#include "sample_constants.h"
+#include "EpicInitOptions.h"
+#include "IPlatform.h"
+#include <memory>
 
 namespace godot {
-
-// Configuration structure for EOS initialization
-struct EpicInitOptions {
-    String product_name = "GodotEpic";
-    String product_version = "1.0.0";
-    String product_id = "";
-    String sandbox_id = "";
-    String deployment_id = "";
-    String client_id = "";
-    String client_secret = "";
-    String encryption_key = "";
-};
 
 class GodotEpic : public Object {
 	GDCLASS(GodotEpic, Object)
 
 private:
 	static GodotEpic* instance;
-	static EOS_HPlatform platform_handle;
-	static bool is_initialized;
+
+	// Platform instance
+	std::unique_ptr<godot::IPlatform> platform_instance;
 
 	// Authentication state
 	EOS_EpicAccountId epic_account_id;
