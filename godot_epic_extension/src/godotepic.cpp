@@ -200,7 +200,7 @@ EOS_HPlatform GodotEpic::get_platform_handle() const {
 
 // Authentication methods
 void GodotEpic::login_with_epic_account(const String& email, const String& password) {
-	auto auth = SubsystemManager::GetInstance()->GetSubsystem<IAuthenticationSubsystem>();
+	auto auth = Get<IAuthenticationSubsystem>();
 	if (!auth) {
 		ERR_PRINT("AuthenticationSubsystem not available");
 		Dictionary empty_user_info;
@@ -220,7 +220,7 @@ void GodotEpic::login_with_epic_account(const String& email, const String& passw
 }
 
 void GodotEpic::login_with_device_id(const String& display_name) {
-	auto auth = SubsystemManager::GetInstance()->GetSubsystem<IAuthenticationSubsystem>();
+	auto auth = Get<IAuthenticationSubsystem>();
 	if (!auth) {
 		ERR_PRINT("AuthenticationSubsystem not available");
 		Dictionary empty_user_info;
@@ -237,7 +237,7 @@ void GodotEpic::login_with_device_id(const String& display_name) {
 }
 
 void GodotEpic::logout() {
-	auto auth = SubsystemManager::GetInstance()->GetSubsystem<IAuthenticationSubsystem>();
+	auto auth = Get<IAuthenticationSubsystem>();
 	if (!auth) {
 		ERR_PRINT("AuthenticationSubsystem not available");
 		emit_signal("logout_completed", false);
@@ -251,22 +251,22 @@ void GodotEpic::logout() {
 }
 
 bool GodotEpic::is_user_logged_in() const {
-	auto auth = SubsystemManager::GetInstance()->GetSubsystem<IAuthenticationSubsystem>();
+	auto auth = Get<IAuthenticationSubsystem>();
 	return auth ? auth->IsLoggedIn() : false;
 }
 
 String GodotEpic::get_current_username() const {
-	auto auth = SubsystemManager::GetInstance()->GetSubsystem<IAuthenticationSubsystem>();
+	auto auth = Get<IAuthenticationSubsystem>();
 	return auth ? auth->GetDisplayName() : "";
 }
 
 String GodotEpic::get_epic_account_id() const {
-	auto auth = SubsystemManager::GetInstance()->GetSubsystem<IAuthenticationSubsystem>();
+	auto auth = Get<IAuthenticationSubsystem>();
 	return auth ? auth->GetEpicAccountId() : "";
 }
 
 String GodotEpic::get_product_user_id() const {
-	auto auth = SubsystemManager::GetInstance()->GetSubsystem<IAuthenticationSubsystem>();
+	auto auth = Get<IAuthenticationSubsystem>();
 	return auth ? auth->GetProductUserId() : "";
 }
 
@@ -382,7 +382,7 @@ Dictionary GodotEpic::get_friend_info(const String& friend_id) {
 
 // Achievements methods
 void GodotEpic::query_achievement_definitions() {
-	auto achievements = SubsystemManager::GetInstance()->GetSubsystem<IAchievementsSubsystem>();
+	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
 		ERR_PRINT("AchievementsSubsystem not available");
 		Array empty_definitions;
@@ -398,7 +398,7 @@ void GodotEpic::query_achievement_definitions() {
 }
 
 void GodotEpic::query_player_achievements() {
-	auto achievements = SubsystemManager::GetInstance()->GetSubsystem<IAchievementsSubsystem>();
+	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
 		ERR_PRINT("AchievementsSubsystem not available");
 		Array empty_achievements;
@@ -420,7 +420,7 @@ void GodotEpic::unlock_achievement(const String& achievement_id) {
 }
 
 void GodotEpic::unlock_achievements(const Array& achievement_ids) {
-	auto achievements = SubsystemManager::GetInstance()->GetSubsystem<IAchievementsSubsystem>();
+	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
 		ERR_PRINT("AchievementsSubsystem not available");
 		Array empty_unlocked;
@@ -436,22 +436,22 @@ void GodotEpic::unlock_achievements(const Array& achievement_ids) {
 }
 
 Array GodotEpic::get_achievement_definitions() {
-	auto achievements = SubsystemManager::GetInstance()->GetSubsystem<IAchievementsSubsystem>();
+	auto achievements = Get<IAchievementsSubsystem>();
 	return achievements ? achievements->GetAchievementDefinitions() : Array();
 }
 
 Array GodotEpic::get_player_achievements() {
-	auto achievements = SubsystemManager::GetInstance()->GetSubsystem<IAchievementsSubsystem>();
+	auto achievements = Get<IAchievementsSubsystem>();
 	return achievements ? achievements->GetPlayerAchievements() : Array();
 }
 
 Dictionary GodotEpic::get_achievement_definition(const String& achievement_id) {
-	auto achievements = SubsystemManager::GetInstance()->GetSubsystem<IAchievementsSubsystem>();
+	auto achievements = Get<IAchievementsSubsystem>();
 	return achievements ? achievements->GetAchievementDefinition(achievement_id) : Dictionary();
 }
 
 Dictionary GodotEpic::get_player_achievement(const String& achievement_id) {
-	auto achievements = SubsystemManager::GetInstance()->GetSubsystem<IAchievementsSubsystem>();
+	auto achievements = Get<IAchievementsSubsystem>();
 	return achievements ? achievements->GetPlayerAchievement(achievement_id) : Dictionary();
 }
 
@@ -807,7 +807,7 @@ void EOS_CALL GodotEpic::achievements_unlocked_notification(const EOS_Achievemen
 
 // Leaderboards methods
 void GodotEpic::query_leaderboard_definitions() {
-	auto leaderboards = SubsystemManager::GetInstance()->GetSubsystem<ILeaderboardsSubsystem>();
+	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	if (!leaderboards) {
 		ERR_PRINT("LeaderboardsSubsystem not available");
 		Array empty_definitions;
@@ -823,7 +823,7 @@ void GodotEpic::query_leaderboard_definitions() {
 }
 
 void GodotEpic::query_leaderboard_ranks(const String& leaderboard_id, int limit) {
-	auto leaderboards = SubsystemManager::GetInstance()->GetSubsystem<ILeaderboardsSubsystem>();
+	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	if (!leaderboards) {
 		ERR_PRINT("LeaderboardsSubsystem not available");
 		Array empty_ranks;
@@ -839,7 +839,7 @@ void GodotEpic::query_leaderboard_ranks(const String& leaderboard_id, int limit)
 }
 
 void GodotEpic::query_leaderboard_user_scores(const String& leaderboard_id, const Array& user_ids) {
-	auto leaderboards = SubsystemManager::GetInstance()->GetSubsystem<ILeaderboardsSubsystem>();
+	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	if (!leaderboards) {
 		ERR_PRINT("LeaderboardsSubsystem not available");
 		Dictionary empty_scores;
@@ -855,7 +855,7 @@ void GodotEpic::query_leaderboard_user_scores(const String& leaderboard_id, cons
 }
 
 void GodotEpic::ingest_stat(const String& stat_name, int value) {
-	auto leaderboards = SubsystemManager::GetInstance()->GetSubsystem<ILeaderboardsSubsystem>();
+	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	if (!leaderboards) {
 		ERR_PRINT("LeaderboardsSubsystem not available");
 		Array empty_stats;
@@ -871,7 +871,7 @@ void GodotEpic::ingest_stat(const String& stat_name, int value) {
 }
 
 void GodotEpic::ingest_stats(const Dictionary& stats) {
-	auto leaderboards = SubsystemManager::GetInstance()->GetSubsystem<ILeaderboardsSubsystem>();
+	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	if (!leaderboards) {
 		ERR_PRINT("LeaderboardsSubsystem not available");
 		Array empty_stats;
@@ -887,17 +887,17 @@ void GodotEpic::ingest_stats(const Dictionary& stats) {
 }
 
 Array GodotEpic::get_leaderboard_definitions() {
-	auto leaderboards = SubsystemManager::GetInstance()->GetSubsystem<ILeaderboardsSubsystem>();
+	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	return leaderboards ? leaderboards->GetLeaderboardDefinitions() : Array();
 }
 
 Array GodotEpic::get_leaderboard_ranks() {
-	auto leaderboards = SubsystemManager::GetInstance()->GetSubsystem<ILeaderboardsSubsystem>();
+	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	return leaderboards ? leaderboards->GetLeaderboardRanks() : Array();
 }
 
 Dictionary GodotEpic::get_leaderboard_user_scores() {
-	auto leaderboards = SubsystemManager::GetInstance()->GetSubsystem<ILeaderboardsSubsystem>();
+	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	return leaderboards ? leaderboards->GetLeaderboardUserScores() : Dictionary();
 }
 
