@@ -1,0 +1,70 @@
+#pragma once
+
+#include "ISubsystem.h"
+#include <godot_cpp/variant/string.hpp>
+#include <godot_cpp/variant/array.hpp>
+
+namespace godot {
+
+/**
+ * @brief Achievements subsystem interface.
+ *
+ * Handles EOS achievements functionality including querying, unlocking,
+ * and tracking player achievements.
+ */
+class IAchievementsSubsystem : public ISubsystem {
+public:
+    /**
+     * @brief Query achievement definitions from EOS.
+     * @return true if query initiated successfully.
+     */
+    virtual bool QueryAchievementDefinitions() = 0;
+
+    /**
+     * @brief Query player achievements from EOS.
+     * @return true if query initiated successfully.
+     */
+    virtual bool QueryPlayerAchievements() = 0;
+
+    /**
+     * @brief Unlock an achievement for the current player.
+     * @param achievement_id The achievement ID to unlock.
+     * @return true if unlock request initiated successfully.
+     */
+    virtual bool UnlockAchievement(const String& achievement_id) = 0;
+
+    /**
+     * @brief Unlock multiple achievements for the current player.
+     * @param achievement_ids Array of achievement IDs to unlock.
+     * @return true if unlock request initiated successfully.
+     */
+    virtual bool UnlockAchievements(const Array& achievement_ids) = 0;
+
+    /**
+     * @brief Get cached achievement definitions.
+     * @return Array of achievement definition dictionaries.
+     */
+    virtual Array GetAchievementDefinitions() const = 0;
+
+    /**
+     * @brief Get cached player achievements.
+     * @return Array of player achievement dictionaries.
+     */
+    virtual Array GetPlayerAchievements() const = 0;
+
+    /**
+     * @brief Get a specific achievement definition.
+     * @param achievement_id The achievement ID to retrieve.
+     * @return Dictionary containing achievement definition, or empty dict if not found.
+     */
+    virtual Dictionary GetAchievementDefinition(const String& achievement_id) const = 0;
+
+    /**
+     * @brief Get a specific player achievement.
+     * @param achievement_id The achievement ID to retrieve.
+     * @return Dictionary containing player achievement, or empty dict if not found.
+     */
+    virtual Dictionary GetPlayerAchievement(const String& achievement_id) const = 0;
+};
+
+} // namespace godot
