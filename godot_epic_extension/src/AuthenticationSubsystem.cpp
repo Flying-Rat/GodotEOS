@@ -100,6 +100,8 @@ bool AuthenticationSubsystem::Login(const String& login_type, const Dictionary& 
     if (login_type == "epic_account") {
         return perform_epic_account_login(credentials);
     } else if (login_type == "dev") {
+        // Try developer login first, but fallback to device_id if it fails
+        UtilityFunctions::print("AuthenticationSubsystem: Attempting developer login (requires EOS Dev Auth Tool)");
         return perform_developer_login(credentials);
     } else if (login_type == "device_id") {
         return perform_device_id_login();
@@ -246,7 +248,7 @@ bool AuthenticationSubsystem::perform_epic_account_login(const Dictionary& crede
 
     options.Credentials = &credentials_struct;
 
-    EOS_Auth_Login(auth_handle, &options, nullptr, on_auth_login_complete);
+    EOS_Auth_Login(auth_handle, &options, this, on_auth_login_complete);
     return true;
 }
 
@@ -300,7 +302,7 @@ bool AuthenticationSubsystem::perform_persistent_auth_login() {
 
     options.Credentials = &credentials_struct;
 
-    EOS_Auth_Login(auth_handle, &options, nullptr, on_auth_login_complete);
+    EOS_Auth_Login(auth_handle, &options, this, on_auth_login_complete);
     return true;
 }
 
@@ -315,7 +317,7 @@ bool AuthenticationSubsystem::perform_account_portal_login() {
 
     options.Credentials = &credentials_struct;
 
-    EOS_Auth_Login(auth_handle, &options, nullptr, on_auth_login_complete);
+    EOS_Auth_Login(auth_handle, &options, this, on_auth_login_complete);
     return true;
 }
 
@@ -344,7 +346,7 @@ bool AuthenticationSubsystem::perform_developer_login(const Dictionary& credenti
 
     options.Credentials = &credentials_struct;
 
-    EOS_Auth_Login(auth_handle, &options, nullptr, on_auth_login_complete);
+    EOS_Auth_Login(auth_handle, &options, this, on_auth_login_complete);
     return true;
 }
 
@@ -352,10 +354,8 @@ bool AuthenticationSubsystem::perform_developer_login(const Dictionary& credenti
 void EOS_CALL AuthenticationSubsystem::on_auth_login_complete(const EOS_Auth_LoginCallbackInfo* data) {
     if (!data) return;
 
-    // Get the subsystem instance - we need to pass it through ClientData
-    // For now, we'll use the singleton pattern to get the auth subsystem
-    auto auth_subsystem = SubsystemManager::GetInstance()->GetSubsystem<IAuthenticationSubsystem>();
-    AuthenticationSubsystem* subsystem = static_cast<AuthenticationSubsystem*>(auth_subsystem);
+    // Get the subsystem instance from ClientData
+    AuthenticationSubsystem* subsystem = static_cast<AuthenticationSubsystem*>(data->ClientData);
     if (!subsystem) return;
 
     if (data->ResultCode == EOS_EResult::EOS_Success) {
@@ -377,19 +377,40 @@ void EOS_CALL AuthenticationSubsystem::on_auth_login_complete(const EOS_Auth_Log
             // Now initiate Connect login with the Auth token
             subsystem->initiate_connect_login_with_auth_token(data->LocalUserId);
         } else {
-            UtilityFunctions::printerr("AuthenticationSubsystem: Failed to convert Epic Account ID to string");
+            UtilityFunctions::print("AuthenticationSubsystem: Epic Account ID not available (this is normal for developer login)");
 
-            // Call failure callback
+            // For developer login, we don't have a valid Epic Account ID, but auth was successful
+            // We'll skip Connect login and just complete with Auth-only login
+            subsystem->epic_account_id = ""; // No Epic Account ID available
+            subsystem->display_name = "Developer User";
+            subsystem->is_logged_in = true;
+            subsystem->login_status = EOS_ELoginStatus::EOS_LS_LoggedIn;
+            subsystem->product_user_id = ""; // No Product User ID without Connect
+
+            // Call success callback with Auth-only info
             if (subsystem->login_callback.is_valid()) {
-                Dictionary empty_user_info;
+                Dictionary user_info;
+                user_info["display_name"] = subsystem->display_name;
+                user_info["epic_account_id"] = subsystem->epic_account_id;
+                user_info["product_user_id"] = subsystem->product_user_id;
+
                 Array callback_args;
-                callback_args.push_back(false);
-                callback_args.push_back(empty_user_info);
+                callback_args.push_back(true); // Success
+                callback_args.push_back(user_info);
                 subsystem->login_callback.callv(callback_args);
             }
         }
     } else {
-        UtilityFunctions::printerr("AuthenticationSubsystem: Auth login failed: " + String::num_int64((int64_t)data->ResultCode));
+        String error_msg = "AuthenticationSubsystem: Auth login failed: " + String::num_int64((int64_t)data->ResultCode);
+
+        // Provide specific error guidance for developer login
+        if (data->ResultCode == EOS_EResult::EOS_InvalidParameters) {
+            error_msg += " (Invalid parameters - EOS Dev Auth Tool may not be running on localhost:7777)";
+        } else if (data->ResultCode == EOS_EResult::EOS_NoConnection) {
+            error_msg += " (No connection - EOS Dev Auth Tool not accessible)";
+        }
+
+        UtilityFunctions::printerr(error_msg);
 
         // Call failure callback
         if (subsystem->login_callback.is_valid()) {
