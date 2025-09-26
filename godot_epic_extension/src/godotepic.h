@@ -54,10 +54,6 @@ private:
 	static void EOS_CALL achievements_unlock_callback(const EOS_Achievements_OnUnlockAchievementsCompleteCallbackInfo* data);
 	static void EOS_CALL achievements_unlocked_notification(const EOS_Achievements_OnAchievementsUnlockedCallbackV2Info* data);
 
-	// Helper methods
-	EpicInitOptions _dict_to_init_options(const Dictionary& options_dict);
-	bool _validate_init_options(const EpicInitOptions& options);
-
 protected:
 	static void _bind_methods();
 
@@ -112,8 +108,15 @@ public:
 	bool is_platform_initialized() const;
 	EOS_HPlatform get_platform_handle() const;
 
-	// Test method for SubsystemManager functionality
+		// Test method for SubsystemManager functionality
 	Dictionary test_subsystem_manager();
+
+private:
+	// Helper methods
+	EpicInitOptions _dict_to_init_options(const Dictionary& options_dict);
+	bool _validate_init_options(const EpicInitOptions& options);
+	void setup_authentication_callback();
+	void on_authentication_completed(bool success, const Dictionary& user_info);
 };
 
 }

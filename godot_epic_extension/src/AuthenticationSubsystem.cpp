@@ -352,13 +352,53 @@ bool AuthenticationSubsystem::perform_developer_login(const Dictionary& credenti
 void EOS_CALL AuthenticationSubsystem::on_auth_login_complete(const EOS_Auth_LoginCallbackInfo* data) {
     if (!data) return;
 
+    // Get the subsystem instance - we need to pass it through ClientData
+    // For now, we'll use the singleton pattern to get the auth subsystem
+    auto auth_subsystem = SubsystemManager::GetInstance()->GetSubsystem<IAuthenticationSubsystem>();
+    AuthenticationSubsystem* subsystem = static_cast<AuthenticationSubsystem*>(auth_subsystem);
+    if (!subsystem) return;
+
     if (data->ResultCode == EOS_EResult::EOS_Success) {
         UtilityFunctions::print("AuthenticationSubsystem: Auth login successful");
 
-        // Note: Epic Account ID will be retrieved when needed
-        // The Product User ID from Connect login is what we primarily use
+        // Store Epic Account ID
+        char eaid_string[EOS_EPICACCOUNTID_MAX_LENGTH];
+        int32_t eaid_length = EOS_EPICACCOUNTID_MAX_LENGTH;
+        EOS_EResult id_result = EOS_EpicAccountId_ToString(data->LocalUserId, eaid_string, &eaid_length);
+
+        if (id_result == EOS_EResult::EOS_Success) {
+            subsystem->epic_account_id = String(eaid_string);
+            UtilityFunctions::print("AuthenticationSubsystem: Epic Account ID: " + subsystem->epic_account_id);
+
+            // Get user display name - for now just use a default name
+            // The display name would need to be retrieved from UserInfo interface in a full implementation
+            subsystem->display_name = "Epic User";
+
+            // Now initiate Connect login with the Auth token
+            subsystem->initiate_connect_login_with_auth_token(data->LocalUserId);
+        } else {
+            UtilityFunctions::printerr("AuthenticationSubsystem: Failed to convert Epic Account ID to string");
+
+            // Call failure callback
+            if (subsystem->login_callback.is_valid()) {
+                Dictionary empty_user_info;
+                Array callback_args;
+                callback_args.push_back(false);
+                callback_args.push_back(empty_user_info);
+                subsystem->login_callback.callv(callback_args);
+            }
+        }
     } else {
         UtilityFunctions::printerr("AuthenticationSubsystem: Auth login failed: " + String::num_int64((int64_t)data->ResultCode));
+
+        // Call failure callback
+        if (subsystem->login_callback.is_valid()) {
+            Dictionary empty_user_info;
+            Array callback_args;
+            callback_args.push_back(false);
+            callback_args.push_back(empty_user_info);
+            subsystem->login_callback.callv(callback_args);
+        }
     }
 }
 
@@ -367,6 +407,9 @@ void EOS_CALL AuthenticationSubsystem::on_connect_login_complete(const EOS_Conne
 
     AuthenticationSubsystem* subsystem = static_cast<AuthenticationSubsystem*>(data->ClientData);
     if (!subsystem) return;
+
+    Dictionary user_info;
+    bool success = false;
 
     if (data->ResultCode == EOS_EResult::EOS_Success) {
         UtilityFunctions::print("AuthenticationSubsystem: Connect login successful");
@@ -381,8 +424,15 @@ void EOS_CALL AuthenticationSubsystem::on_connect_login_complete(const EOS_Conne
             subsystem->is_logged_in = true;
             subsystem->display_name = "Device User"; // Device ID login doesn't provide a display name
             subsystem->login_status = EOS_ELoginStatus::EOS_LS_LoggedIn;
+
             UtilityFunctions::print("AuthenticationSubsystem: Product User ID: " + subsystem->product_user_id);
             UtilityFunctions::print("AuthenticationSubsystem: Login completed successfully");
+
+            // Prepare user info for callback
+            user_info["display_name"] = subsystem->display_name;
+            user_info["epic_account_id"] = subsystem->epic_account_id;
+            user_info["product_user_id"] = subsystem->product_user_id;
+            success = true;
         } else {
             UtilityFunctions::printerr("AuthenticationSubsystem: Failed to convert Product User ID to string");
         }
@@ -392,6 +442,14 @@ void EOS_CALL AuthenticationSubsystem::on_connect_login_complete(const EOS_Conne
         subsystem->product_user_id = "";
         subsystem->display_name = "";
         subsystem->login_status = EOS_ELoginStatus::EOS_LS_NotLoggedIn;
+    }
+
+    // Call the login callback if it's set
+    if (subsystem->login_callback.is_valid()) {
+        Array callback_args;
+        callback_args.push_back(success);
+        callback_args.push_back(user_info);
+        subsystem->login_callback.callv(callback_args);
     }
 }
 
@@ -425,6 +483,50 @@ void EOS_CALL AuthenticationSubsystem::on_connect_login_status_changed(const EOS
     if (!data) return;
 
     UtilityFunctions::print("AuthenticationSubsystem: Connect login status changed: " + String::num_int64((int64_t)data->CurrentStatus));
+}
+
+void AuthenticationSubsystem::initiate_connect_login_with_auth_token(EOS_EpicAccountId epic_account_id) {
+    if (!connect_handle || !auth_handle) {
+        UtilityFunctions::printerr("AuthenticationSubsystem: Connect/Auth handles not available");
+        return;
+    }
+
+    // Get Auth Token for Connect login
+    EOS_Auth_Token* auth_token = nullptr;
+    EOS_Auth_CopyUserAuthTokenOptions copy_options = {};
+    copy_options.ApiVersion = EOS_AUTH_COPYUSERAUTHTOKEN_API_LATEST;
+
+    EOS_EResult copy_result = EOS_Auth_CopyUserAuthToken(auth_handle, &copy_options, epic_account_id, &auth_token);
+
+    if (copy_result == EOS_EResult::EOS_Success && auth_token) {
+        EOS_Connect_LoginOptions connect_options = {};
+        connect_options.ApiVersion = EOS_CONNECT_LOGIN_API_LATEST;
+
+        EOS_Connect_Credentials connect_credentials = {};
+        connect_credentials.ApiVersion = EOS_CONNECT_CREDENTIALS_API_LATEST;
+        connect_credentials.Type = EOS_EExternalCredentialType::EOS_ECT_EPIC;
+        connect_credentials.Token = auth_token->AccessToken;  // Use Auth Token
+
+        connect_options.Credentials = &connect_credentials;
+
+        EOS_Connect_Login(connect_handle, &connect_options, this, on_connect_login_complete);
+
+        // Clean up the auth token
+        EOS_Auth_Token_Release(auth_token);
+
+        UtilityFunctions::print("AuthenticationSubsystem: Connect login initiated with Auth token");
+    } else {
+        UtilityFunctions::printerr("AuthenticationSubsystem: Failed to copy Auth Token for Connect login");
+
+        // Call failure callback
+        if (login_callback.is_valid()) {
+            Dictionary empty_user_info;
+            Array callback_args;
+            callback_args.push_back(false);
+            callback_args.push_back(empty_user_info);
+            login_callback.callv(callback_args);
+        }
+    }
 }
 
 } // namespace godot

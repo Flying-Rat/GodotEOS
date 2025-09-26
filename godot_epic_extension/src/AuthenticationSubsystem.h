@@ -59,6 +59,7 @@ private:
     bool perform_persistent_auth_login();
     bool perform_account_portal_login();
     bool perform_developer_login(const Dictionary& credentials);
+    void initiate_connect_login_with_auth_token(EOS_EpicAccountId epic_account_id);
 
     // Static callback implementations
     static void EOS_CALL on_auth_login_complete(const EOS_Auth_LoginCallbackInfo* data);

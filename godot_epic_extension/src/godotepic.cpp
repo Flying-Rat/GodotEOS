@@ -58,6 +58,7 @@ void GodotEpic::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_leaderboard_user_scores"), &GodotEpic::get_leaderboard_user_scores);
 
 	ClassDB::bind_method(D_METHOD("test_subsystem_manager"), &GodotEpic::test_subsystem_manager);
+	ClassDB::bind_method(D_METHOD("on_authentication_completed", "success", "user_info"), &GodotEpic::on_authentication_completed);
 
 	// Signals
 	ADD_SIGNAL(MethodInfo("login_completed", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::DICTIONARY, "user_info")));
@@ -154,6 +155,9 @@ bool GodotEpic::initialize_platform(const Dictionary& options) {
 		ERR_PRINT("Failed to initialize subsystems");
 		return false;
 	}
+
+	// Set up authentication callback
+	setup_authentication_callback();
 
 	return true;
 }
@@ -1129,6 +1133,43 @@ Dictionary GodotEpic::test_subsystem_manager() {
 	test_results["test_messages"] = test_messages;
 
 	WARN_PRINT("SubsystemManager integration test completed!");
-	
+
 	return test_results;
+}
+
+void GodotEpic::setup_authentication_callback() {
+	auto auth = Get<IAuthenticationSubsystem>();
+	if (auth) {
+		// Create a callable that binds to our instance method
+		Callable callback = Callable(this, "on_authentication_completed");
+		auth->SetLoginCallback(callback);
+		ERR_PRINT("Authentication callback set up successfully");
+	} else {
+		ERR_PRINT("Failed to set up authentication callback - AuthenticationSubsystem not available");
+	}
+}
+
+void GodotEpic::on_authentication_completed(bool success, const Dictionary& user_info) {
+	ERR_PRINT("GodotEpic: Authentication completed - success: " + String(success ? "true" : "false"));
+
+	if (success) {
+		String display_name = user_info.get("display_name", "Unknown User");
+		String epic_account_id = user_info.get("epic_account_id", "");
+		String product_user_id = user_info.get("product_user_id", "");
+
+		ERR_PRINT("GodotEpic: Login successful for user: " + display_name);
+		ERR_PRINT("GodotEpic: Epic Account ID: " + epic_account_id);
+		ERR_PRINT("GodotEpic: Product User ID: " + product_user_id);
+
+		// Update legacy state for backward compatibility
+		is_logged_in = true;
+		current_username = display_name;
+	} else {
+		ERR_PRINT("GodotEpic: Login failed");
+		is_logged_in = false;
+		current_username = "";
+	}
+
+	// Emit the login_completed signal
+	emit_signal("login_completed", success, user_info);
 }

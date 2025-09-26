@@ -71,7 +71,7 @@ text = "2 - Login with Dev ID (TestUser123)"
 
 [node name="LoginDevice2Button" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup"]
 layout_mode = 2
-text = "3 - Login with Device ID"
+text = "3 - Login with Device ID (Player1)"
 
 [node name="LogoutButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup"]
 layout_mode = 2
