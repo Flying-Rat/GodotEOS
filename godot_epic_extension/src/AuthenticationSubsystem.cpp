@@ -380,25 +380,34 @@ void EOS_CALL AuthenticationSubsystem::on_auth_login_complete(const EOS_Auth_Log
             UtilityFunctions::print("AuthenticationSubsystem: Epic Account ID not available (this is normal for developer login)");
 
             // For developer login, we don't have a valid Epic Account ID, but auth was successful
-            // We'll skip Connect login and just complete with Auth-only login
+            // We'll attempt a Connect login with device ID to get a Product User ID
             subsystem->epic_account_id = ""; // No Epic Account ID available
             subsystem->display_name = "Developer User";
-            subsystem->is_logged_in = true;
             subsystem->login_status = EOS_ELoginStatus::EOS_LS_LoggedIn;
-            subsystem->product_user_id = ""; // No Product User ID without Connect
 
-            // Call success callback with Auth-only info
-            if (subsystem->login_callback.is_valid()) {
-                Dictionary user_info;
-                user_info["display_name"] = subsystem->display_name;
-                user_info["epic_account_id"] = subsystem->epic_account_id;
-                user_info["product_user_id"] = subsystem->product_user_id;
+            // Attempt Connect login with device ID to get Product User ID
+            UtilityFunctions::print("AuthenticationSubsystem: Attempting Connect login with device ID for developer account");
+            if (!subsystem->perform_device_id_login()) {
+                UtilityFunctions::printerr("AuthenticationSubsystem: Failed to initiate Connect login for developer account");
 
-                Array callback_args;
-                callback_args.push_back(true); // Success
-                callback_args.push_back(user_info);
-                subsystem->login_callback.callv(callback_args);
+                // If Connect login fails to initiate, complete with Auth-only login
+                subsystem->is_logged_in = true;
+                subsystem->product_user_id = ""; // No Product User ID without Connect
+
+                // Call success callback with Auth-only info
+                if (subsystem->login_callback.is_valid()) {
+                    Dictionary user_info;
+                    user_info["display_name"] = subsystem->display_name;
+                    user_info["epic_account_id"] = subsystem->epic_account_id;
+                    user_info["product_user_id"] = subsystem->product_user_id;
+
+                    Array callback_args;
+                    callback_args.push_back(true); // Success
+                    callback_args.push_back(user_info);
+                    subsystem->login_callback.callv(callback_args);
+                }
             }
+            // If Connect login is initiated successfully, the callback will handle completion
         }
     } else {
         String error_msg = "AuthenticationSubsystem: Auth login failed: " + String::num_int64((int64_t)data->ResultCode);
@@ -436,27 +445,36 @@ void EOS_CALL AuthenticationSubsystem::on_connect_login_complete(const EOS_Conne
         UtilityFunctions::print("AuthenticationSubsystem: Connect login successful");
 
         // Store Product User ID
-        char puid_string[EOS_PRODUCTUSERID_MAX_LENGTH];
-        int32_t puid_length = EOS_PRODUCTUSERID_MAX_LENGTH;
-        EOS_EResult id_result = EOS_ProductUserId_ToString(data->LocalUserId, puid_string, &puid_length);
+        if (data->LocalUserId) {
+            char puid_string[EOS_PRODUCTUSERID_MAX_LENGTH];
+            int32_t puid_length = EOS_PRODUCTUSERID_MAX_LENGTH;
+            EOS_EResult id_result = EOS_ProductUserId_ToString(data->LocalUserId, puid_string, &puid_length);
 
-        if (id_result == EOS_EResult::EOS_Success) {
-            subsystem->product_user_id = String(puid_string);
-            subsystem->is_logged_in = true;
-            subsystem->display_name = "Device User"; // Device ID login doesn't provide a display name
-            subsystem->login_status = EOS_ELoginStatus::EOS_LS_LoggedIn;
-
-            UtilityFunctions::print("AuthenticationSubsystem: Product User ID: " + subsystem->product_user_id);
-            UtilityFunctions::print("AuthenticationSubsystem: Login completed successfully");
-
-            // Prepare user info for callback
-            user_info["display_name"] = subsystem->display_name;
-            user_info["epic_account_id"] = subsystem->epic_account_id;
-            user_info["product_user_id"] = subsystem->product_user_id;
-            success = true;
+            if (id_result == EOS_EResult::EOS_Success) {
+                subsystem->product_user_id = String(puid_string);
+                UtilityFunctions::print("AuthenticationSubsystem: Product User ID: " + subsystem->product_user_id);
+            } else {
+                UtilityFunctions::printerr("AuthenticationSubsystem: Failed to convert Product User ID to string, error: " + String::num_int64((int64_t)id_result));
+                // Still continue, but with empty Product User ID
+                subsystem->product_user_id = "";
+            }
         } else {
-            UtilityFunctions::printerr("AuthenticationSubsystem: Failed to convert Product User ID to string");
+            UtilityFunctions::printerr("AuthenticationSubsystem: No LocalUserId provided in Connect login response");
+            subsystem->product_user_id = "";
         }
+
+        // Set logged in state regardless of Product User ID conversion
+        subsystem->is_logged_in = true;
+        subsystem->display_name = "Device User"; // Device ID login doesn't provide a display name
+        subsystem->login_status = EOS_ELoginStatus::EOS_LS_LoggedIn;
+
+        UtilityFunctions::print("AuthenticationSubsystem: Connect login completed successfully");
+
+        // Prepare user info for callback
+        user_info["display_name"] = subsystem->display_name;
+        user_info["epic_account_id"] = subsystem->epic_account_id;
+        user_info["product_user_id"] = subsystem->product_user_id;
+        success = true;
     } else {
         UtilityFunctions::printerr("AuthenticationSubsystem: Connect login failed: " + String::num_int64((int64_t)data->ResultCode));
         subsystem->is_logged_in = false;
