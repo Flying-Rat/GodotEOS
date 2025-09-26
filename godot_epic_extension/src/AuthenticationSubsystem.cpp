@@ -261,7 +261,7 @@ bool AuthenticationSubsystem::perform_device_id_login() {
     options.Credentials = &credentials;
     options.UserLoginInfo = nullptr;
 
-    EOS_Connect_Login(connect_handle, &options, nullptr, on_connect_login_complete);
+    EOS_Connect_Login(connect_handle, &options, this, on_connect_login_complete);
     return true;
 }
 
@@ -285,7 +285,7 @@ bool AuthenticationSubsystem::perform_exchange_code_login(const String& exchange
     options.Credentials = &credentials;
     options.UserLoginInfo = nullptr;
 
-    EOS_Connect_Login(connect_handle, &options, nullptr, on_connect_login_complete);
+    EOS_Connect_Login(connect_handle, &options, this, on_connect_login_complete);
     return true;
 }
 
@@ -365,6 +365,9 @@ void EOS_CALL AuthenticationSubsystem::on_auth_login_complete(const EOS_Auth_Log
 void EOS_CALL AuthenticationSubsystem::on_connect_login_complete(const EOS_Connect_LoginCallbackInfo* data) {
     if (!data) return;
 
+    AuthenticationSubsystem* subsystem = static_cast<AuthenticationSubsystem*>(data->ClientData);
+    if (!subsystem) return;
+
     if (data->ResultCode == EOS_EResult::EOS_Success) {
         UtilityFunctions::print("AuthenticationSubsystem: Connect login successful");
 
@@ -374,11 +377,21 @@ void EOS_CALL AuthenticationSubsystem::on_connect_login_complete(const EOS_Conne
         EOS_EResult id_result = EOS_ProductUserId_ToString(data->LocalUserId, puid_string, &puid_length);
 
         if (id_result == EOS_EResult::EOS_Success) {
-            // Note: In a full implementation, we'd need to store this in the subsystem instance
-            UtilityFunctions::print("AuthenticationSubsystem: Product User ID: " + String(puid_string));
+            subsystem->product_user_id = String(puid_string);
+            subsystem->is_logged_in = true;
+            subsystem->display_name = "Device User"; // Device ID login doesn't provide a display name
+            subsystem->login_status = EOS_ELoginStatus::EOS_LS_LoggedIn;
+            UtilityFunctions::print("AuthenticationSubsystem: Product User ID: " + subsystem->product_user_id);
+            UtilityFunctions::print("AuthenticationSubsystem: Login completed successfully");
+        } else {
+            UtilityFunctions::printerr("AuthenticationSubsystem: Failed to convert Product User ID to string");
         }
     } else {
         UtilityFunctions::printerr("AuthenticationSubsystem: Connect login failed: " + String::num_int64((int64_t)data->ResultCode));
+        subsystem->is_logged_in = false;
+        subsystem->product_user_id = "";
+        subsystem->display_name = "";
+        subsystem->login_status = EOS_ELoginStatus::EOS_LS_NotLoggedIn;
     }
 }
 

@@ -69,13 +69,13 @@ text = "1 - Login with Epic Account"
 layout_mode = 2
 text = "2 - Login with Dev ID (TestUser123)"
 
-[node name="LoginDevice2Button" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup"]
+[node name="LoginDeviceIdButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup"]
 layout_mode = 2
-text = "Alt+2 - Login with Dev ID (Player1)"
+text = "3 - Login with Device ID"
 
 [node name="LogoutButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup"]
 layout_mode = 2
-text = "3 - Logout"
+text = "4 - Logout"
 
 [node name="HSeparator3" type="HSeparator" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
 layout_mode = 2
@@ -90,11 +90,11 @@ text = "Friends"
 
 [node name="QueryFriendsButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/FriendsGroup"]
 layout_mode = 2
-text = "4 - Query Friends"
+text = "5 - Query Friends"
 
 [node name="GetFriendsButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/FriendsGroup"]
 layout_mode = 2
-text = "5 - Get Current Friends"
+text = "6 - Get Current Friends"
 
 [node name="HSeparator4" type="HSeparator" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
 layout_mode = 2
@@ -109,31 +109,31 @@ text = "Achievements"
 
 [node name="QueryAchDefsButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup"]
 layout_mode = 2
-text = "6 - Query Achievement Definitions"
+text = "7 - Query Achievement Definitions"
 
 [node name="QueryPlayerAchButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup"]
 layout_mode = 2
-text = "7 - Query Player Achievements"
+text = "8 - Query Player Achievements"
 
 [node name="GetAchDefsButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup"]
 layout_mode = 2
-text = "8 - Get Current Achievement Definitions"
+text = "9 - Get Current Achievement Definitions"
 
 [node name="GetPlayerAchButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup"]
 layout_mode = 2
-text = "9 - Get Current Player Achievements"
+text = "0 - Get Current Player Achievements"
 
 [node name="UnlockTestButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup"]
 layout_mode = 2
-text = "0 - Unlock Test Achievement"
+text = "Q - Unlock Test Achievement"
 
 [node name="GetSpecificDefButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup"]
 layout_mode = 2
-text = "Q - Get Specific Achievement Definition"
+text = "W - Get Specific Achievement Definition"
 
 [node name="GetSpecificPlayerButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup"]
 layout_mode = 2
-text = "W - Get Specific Player Achievement"
+text = "E - Get Specific Player Achievement"
 
 [node name="HSeparator5" type="HSeparator" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
 layout_mode = 2
