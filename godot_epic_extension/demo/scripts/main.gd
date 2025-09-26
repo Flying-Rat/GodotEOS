@@ -119,12 +119,12 @@ func _on_login_epic_pressed():
 	godot_epic.login_with_epic_account("", "")
 
 func _on_login_device_pressed():
-	add_output_line("[color=cyan]🔐 Starting Device ID login (TestUser123)...[/color]")
-	godot_epic.login_with_device_id("TestUser123")
+	add_output_line("[color=cyan]🔐 Starting Dev login (TestUser123)...[/color]")
+	godot_epic.login_with_dev("TestUser123")
 
 func _on_login_device2_pressed():
-	add_output_line("[color=cyan]🔐 Starting Device ID login (Player1)...[/color]")
-	godot_epic.login_with_device_id("Player1")
+	add_output_line("[color=cyan]🔐 Starting Dev login (Player1)...[/color]")
+	godot_epic.login_with_dev("Player1")
 
 func _on_logout_pressed():
 	if godot_epic.is_user_logged_in():

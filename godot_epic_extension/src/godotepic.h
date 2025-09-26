@@ -76,6 +76,7 @@ public:
 	// Authentication methods
 	void login_with_epic_account(const String& email, const String& password);
 	void login_with_device_id(const String& display_name);
+	void login_with_dev(const String& display_name);
 	void logout();
 	bool is_user_logged_in() const;
 	String get_current_username() const;

@@ -67,11 +67,11 @@ text = "1 - Login with Epic Account"
 
 [node name="LoginDeviceButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup"]
 layout_mode = 2
-text = "2 - Login with Device ID (TestUser123)"
+text = "2 - Login with Dev ID (TestUser123)"
 
 [node name="LoginDevice2Button" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup"]
 layout_mode = 2
-text = "Alt+2 - Login with Device ID (Player1)"
+text = "Alt+2 - Login with Dev ID (Player1)"
 
 [node name="LogoutButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup"]
 layout_mode = 2

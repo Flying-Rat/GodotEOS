@@ -99,6 +99,8 @@ bool AuthenticationSubsystem::Login(const String& login_type, const Dictionary& 
 
     if (login_type == "epic_account") {
         return perform_epic_account_login(credentials);
+    } else if (login_type == "dev") {
+        return perform_developer_login(credentials);
     } else if (login_type == "device_id") {
         return perform_device_id_login();
     } else if (login_type == "exchange_code") {
@@ -232,11 +234,15 @@ bool AuthenticationSubsystem::perform_epic_account_login(const Dictionary& crede
     options.ApiVersion = EOS_AUTH_LOGIN_API_LATEST;
     options.ScopeFlags = EOS_EAuthScopeFlags::EOS_AS_BasicProfile | EOS_EAuthScopeFlags::EOS_AS_FriendsList | EOS_EAuthScopeFlags::EOS_AS_Presence;
 
+    // Keep CharString temporaries alive for the duration of the call
+    godot::CharString email_cs = email.utf8();
+    godot::CharString password_cs = password.utf8();
+
     EOS_Auth_Credentials credentials_struct = {};
     credentials_struct.ApiVersion = EOS_AUTH_CREDENTIALS_API_LATEST;
     credentials_struct.Type = EOS_ELoginCredentialType::EOS_LCT_Password;
-    credentials_struct.Id = email.utf8().get_data();
-    credentials_struct.Token = password.utf8().get_data();
+    credentials_struct.Id = email_cs.get_data();
+    credentials_struct.Token = password_cs.get_data();
 
     options.Credentials = &credentials_struct;
 
@@ -268,10 +274,13 @@ bool AuthenticationSubsystem::perform_exchange_code_login(const String& exchange
     EOS_Connect_LoginOptions options = {};
     options.ApiVersion = EOS_CONNECT_LOGIN_API_LATEST;
 
+    // Keep CharString temporary alive for the duration of the call
+    godot::CharString exchange_code_cs = exchange_code.utf8();
+
     EOS_Connect_Credentials credentials = {};
     credentials.ApiVersion = EOS_CONNECT_CREDENTIALS_API_LATEST;
     credentials.Type = EOS_EExternalCredentialType::EOS_ECT_EPIC_ID_TOKEN;
-    credentials.Token = exchange_code.utf8().get_data();
+    credentials.Token = exchange_code_cs.get_data();
 
     options.Credentials = &credentials;
     options.UserLoginInfo = nullptr;
@@ -314,8 +323,8 @@ bool AuthenticationSubsystem::perform_developer_login(const Dictionary& credenti
     String id = credentials.get("id", "");
     String token = credentials.get("token", "");
 
-    if (id.is_empty() || token.is_empty()) {
-        UtilityFunctions::printerr("AuthenticationSubsystem: ID and token required for developer login");
+    if (id.is_empty()) {
+        UtilityFunctions::printerr("AuthenticationSubsystem: ID required for developer login");
         return false;
     }
 
@@ -323,11 +332,15 @@ bool AuthenticationSubsystem::perform_developer_login(const Dictionary& credenti
     options.ApiVersion = EOS_AUTH_LOGIN_API_LATEST;
     options.ScopeFlags = EOS_EAuthScopeFlags::EOS_AS_BasicProfile | EOS_EAuthScopeFlags::EOS_AS_FriendsList | EOS_EAuthScopeFlags::EOS_AS_Presence;
 
+    // Keep CharString temporaries alive for the duration of the call
+    godot::CharString id_cs = id.utf8();
+    godot::CharString token_cs = token.utf8();
+
     EOS_Auth_Credentials credentials_struct = {};
     credentials_struct.ApiVersion = EOS_AUTH_CREDENTIALS_API_LATEST;
     credentials_struct.Type = EOS_ELoginCredentialType::EOS_LCT_Developer;
-    credentials_struct.Id = id.utf8().get_data();
-    credentials_struct.Token = token.utf8().get_data();
+    credentials_struct.Id = id_cs.get_data();
+    credentials_struct.Token = token_cs.get_data();
 
     options.Credentials = &credentials_struct;
 
