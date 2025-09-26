@@ -8,7 +8,7 @@ var godot_epic: GodotEpic = null
 
 # Button references
 @onready var login_epic_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup/LoginEpicButton
-@onready var login_device_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup/LoginDeviceButton
+@onready var login_device1_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup/LoginDevice1Button
 @onready var login_device2_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup/LoginDevice2Button
 @onready var logout_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup/LogoutButton
 @onready var query_friends_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/FriendsGroup/QueryFriendsButton
@@ -38,7 +38,7 @@ func _ready():
 
 	# Connect button signals
 	login_epic_button.pressed.connect(_on_login_epic_pressed)
-	login_device_button.pressed.connect(_on_login_device_pressed)
+	login_device1_button.pressed.connect(_on_login_device1_pressed)
 	login_device2_button.pressed.connect(_on_login_device2_pressed)
 	logout_button.pressed.connect(_on_logout_pressed)
 	query_friends_button.pressed.connect(_on_query_friends_pressed)
@@ -118,7 +118,7 @@ func _on_login_epic_pressed():
 	add_output_line("[color=cyan]🔐 Starting Epic Account login...[/color]")
 	godot_epic.login_with_epic_account("", "")
 
-func _on_login_device_pressed():
+func _on_login_device1_pressed():
 	add_output_line("[color=cyan]🔐 Starting Dev login (TestUser123)...[/color]")
 	godot_epic.login_with_dev("TestUser123")
 
@@ -233,7 +233,7 @@ func _input(event):
 			KEY_1:
 				_on_login_epic_pressed()
 			KEY_2:
-				_on_login_device_pressed()
+				_on_login_device1_pressed()
 			KEY_3:
 				_on_logout_pressed()
 			KEY_4:
