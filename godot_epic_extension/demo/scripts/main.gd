@@ -23,6 +23,13 @@ var godot_epic: GodotEpic = null
 @onready var clear_output_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/ClearOutputButton
 @onready var test_subsystem_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/TestSubsystemButton
 
+# Auto-test variables
+var auto_test_timer: Timer = null
+var auto_test_step: int = 0
+var auto_test_enabled: bool = true  # Set to false to disable auto-test
+var auto_test_time_accumulator: float = 0.0
+var auto_test_current_delay: float = 0.0
+
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	godot_epic = GodotEpic.get_singleton()
@@ -78,6 +85,10 @@ func _ready():
 		add_output_line("• Achievements System")
 		add_output_line("")
 		add_output_line("[i]Use the buttons on the left or keyboard shortcuts (1-9, 0, Q, W, Alt+2)[/i]")
+		
+		# Start auto-test if enabled
+		if auto_test_enabled:
+			start_auto_test()
 	else:
 		status_label.text = "❌ Initialization Failed"
 		add_output_line("[color=red]❌ Failed to initialize EOS Platform![/color]")
@@ -92,6 +103,14 @@ func _process(_delta):
 	# Tick the EOS platform to handle callbacks and updates
 	if godot_epic and godot_epic.is_platform_initialized():
 		godot_epic.tick()
+	
+	# Handle auto-test timing
+	if auto_test_enabled and auto_test_step >= 0 and auto_test_current_delay > 0:
+		auto_test_time_accumulator += _delta
+		if auto_test_time_accumulator >= auto_test_current_delay:
+			auto_test_time_accumulator = 0.0
+			auto_test_current_delay = 0.0
+			_on_auto_test_timer_timeout()
 
 
 # Helper function to add formatted output
@@ -102,14 +121,17 @@ func add_output_line(text: String):
 
 func update_button_states():
 	var is_logged_in = godot_epic and godot_epic.is_user_logged_in()
+	var has_product_user_id = godot_epic and not godot_epic.get_product_user_id().is_empty()
 
 	# Update buttons that require login
 	query_friends_button.disabled = not is_logged_in
 	get_friends_button.disabled = not is_logged_in
-	query_player_ach_button.disabled = not is_logged_in
-	get_player_ach_button.disabled = not is_logged_in
-	unlock_test_button.disabled = not is_logged_in
-	get_specific_player_button.disabled = not is_logged_in
+	
+	# Achievements require Product User ID (cross-platform features)
+	query_player_ach_button.disabled = not (is_logged_in and has_product_user_id)
+	get_player_ach_button.disabled = not (is_logged_in and has_product_user_id)
+	unlock_test_button.disabled = not (is_logged_in and has_product_user_id)
+	get_specific_player_button.disabled = not (is_logged_in and has_product_user_id)
 
 	logout_button.disabled = not is_logged_in
 
@@ -154,8 +176,12 @@ func _on_query_ach_defs_pressed():
 
 func _on_query_player_ach_pressed():
 	if godot_epic.is_user_logged_in():
-		add_output_line("[color=yellow]🎯 Querying player achievements...[/color]")
-		godot_epic.query_player_achievements()
+		var product_user_id = godot_epic.get_product_user_id()
+		if not product_user_id.is_empty():
+			add_output_line("[color=yellow]🎯 Querying player achievements...[/color]")
+			godot_epic.query_player_achievements()
+		else:
+			add_output_line("[color=orange]⚠️ Achievements require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
 	else:
 		add_output_line("[color=red]❌ Please login first![/color]")
 
@@ -166,16 +192,24 @@ func _on_get_ach_defs_pressed():
 
 func _on_get_player_ach_pressed():
 	if godot_epic.is_user_logged_in():
-		add_output_line("[color=yellow]🎯 Getting current player achievements...[/color]")
-		var achievements = godot_epic.get_player_achievements()
-		_display_player_achievements(achievements)
+		var product_user_id = godot_epic.get_product_user_id()
+		if not product_user_id.is_empty():
+			add_output_line("[color=yellow]🎯 Getting current player achievements...[/color]")
+			var achievements = godot_epic.get_player_achievements()
+			_display_player_achievements(achievements)
+		else:
+			add_output_line("[color=orange]⚠️ Achievements require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
 	else:
 		add_output_line("[color=red]❌ Please login first![/color]")
 
 func _on_unlock_test_pressed():
 	if godot_epic.is_user_logged_in():
-		add_output_line("[color=purple]🎉 Attempting to unlock test achievement...[/color]")
-		godot_epic.unlock_achievement("test_achievement")
+		var product_user_id = godot_epic.get_product_user_id()
+		if not product_user_id.is_empty():
+			add_output_line("[color=purple]🎉 Attempting to unlock test achievement...[/color]")
+			godot_epic.unlock_achievement("test_achievement")
+		else:
+			add_output_line("[color=orange]⚠️ Achievements require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
 	else:
 		add_output_line("[color=red]❌ Please login first![/color]")
 
@@ -186,9 +220,13 @@ func _on_get_specific_def_pressed():
 
 func _on_get_specific_player_pressed():
 	if godot_epic.is_user_logged_in():
-		add_output_line("[color=yellow]🎯 Getting specific player achievement...[/color]")
-		var achievement = godot_epic.get_player_achievement("test_achievement")
-		_display_single_player_achievement(achievement)
+		var product_user_id = godot_epic.get_product_user_id()
+		if not product_user_id.is_empty():
+			add_output_line("[color=yellow]🎯 Getting specific player achievement...[/color]")
+			var achievement = godot_epic.get_player_achievement("test_achievement")
+			_display_single_player_achievement(achievement)
+		else:
+			add_output_line("[color=orange]⚠️ Achievements require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
 	else:
 		add_output_line("[color=red]❌ Please login first![/color]")
 
@@ -447,6 +485,76 @@ func _display_single_player_achievement(achievement: Dictionary):
 			var threshold = stat.get("threshold_value", 0)
 			add_output_line("    • " + str(stat.get("name", "Unknown")) + ": " + str(current) + "/" + str(threshold))
 	add_output_line("")
+
+
+# Auto-test functions
+func start_auto_test():
+	add_output_line("")
+	add_output_line("[color=magenta]🤖 Starting automated test sequence...[/color]")
+	add_output_line("[color=magenta]Test steps: Login → Query Friends → Query Achievements[/color]")
+	add_output_line("")
+	
+	auto_test_step = 0
+	auto_test_time_accumulator = 0.0
+	auto_test_current_delay = 2.0  # Initial delay before starting
+	
+	add_output_line("[color=gray]🤖 Process-based timer started (step: " + str(auto_test_step) + ", delay: " + str(auto_test_current_delay) + ")[/color]")
+
+func _on_auto_test_timer_timeout():
+	add_output_line("[color=gray]🤖 Process timeout triggered (step: " + str(auto_test_step) + ")[/color]")
+	
+	match auto_test_step:
+		0:
+			# Step 0: Login with dev id "TestUser123"
+			add_output_line("[color=magenta]🤖 Auto-test Step 1/3: Logging in with TestUser123...[/color]")
+			godot_epic.login_with_dev("TestUser123")
+			auto_test_step = 1
+			auto_test_current_delay = 5.0
+			
+		1:
+			# Step 1: Query friends (only if logged in)
+			if godot_epic.is_user_logged_in():
+				add_output_line("[color=magenta]🤖 Auto-test Step 2/3: Querying friends...[/color]")
+				godot_epic.query_friends()
+				auto_test_step = 2
+				auto_test_current_delay = 5.0
+			else:
+				add_output_line("[color=red]🤖 Auto-test failed: Not logged in, skipping friends query[/color]")
+				auto_test_step = 3
+				auto_test_current_delay = 5.0
+				
+		2:
+			# Step 2: Query achievements (only if we have Product User ID)
+			if godot_epic.is_user_logged_in():
+				var product_user_id = godot_epic.get_product_user_id()
+				if not product_user_id.is_empty():
+					add_output_line("[color=magenta]🤖 Auto-test Step 3/3: Querying achievements...[/color]")
+					godot_epic.query_player_achievements()
+					auto_test_step = 3
+					auto_test_current_delay = 5.0
+				else:
+					add_output_line("[color=orange]🤖 Auto-test: Skipping achievements (no Product User ID - Connect service unavailable)[/color]")
+					auto_test_step = 3
+					auto_test_current_delay = 5.0
+			else:
+				add_output_line("[color=red]🤖 Auto-test failed: Not logged in, skipping achievements query[/color]")
+				auto_test_step = 3
+				auto_test_current_delay = 5.0
+				
+		3:
+			# Step 3: Finish auto-test
+			add_output_line("[color=magenta]🤖 Auto-test completed![/color]")
+			var product_user_id = godot_epic.get_product_user_id()
+			if not product_user_id.is_empty():
+				add_output_line("[color=green]✓ Cross-platform features available (Product User ID: " + product_user_id + ")[/color]")
+			else:
+				add_output_line("[color=orange]⚠ Cross-platform features disabled (no Product User ID)[/color]")
+			add_output_line("[color=magenta]You can now interact with the demo manually.[/color]")
+			add_output_line("")
+			
+			# Clean up
+			auto_test_step = -1  # Disable auto-test
+			auto_test_current_delay = 0.0
 
 
 # Called when the node is about to be removed from the scene

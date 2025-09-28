@@ -2,8 +2,10 @@
 
 #include "IAuthenticationSubsystem.h"
 #include "../eos_sdk/Include/eos_sdk.h"
+#include "../eos_sdk/Include/eos_base.h"
 #include "../eos_sdk/Include/eos_auth.h"
 #include "../eos_sdk/Include/eos_connect.h"
+#include "../eos_sdk/Include/eos_logging.h"
 #include <godot_cpp/classes/ref.hpp>
 #include <godot_cpp/variant/string.hpp>
 #include <godot_cpp/variant/callable.hpp>
@@ -31,10 +33,15 @@ public:
     virtual int GetLoginStatus() const override;
     virtual void SetLoginCallback(const Callable& callback) override;
 
+    // Additional getter for raw EOS handle
+    EOS_EpicAccountId GetRawEpicAccountId() const;
+
 private:
     // EOS handles
+    EOS_HPlatform platform_handle;
     EOS_HAuth auth_handle;
     EOS_HConnect connect_handle;
+    EOS_ProductUserId local_user_id;
 
     // State
     bool is_logged_in;
@@ -67,6 +74,9 @@ private:
     static void EOS_CALL auth_logout_callback(const EOS_Auth_LogoutCallbackInfo* data);
     static void EOS_CALL connect_login_callback(const EOS_Connect_LoginCallbackInfo* data);
 
+    static void EOS_CALL on_auth_logout_complete(const EOS_Auth_LogoutCallbackInfo* data);
+    static void EOS_CALL on_auth_login_complete(const EOS_Auth_LoginCallbackInfo* data);
+    static void EOS_CALL on_connect_login_complete(const EOS_Connect_LoginCallbackInfo* data);
     static void EOS_CALL on_connect_logout_complete(const EOS_Connect_LogoutCallbackInfo* data);
     static void EOS_CALL on_auth_login_status_changed(const EOS_Auth_LoginStatusChangedCallbackInfo* data);
     static void EOS_CALL on_connect_login_status_changed(const EOS_Connect_LoginStatusChangedCallbackInfo* data);

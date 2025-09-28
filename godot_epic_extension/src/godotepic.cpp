@@ -80,7 +80,6 @@ GodotEpic::GodotEpic() {
 	instance = this;
 
 	// Initialize authentication state
-	epic_account_id = nullptr;
 	product_user_id = nullptr;
 	is_logged_in = false;
 	current_username = "";
@@ -279,9 +278,15 @@ String GodotEpic::get_product_user_id() const {
 
 // Friends methods
 void GodotEpic::query_friends() {
+	auto auth = Get<IAuthenticationSubsystem>();
+	if (!auth || !auth->IsLoggedIn()) {
+		ERR_PRINT("AuthenticationSubsystem not available or user not logged in");
+		return;
+	}
+
 	EOS_HPlatform platform_handle = get_platform_handle();
-	if (!platform_handle || !epic_account_id) {
-		ERR_PRINT("Platform not initialized or user not logged in");
+	if (!platform_handle) {
+		ERR_PRINT("Platform not initialized");
 		return;
 	}
 
@@ -293,7 +298,7 @@ void GodotEpic::query_friends() {
 
 	EOS_Friends_QueryFriendsOptions query_options = {};
 	query_options.ApiVersion = EOS_FRIENDS_QUERYFRIENDS_API_LATEST;
-	query_options.LocalUserId = epic_account_id;
+	query_options.LocalUserId = static_cast<AuthenticationSubsystem*>(auth)->GetRawEpicAccountId();
 
 	EOS_Friends_QueryFriends(friends_handle, &query_options, nullptr, friends_query_callback);
 	ERR_PRINT("Friends query initiated");
@@ -302,9 +307,15 @@ void GodotEpic::query_friends() {
 Array GodotEpic::get_friends_list() {
 	Array friends_array;
 
+	auto auth = Get<IAuthenticationSubsystem>();
+	if (!auth || !auth->IsLoggedIn()) {
+		ERR_PRINT("AuthenticationSubsystem not available or user not logged in");
+		return friends_array;
+	}
+
 	EOS_HPlatform platform_handle = get_platform_handle();
-	if (!platform_handle || !epic_account_id) {
-		ERR_PRINT("Platform not initialized or user not logged in");
+	if (!platform_handle) {
+		ERR_PRINT("Platform not initialized");
 		return friends_array;
 	}
 
@@ -316,14 +327,14 @@ Array GodotEpic::get_friends_list() {
 
 	EOS_Friends_GetFriendsCountOptions count_options = {};
 	count_options.ApiVersion = EOS_FRIENDS_GETFRIENDSCOUNT_API_LATEST;
-	count_options.LocalUserId = epic_account_id;
+	count_options.LocalUserId = static_cast<AuthenticationSubsystem*>(auth)->GetRawEpicAccountId();
 
 	int32_t friends_count = EOS_Friends_GetFriendsCount(friends_handle, &count_options);
 
 	for (int32_t i = 0; i < friends_count; i++) {
 		EOS_Friends_GetFriendAtIndexOptions friend_options = {};
 		friend_options.ApiVersion = EOS_FRIENDS_GETFRIENDATINDEX_API_LATEST;
-		friend_options.LocalUserId = epic_account_id;
+		friend_options.LocalUserId = static_cast<AuthenticationSubsystem*>(auth)->GetRawEpicAccountId();
 		friend_options.Index = i;
 
 		EOS_EpicAccountId friend_id = EOS_Friends_GetFriendAtIndex(friends_handle, &friend_options);
@@ -341,7 +352,7 @@ Array GodotEpic::get_friends_list() {
 				// Get friend status
 				EOS_Friends_GetStatusOptions status_options = {};
 				status_options.ApiVersion = EOS_FRIENDS_GETSTATUS_API_LATEST;
-				status_options.LocalUserId = epic_account_id;
+				status_options.LocalUserId = static_cast<AuthenticationSubsystem*>(auth)->GetRawEpicAccountId();
 				status_options.TargetUserId = friend_id;
 
 				EOS_EFriendsStatus status = EOS_Friends_GetStatus(friends_handle, &status_options);
@@ -374,9 +385,15 @@ Array GodotEpic::get_friends_list() {
 Dictionary GodotEpic::get_friend_info(const String& friend_id) {
 	Dictionary friend_info;
 
+	auto auth = Get<IAuthenticationSubsystem>();
+	if (!auth || !auth->IsLoggedIn()) {
+		ERR_PRINT("AuthenticationSubsystem not available or user not logged in");
+		return friend_info;
+	}
+
 	EOS_HPlatform platform_handle = get_platform_handle();
-	if (!platform_handle || !epic_account_id) {
-		ERR_PRINT("Platform not initialized or user not logged in");
+	if (!platform_handle) {
+		ERR_PRINT("Platform not initialized");
 		return friend_info;
 	}
 
@@ -507,7 +524,7 @@ void EOS_CALL GodotEpic::auth_login_callback(const EOS_Auth_LoginCallbackInfo* d
 	}
 
 	if (data->ResultCode == EOS_EResult::EOS_Success) {
-		instance->epic_account_id = data->LocalUserId;
+		// instance->epic_account_id = data->LocalUserId; // Now handled by AuthenticationSubsystem
 		instance->is_logged_in = true;
 
 		// Get user info
@@ -633,7 +650,7 @@ void EOS_CALL GodotEpic::auth_logout_callback(const EOS_Auth_LogoutCallbackInfo*
 	}
 
 	if (data->ResultCode == EOS_EResult::EOS_Success) {
-		instance->epic_account_id = data->LocalUserId;
+		// instance->epic_account_id = data->LocalUserId; // Now handled by AuthenticationSubsystem
 		instance->product_user_id = nullptr;
 		instance->is_logged_in = false;
 		instance->current_username = "";

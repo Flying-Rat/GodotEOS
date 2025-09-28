@@ -25,7 +25,6 @@ private:
 	static GodotEpic* instance;
 
 	// Authentication state
-	EOS_EpicAccountId epic_account_id;
 	EOS_ProductUserId product_user_id;
 	bool is_logged_in;
 	String current_username;
