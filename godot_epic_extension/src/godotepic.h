@@ -29,29 +29,13 @@ private:
 	bool is_logged_in;
 	String current_username;
 
-	// Achievements state
-	EOS_NotificationId achievements_notification_id;
-	bool achievements_definitions_cached;
-	bool player_achievements_cached;
-
 	double time_passed;
 
 	// EOS logging callback
 	static void EOS_CALL logging_callback(const EOS_LogMessage* message);
 
-	// Authentication callbacks
-	static void EOS_CALL auth_login_callback(const EOS_Auth_LoginCallbackInfo* data);
-	static void EOS_CALL auth_logout_callback(const EOS_Auth_LogoutCallbackInfo* data);
-	static void EOS_CALL connect_login_callback(const EOS_Connect_LoginCallbackInfo* data);
-
 	// Friends callbacks
 	static void EOS_CALL friends_query_callback(const EOS_Friends_QueryFriendsCallbackInfo* data);
-
-	// Achievements callbacks
-	static void EOS_CALL achievements_query_definitions_callback(const EOS_Achievements_OnQueryDefinitionsCompleteCallbackInfo* data);
-	static void EOS_CALL achievements_query_player_callback(const EOS_Achievements_OnQueryPlayerAchievementsCompleteCallbackInfo* data);
-	static void EOS_CALL achievements_unlock_callback(const EOS_Achievements_OnUnlockAchievementsCompleteCallbackInfo* data);
-	static void EOS_CALL achievements_unlocked_notification(const EOS_Achievements_OnAchievementsUnlockedCallbackV2Info* data);
 
 protected:
 	static void _bind_methods();
@@ -106,9 +90,6 @@ public:
 	// Status methods
 	bool is_platform_initialized() const;
 	EOS_HPlatform get_platform_handle() const;
-
-		// Test method for SubsystemManager functionality
-	Dictionary test_subsystem_manager();
 
 private:
 	// Helper methods

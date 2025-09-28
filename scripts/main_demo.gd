@@ -11,7 +11,6 @@ extends Control
 @onready var leaderboard_button = $VBoxContainer/FeaturesSection/LeaderboardButton
 @onready var save_button = $VBoxContainer/FeaturesSection/FeaturesGrid/SaveButton
 @onready var load_button = $VBoxContainer/FeaturesSection/FeaturesGrid/LoadButton
-@onready var test_button = $VBoxContainer/FeaturesSection/FeaturesGrid/TestButton
 
 @onready var output_text = $VBoxContainer/OutputSection/ScrollContainer/OutputText
 
@@ -24,7 +23,6 @@ func _ready():
 	leaderboard_button.pressed.connect(_on_leaderboard_pressed)
 	save_button.pressed.connect(_on_save_pressed)
 	load_button.pressed.connect(_on_load_pressed)
-	test_button.pressed.connect(_on_test_pressed)
 
 	# Connect EOS signals
 	EpicOS.login_completed.connect(_on_login_completed)
@@ -109,10 +107,6 @@ func _on_save_pressed():
 func _on_load_pressed():
 	_add_output("Loading game data from cloud...")
 	EpicOS.load_file("demo_save.json")
-
-func _on_test_pressed():
-	_add_output("Testing SubsystemManager...")
-	EpicOS.test_subsystem_manager()
 
 # EOS Event Handlers
 func _on_login_completed(success: bool, user_info: Dictionary):

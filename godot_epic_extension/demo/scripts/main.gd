@@ -21,7 +21,6 @@ var godot_epic: GodotEpic = null
 @onready var get_specific_def_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup/GetSpecificDefButton
 @onready var get_specific_player_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup/GetSpecificPlayerButton
 @onready var clear_output_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/ClearOutputButton
-@onready var test_subsystem_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/TestSubsystemButton
 
 # Auto-test variables
 var auto_test_timer: Timer = null
@@ -57,10 +56,10 @@ func _ready():
 	unlock_test_button.pressed.connect(_on_unlock_test_pressed)
 	get_specific_def_button.pressed.connect(_on_get_specific_def_pressed)
 	get_specific_player_button.pressed.connect(_on_get_specific_player_pressed)
-	clear_output_button.pressed.connect(_on_clear_output_pressed)
-	test_subsystem_button.pressed.connect(_on_test_subsystem_pressed)
-
-	# Example initialization options for Epic Online Services
+	clear_output_button.connect("pressed", Callable(self, "_on_clear_output_pressed"))
+	
+	# Connect achievement buttons
+	get_specific_player_button.connect("pressed", Callable(self, "_on_get_specific_player_pressed"))	# Example initialization options for Epic Online Services
 	var init_options = {
 		"product_name": "GodotEpic Demo",
 		"product_version": "1.0.0",
@@ -234,31 +233,6 @@ func _on_clear_output_pressed():
 	if output_text:
 		output_text.clear()
 		add_output_line("[i]Output cleared[/i]")
-
-func _on_test_subsystem_pressed():
-	add_output_line("[color=magenta]🔧 Testing Subsystem Manager functionality...[/color]")
-	var test_results = godot_epic.test_subsystem_manager()
-
-	# Display test results in UI
-	if test_results.has("all_tests_passed"):
-		var passed = test_results["all_tests_passed"]
-		var status_color = "green" if passed else "red"
-		var status_icon = "✅" if passed else "❌"
-		add_output_line("[" + status_color + "]" + status_icon + " Overall Test Result: " + ("PASSED" if passed else "FAILED") + "[/" + status_color + "]")
-
-	if test_results.has("subsystem_count"):
-		add_output_line("Subsystem Count: " + str(test_results["subsystem_count"]))
-
-	if test_results.has("test_messages"):
-		var messages = test_results["test_messages"]
-		if messages.size() > 0:
-			add_output_line("Test Details:")
-			for msg in messages:
-				add_output_line("  " + str(msg))
-		else:
-			add_output_line("No test messages available")
-
-	add_output_line("")
 
 func _input(event):
 	if event is InputEventKey and event.pressed:
