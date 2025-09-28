@@ -346,171 +346,247 @@ bool AuthenticationSubsystem::perform_developer_login(const Dictionary& credenti
 
     options.Credentials = &credentials_struct;
 
-    EOS_Auth_Login(auth_handle, &options, this, on_auth_login_complete);
+    EOS_Auth_Login(auth_handle, &options, this, auth_login_callback);
     return true;
 }
 
-// Static callback implementations
-void EOS_CALL AuthenticationSubsystem::on_auth_login_complete(const EOS_Auth_LoginCallbackInfo* data) {
-    if (!data) return;
+void EOS_CALL AuthenticationSubsystem::logging_callback(const EOS_LogMessage* message) {
+	if (!message || !message->Message) {
+		return;
+	}
 
-    // Get the subsystem instance from ClientData
-    AuthenticationSubsystem* subsystem = static_cast<AuthenticationSubsystem*>(data->ClientData);
-    if (!subsystem) return;
+	String log_text = String::utf8(message->Message);
+	String category = message->Category ? String::utf8(message->Category) : "EOS";
 
-    if (data->ResultCode == EOS_EResult::EOS_Success) {
-        UtilityFunctions::print("AuthenticationSubsystem: Auth login successful");
-
-        // Store Epic Account ID
-        char eaid_string[EOS_EPICACCOUNTID_MAX_LENGTH];
-        int32_t eaid_length = EOS_EPICACCOUNTID_MAX_LENGTH;
-        EOS_EResult id_result = EOS_EpicAccountId_ToString(data->LocalUserId, eaid_string, &eaid_length);
-
-        if (id_result == EOS_EResult::EOS_Success) {
-            subsystem->epic_account_id = String(eaid_string);
-            UtilityFunctions::print("AuthenticationSubsystem: Epic Account ID: " + subsystem->epic_account_id);
-
-            // Get user display name - for now just use a default name
-            // The display name would need to be retrieved from UserInfo interface in a full implementation
-            subsystem->display_name = "Epic User";
-
-            // Now initiate Connect login with the Auth token
-            subsystem->initiate_connect_login_with_auth_token(data->LocalUserId);
-        } else {
-            UtilityFunctions::print("AuthenticationSubsystem: Epic Account ID not available (this is normal for developer login)");
-
-            // For developer login, we don't have a valid Epic Account ID, but auth was successful
-            // We'll attempt a Connect login with device ID to get a Product User ID
-            subsystem->epic_account_id = ""; // No Epic Account ID available
-            subsystem->display_name = "Developer User";
-            subsystem->login_status = EOS_ELoginStatus::EOS_LS_LoggedIn;
-
-            // Attempt Connect login with device ID to get Product User ID
-            UtilityFunctions::print("AuthenticationSubsystem: Attempting Connect login with device ID for developer account");
-            if (!subsystem->perform_device_id_login()) {
-                UtilityFunctions::printerr("AuthenticationSubsystem: Failed to initiate Connect login for developer account");
-
-                // If Connect login fails to initiate, complete with Auth-only login
-                subsystem->is_logged_in = true;
-                subsystem->product_user_id = ""; // No Product User ID without Connect
-
-                // Call success callback with Auth-only info
-                if (subsystem->login_callback.is_valid()) {
-                    Dictionary user_info;
-                    user_info["display_name"] = subsystem->display_name;
-                    user_info["epic_account_id"] = subsystem->epic_account_id;
-                    user_info["product_user_id"] = subsystem->product_user_id;
-
-                    Array callback_args;
-                    callback_args.push_back(true); // Success
-                    callback_args.push_back(user_info);
-                    subsystem->login_callback.callv(callback_args);
-                }
-            }
-            // If Connect login is initiated successfully, the callback will handle completion
-        }
-    } else {
-        String error_msg = "AuthenticationSubsystem: Auth login failed: " + String::num_int64((int64_t)data->ResultCode);
-
-        // Provide specific error guidance for developer login
-        if (data->ResultCode == EOS_EResult::EOS_InvalidParameters) {
-            error_msg += " (Invalid parameters - EOS Dev Auth Tool may not be running on localhost:7777)";
-        } else if (data->ResultCode == EOS_EResult::EOS_NoConnection) {
-            error_msg += " (No connection - EOS Dev Auth Tool not accessible)";
-        }
-
-        UtilityFunctions::printerr(error_msg);
-
-        // Call failure callback
-        if (subsystem->login_callback.is_valid()) {
-            Dictionary empty_user_info;
-            Array callback_args;
-            callback_args.push_back(false);
-            callback_args.push_back(empty_user_info);
-            subsystem->login_callback.callv(callback_args);
-        }
-    }
+	switch (message->Level) {
+		case EOS_ELogLevel::EOS_LOG_Fatal:
+		case EOS_ELogLevel::EOS_LOG_Error:
+			{
+				String log_msg = String("[") + category + "] " + log_text;
+				ERR_PRINT(log_msg);
+			}
+			break;
+		case EOS_ELogLevel::EOS_LOG_Warning:
+			{
+				String log_msg = String("[") + category + "] " + log_text;
+				WARN_PRINT(log_msg);
+			}
+			break;
+		case EOS_ELogLevel::EOS_LOG_Info:
+		case EOS_ELogLevel::EOS_LOG_Verbose:
+		case EOS_ELogLevel::EOS_LOG_VeryVerbose:
+		default:
+			{
+				String log_msg = String("[") + category + "] " + log_text;
+				ERR_PRINT(log_msg);
+			}
+			break;
+	}
 }
 
-void EOS_CALL AuthenticationSubsystem::on_connect_login_complete(const EOS_Connect_LoginCallbackInfo* data) {
-    if (!data) return;
+void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginCallbackInfo* data) {
+	if (!data || !instance) {
+		return;
+	}
 
-    AuthenticationSubsystem* subsystem = static_cast<AuthenticationSubsystem*>(data->ClientData);
-    if (!subsystem) return;
+	if (data->ResultCode == EOS_EResult::EOS_Success) {
+		instance->epic_account_id = data->LocalUserId;
+		instance->is_logged_in = true;
 
-    Dictionary user_info;
-    bool success = false;
+		// Get user info
+		EOS_HAuth auth_handle = EOS_Platform_GetAuthInterface(platform_handle);
+		if (auth_handle) {
+			EOS_Auth_CopyUserAuthTokenOptions token_options = {};
+			token_options.ApiVersion = EOS_AUTH_COPYUSERAUTHTOKEN_API_LATEST;
 
-    if (data->ResultCode == EOS_EResult::EOS_Success) {
-        UtilityFunctions::print("AuthenticationSubsystem: Connect login successful");
+			EOS_Auth_Token* auth_token = nullptr;
+			EOS_EResult result = EOS_Auth_CopyUserAuthToken(auth_handle, &token_options, data->LocalUserId, &auth_token);
 
-        // Store Product User ID
-        if (data->LocalUserId) {
-            char puid_string[EOS_PRODUCTUSERID_MAX_LENGTH];
-            int32_t puid_length = EOS_PRODUCTUSERID_MAX_LENGTH;
-            EOS_EResult id_result = EOS_ProductUserId_ToString(data->LocalUserId, puid_string, &puid_length);
+			if (result == EOS_EResult::EOS_Success && auth_token) {
+				// Use the App field as display name if available
+				if (auth_token->App) {
+					instance->current_username = String::utf8(auth_token->App);
+				} else {
+					// Fallback to a simple default
+					instance->current_username = "Epic User";
+				}
+				EOS_Auth_Token_Release(auth_token);
+			}
+		}
 
-            if (id_result == EOS_EResult::EOS_Success) {
-                subsystem->product_user_id = String(puid_string);
-                UtilityFunctions::print("AuthenticationSubsystem: Product User ID: " + subsystem->product_user_id);
-            } else {
-                UtilityFunctions::printerr("AuthenticationSubsystem: Failed to convert Product User ID to string, error: " + String::num_int64((int64_t)id_result));
-                // Still continue, but with empty Product User ID
-                subsystem->product_user_id = "";
-            }
-        } else {
-            UtilityFunctions::printerr("AuthenticationSubsystem: No LocalUserId provided in Connect login response");
-            subsystem->product_user_id = "";
-        }
+		// Now login to Connect service for cross-platform features
+		EOS_HConnect connect_handle = EOS_Platform_GetConnectInterface(platform_handle);
+		if (connect_handle) {
+			// Get Auth Token for Connect login (not Epic Account ID)
+			EOS_Auth_Token* auth_token = nullptr;
+			EOS_Auth_CopyUserAuthTokenOptions copy_options = {};
+			copy_options.ApiVersion = EOS_AUTH_COPYUSERAUTHTOKEN_API_LATEST;
 
-        // Set logged in state regardless of Product User ID conversion
-        subsystem->is_logged_in = true;
-        subsystem->display_name = "Device User"; // Device ID login doesn't provide a display name
-        subsystem->login_status = EOS_ELoginStatus::EOS_LS_LoggedIn;
+			EOS_EResult copy_result = EOS_Auth_CopyUserAuthToken(auth_handle, &copy_options, data->LocalUserId, &auth_token);
 
-        UtilityFunctions::print("AuthenticationSubsystem: Connect login completed successfully");
+			if (copy_result == EOS_EResult::EOS_Success && auth_token) {
+				EOS_Connect_LoginOptions connect_options = {};
+				connect_options.ApiVersion = EOS_CONNECT_LOGIN_API_LATEST;
 
-        // Prepare user info for callback
-        user_info["display_name"] = subsystem->display_name;
-        user_info["epic_account_id"] = subsystem->epic_account_id;
-        user_info["product_user_id"] = subsystem->product_user_id;
-        success = true;
-    } else {
-        UtilityFunctions::printerr("AuthenticationSubsystem: Connect login failed: " + String::num_int64((int64_t)data->ResultCode));
-        subsystem->is_logged_in = false;
-        subsystem->product_user_id = "";
-        subsystem->display_name = "";
-        subsystem->login_status = EOS_ELoginStatus::EOS_LS_NotLoggedIn;
-    }
+				EOS_Connect_Credentials connect_credentials = {};
+				connect_credentials.ApiVersion = EOS_CONNECT_CREDENTIALS_API_LATEST;
+				connect_credentials.Type = EOS_EExternalCredentialType::EOS_ECT_EPIC;
+				connect_credentials.Token = auth_token->AccessToken;  // Use Auth Token instead of Account ID
 
-    // Call the login callback if it's set
-    if (subsystem->login_callback.is_valid()) {
-        Array callback_args;
-        callback_args.push_back(success);
-        callback_args.push_back(user_info);
-        subsystem->login_callback.callv(callback_args);
-    }
+				connect_options.Credentials = &connect_credentials;
+
+				EOS_Connect_Login(connect_handle, &connect_options, nullptr, connect_login_callback);
+
+				// Clean up the auth token
+				EOS_Auth_Token_Release(auth_token);
+			} else {
+				ERR_PRINT("Failed to copy Auth Token for Connect login - skipping Connect service");
+				// Emit success anyway since Auth login succeeded, but without Connect features
+				Dictionary user_info;
+				user_info["display_name"] = instance->current_username;
+				user_info["epic_account_id"] = instance->get_epic_account_id();
+				user_info["product_user_id"] = "";  // Empty since Connect failed
+
+				instance->emit_signal("login_completed", true, user_info);
+			}
+		}
+
+		ERR_PRINT("Epic Account login successful - initiating Connect login...");
+
+		// Don't emit login signal yet - wait for Connect login to complete
+	} else {
+		String error_msg = "Epic Account login failed: ";
+
+		// Provide more descriptive error messages
+		switch (data->ResultCode) {
+			case EOS_EResult::EOS_InvalidParameters:
+				error_msg += "Invalid parameters (10) - For Device ID login, make sure EOS Dev Auth Tool is running on localhost:7777. For Epic Account login, check email/password format";
+				break;
+			case EOS_EResult::EOS_Invalid_Deployment:
+				error_msg += "Invalid deployment (32) - Check your deployment_id in EOS Developer Portal";
+				break;
+			case EOS_EResult::EOS_InvalidCredentials:
+				error_msg += "Invalid credentials (2) - Check your email/password";
+				break;
+			case EOS_EResult::EOS_InvalidUser:
+				error_msg += "Invalid user (3) - User may need to be linked";
+				break;
+			case EOS_EResult::EOS_MissingPermissions:
+				error_msg += "Missing permissions (6) - Check app permissions in EOS Developer Portal";
+				break;
+			case EOS_EResult::EOS_ApplicationSuspended:
+				error_msg += "Application suspended (40) - App may be suspended in EOS Developer Portal";
+				break;
+			case EOS_EResult::EOS_NetworkDisconnected:
+				error_msg += "Network disconnected (41) - Check internet connection";
+				break;
+			case EOS_EResult::EOS_NotConfigured:
+				error_msg += "Not configured (14) - Check your EOS app configuration";
+				break;
+			case EOS_EResult::EOS_Invalid_Sandbox:
+				error_msg += "Invalid sandbox (31) - Check your sandbox_id in EOS Developer Portal";
+				break;
+			case EOS_EResult::EOS_Invalid_Product:
+				error_msg += "Invalid product (33) - Check your product_id in EOS Developer Portal";
+				break;
+			default:
+				error_msg += String::num_int64(static_cast<int64_t>(data->ResultCode));
+				break;
+		}
+
+		ERR_PRINT(error_msg);
+
+		// Emit login failed signal
+		Dictionary empty_user_info;
+		instance->emit_signal("login_completed", false, empty_user_info);
+	}
 }
 
-void EOS_CALL AuthenticationSubsystem::on_auth_logout_complete(const EOS_Auth_LogoutCallbackInfo* data) {
-    if (!data) return;
+void EOS_CALL AuthenticationSubsystem::auth_logout_callback(const EOS_Auth_LogoutCallbackInfo* data) {
+	if (!data || !instance) {
+		return;
+	}
 
-    if (data->ResultCode == EOS_EResult::EOS_Success) {
-        UtilityFunctions::print("AuthenticationSubsystem: Auth logout successful");
-    } else {
-        UtilityFunctions::printerr("AuthenticationSubsystem: Auth logout failed: " + String::num_int64((int64_t)data->ResultCode));
-    }
+	if (data->ResultCode == EOS_EResult::EOS_Success) {
+		instance->epic_account_id = data->LocalUserId;
+		instance->product_user_id = nullptr;
+		instance->is_logged_in = false;
+		instance->current_username = "";
+
+		ERR_PRINT("Logout successful");
+
+		// Emit logout completed signal
+		instance->emit_signal("logout_completed", true);
+	} else {
+		String error_msg = "Logout failed: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
+		ERR_PRINT(error_msg);
+
+		// Emit logout failed signal
+		instance->emit_signal("logout_completed", false);
+	}
 }
 
-void EOS_CALL AuthenticationSubsystem::on_connect_logout_complete(const EOS_Connect_LogoutCallbackInfo* data) {
-    if (!data) return;
+void EOS_CALL AuthenticationSubsystem::connect_login_callback(const EOS_Connect_LoginCallbackInfo* data) {
+	if (!data || !instance) {
+		return;
+	}
 
-    if (data->ResultCode == EOS_EResult::EOS_Success) {
-        UtilityFunctions::print("AuthenticationSubsystem: Connect logout successful");
-    } else {
-        UtilityFunctions::printerr("AuthenticationSubsystem: Connect logout failed: " + String::num_int64((int64_t)data->ResultCode));
-    }
+	if (data->ResultCode == EOS_EResult::EOS_Success) {
+		instance->product_user_id = data->LocalUserId;
+		WARN_PRINT("Connect login successful - cross-platform features enabled");
+
+		// Now both Auth and Connect logins are complete, emit the signal
+		Dictionary user_info;
+		user_info["display_name"] = instance->current_username;
+		user_info["epic_account_id"] = instance->get_epic_account_id();
+		user_info["product_user_id"] = instance->get_product_user_id();
+
+		instance->emit_signal("login_completed", true, user_info);
+	} else {
+		String error_msg = "Connect login failed: ";
+
+		// Provide more descriptive error messages for Connect login
+		switch (data->ResultCode) {
+			case EOS_EResult::EOS_InvalidParameters:
+				error_msg += "Invalid parameters (10) - Connect login requires valid Epic Account ID from Auth login";
+				break;
+			case EOS_EResult::EOS_InvalidUser:
+				error_msg += "Invalid user (3) - User may need to be linked or created in Connect service";
+				break;
+			case EOS_EResult::EOS_NotFound:
+				error_msg += "User not found (13) - User account may need to be created in Connect service";
+				break;
+			case EOS_EResult::EOS_DuplicateNotAllowed:
+				error_msg += "Duplicate not allowed (15) - User may already be logged in";
+				break;
+			case EOS_EResult::EOS_Connect_ExternalTokenValidationFailed:
+				error_msg += "External token validation failed (7000) - Epic Account ID token was rejected by Connect service. Try using Auth Token instead of Account ID";
+				break;
+			case EOS_EResult::EOS_Connect_InvalidToken:
+				error_msg += "Invalid token (7003) - The provided token is not valid for Connect service";
+				break;
+			case EOS_EResult::EOS_Connect_UnsupportedTokenType:
+				error_msg += "Unsupported token type (7004) - Connect service doesn't support this token type";
+				break;
+			case EOS_EResult::EOS_Connect_AuthExpired:
+				error_msg += "Auth expired (7002) - The authentication token has expired";
+				break;
+			default:
+				error_msg += String::num_int64(static_cast<int64_t>(data->ResultCode));
+				break;
+		}		ERR_PRINT(error_msg);
+
+		// Connect failed, but Auth succeeded - still emit login signal but without product_user_id
+		ERR_PRINT("Login completed with Epic Account only (no cross-platform features)");
+		Dictionary user_info;
+		user_info["display_name"] = instance->current_username;
+		user_info["epic_account_id"] = instance->get_epic_account_id();
+		user_info["product_user_id"] = "";  // Empty since Connect failed
+
+		instance->emit_signal("login_completed", true, user_info);
+	}
 }
+
 
 void EOS_CALL AuthenticationSubsystem::on_auth_login_status_changed(const EOS_Auth_LoginStatusChangedCallbackInfo* data) {
     if (!data) return;
@@ -522,50 +598,6 @@ void EOS_CALL AuthenticationSubsystem::on_connect_login_status_changed(const EOS
     if (!data) return;
 
     UtilityFunctions::print("AuthenticationSubsystem: Connect login status changed: " + String::num_int64((int64_t)data->CurrentStatus));
-}
-
-void AuthenticationSubsystem::initiate_connect_login_with_auth_token(EOS_EpicAccountId epic_account_id) {
-    if (!connect_handle || !auth_handle) {
-        UtilityFunctions::printerr("AuthenticationSubsystem: Connect/Auth handles not available");
-        return;
-    }
-
-    // Get Auth Token for Connect login
-    EOS_Auth_Token* auth_token = nullptr;
-    EOS_Auth_CopyUserAuthTokenOptions copy_options = {};
-    copy_options.ApiVersion = EOS_AUTH_COPYUSERAUTHTOKEN_API_LATEST;
-
-    EOS_EResult copy_result = EOS_Auth_CopyUserAuthToken(auth_handle, &copy_options, epic_account_id, &auth_token);
-
-    if (copy_result == EOS_EResult::EOS_Success && auth_token) {
-        EOS_Connect_LoginOptions connect_options = {};
-        connect_options.ApiVersion = EOS_CONNECT_LOGIN_API_LATEST;
-
-        EOS_Connect_Credentials connect_credentials = {};
-        connect_credentials.ApiVersion = EOS_CONNECT_CREDENTIALS_API_LATEST;
-        connect_credentials.Type = EOS_EExternalCredentialType::EOS_ECT_EPIC;
-        connect_credentials.Token = auth_token->AccessToken;  // Use Auth Token
-
-        connect_options.Credentials = &connect_credentials;
-
-        EOS_Connect_Login(connect_handle, &connect_options, this, on_connect_login_complete);
-
-        // Clean up the auth token
-        EOS_Auth_Token_Release(auth_token);
-
-        UtilityFunctions::print("AuthenticationSubsystem: Connect login initiated with Auth token");
-    } else {
-        UtilityFunctions::printerr("AuthenticationSubsystem: Failed to copy Auth Token for Connect login");
-
-        // Call failure callback
-        if (login_callback.is_valid()) {
-            Dictionary empty_user_info;
-            Array callback_args;
-            callback_args.push_back(false);
-            callback_args.push_back(empty_user_info);
-            login_callback.callv(callback_args);
-        }
-    }
 }
 
 } // namespace godot

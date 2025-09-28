@@ -62,9 +62,11 @@ private:
     void initiate_connect_login_with_auth_token(EOS_EpicAccountId epic_account_id);
 
     // Static callback implementations
-    static void EOS_CALL on_auth_login_complete(const EOS_Auth_LoginCallbackInfo* data);
-    static void EOS_CALL on_connect_login_complete(const EOS_Connect_LoginCallbackInfo* data);
-    static void EOS_CALL on_auth_logout_complete(const EOS_Auth_LogoutCallbackInfo* data);
+    static void EOS_CALL logging_callback(const EOS_LogMessage* message);
+    static void EOS_CALL auth_login_callback(const EOS_Auth_LoginCallbackInfo* data);
+    static void EOS_CALL auth_logout_callback(const EOS_Auth_LogoutCallbackInfo* data);
+    static void EOS_CALL connect_login_callback(const EOS_Connect_LoginCallbackInfo* data);
+
     static void EOS_CALL on_connect_logout_complete(const EOS_Connect_LogoutCallbackInfo* data);
     static void EOS_CALL on_auth_login_status_changed(const EOS_Auth_LoginStatusChangedCallbackInfo* data);
     static void EOS_CALL on_connect_login_status_changed(const EOS_Connect_LoginStatusChangedCallbackInfo* data);
