@@ -79,7 +79,7 @@ func _ready():
 		add_output_line("🚀 [color=green]EOS Platform initialized successfully![/color]")
 		add_output_line("Ready for authentication, friends, and achievements features!")
 		add_output_line("")
-		add_output_line("[b]Available Features:[/b]")
+		add_output_line("Available Features:")
 		add_output_line("• Authentication (Epic Account & Device ID)")
 		add_output_line("• Friends Management")
 		add_output_line("• Achievements System")
@@ -247,16 +247,16 @@ func _on_test_subsystem_pressed():
 		add_output_line("[" + status_color + "]" + status_icon + " Overall Test Result: " + ("PASSED" if passed else "FAILED") + "[/" + status_color + "]")
 
 	if test_results.has("subsystem_count"):
-		add_output_line("[b]Subsystem Count:[/b] " + str(test_results["subsystem_count"]))
+		add_output_line("Subsystem Count: " + str(test_results["subsystem_count"]))
 
 	if test_results.has("test_messages"):
 		var messages = test_results["test_messages"]
 		if messages.size() > 0:
-			add_output_line("[b]Test Details:[/b]")
+			add_output_line("Test Details:")
 			for msg in messages:
 				add_output_line("  " + str(msg))
 		else:
-			add_output_line("[color=gray]No test messages available[/color]")
+			add_output_line("No test messages available")
 
 	add_output_line("")
 
@@ -303,9 +303,9 @@ func _on_login_completed(success: bool, user_info: Dictionary):
 
 		status_label.text = "✅ Logged In: " + display_name
 		add_output_line("[color=green]✅ Login successful![/color]")
-		add_output_line("[b]Username:[/b] " + display_name)
-		add_output_line("[b]Epic Account ID:[/b] " + epic_account_id)
-		add_output_line("[b]Product User ID:[/b] " + product_user_id)
+		add_output_line("Username: " + display_name)
+		add_output_line("Epic Account ID: " + epic_account_id)
+		add_output_line("Product User ID: " + product_user_id)
 
 		if product_user_id != "":
 			add_output_line("[color=green]✓ Cross-platform features enabled[/color]")
@@ -341,14 +341,14 @@ func _on_friends_updated(friends_list: Array):
 
 func _display_friends_list(friends: Array):
 	if friends.size() == 0:
-		add_output_line("[color=gray]📝 Friends list is empty[/color]")
+		add_output_line("📝 Friends list is empty")
 		return
 
-	add_output_line("[b]👥 Friends list (" + str(friends.size()) + " friends):[/b]")
+	add_output_line("👥 Friends list (" + str(friends.size()) + " friends):")
 	for i in range(friends.size()):
 		var friend = friends[i]
-		add_output_line("  " + str(i + 1) + ". [b]ID:[/b] " + str(friend.get("id", "Unknown")))
-		add_output_line("     [b]Status:[/b] " + str(friend.get("status", "Unknown")))
+		add_output_line("  " + str(i + 1) + ". ID: " + str(friend.get("id", "Unknown")))
+		add_output_line("     Status: " + str(friend.get("status", "Unknown")))
 		add_output_line("")
 
 
@@ -366,33 +366,33 @@ func _on_player_achievements_updated(achievements: Array):
 func _on_achievements_unlocked(unlocked_achievement_ids: Array):
 	add_output_line("[color=purple]🎉 Achievements unlocked![/color]")
 	if unlocked_achievement_ids.size() > 0:
-		add_output_line("[b]Unlocked achievement IDs:[/b] " + str(unlocked_achievement_ids))
+		add_output_line("Unlocked achievement IDs: " + str(unlocked_achievement_ids))
 	else:
 		add_output_line("[i]Achievement unlock completed (specific IDs not available)[/i]")
 
 
 func _on_achievement_unlocked(achievement_id: String, unlock_time: int):
-	add_output_line("[color=purple]🏅 Achievement unlocked: [b]" + achievement_id + "[/b][/color]")
-	add_output_line("[b]Unlock time:[/b] " + str(unlock_time))
+	add_output_line("[color=purple]🏅 Achievement unlocked: " + achievement_id + "[/color]")
+	add_output_line("Unlock time: " + str(unlock_time))
 
 
 # Achievement display functions
 func _display_achievement_definitions(definitions: Array):
 	if definitions.size() == 0:
-		add_output_line("[color=gray]📝 No achievement definitions available[/color]")
+		add_output_line("📝 No achievement definitions available")
 		return
 
-	add_output_line("[b]🏆 Achievement Definitions (" + str(definitions.size()) + " achievements):[/b]")
+	add_output_line("🏆 Achievement Definitions (" + str(definitions.size()) + " achievements):")
 	for i in range(definitions.size()):
 		var def = definitions[i]
-		add_output_line("  " + str(i + 1) + ". [b]" + str(def.get("unlocked_display_name", "Unknown Achievement")) + "[/b]")
-		add_output_line("     [b]ID:[/b] " + str(def.get("achievement_id", "Unknown")))
-		add_output_line("     [b]Description:[/b] " + str(def.get("unlocked_description", "No description")))
-		add_output_line("     [b]Hidden:[/b] " + str(def.get("is_hidden", false)))
+		add_output_line("  " + str(i + 1) + ". " + str(def.get("unlocked_display_name", "Unknown Achievement")))
+		add_output_line("     ID: " + str(def.get("achievement_id", "Unknown")))
+		add_output_line("     Description: " + str(def.get("unlocked_description", "No description")))
+		add_output_line("     Hidden: " + str(def.get("is_hidden", false)))
 
 		var stat_thresholds = def.get("stat_thresholds", [])
 		if stat_thresholds.size() > 0:
-			add_output_line("     [b]Requirements:[/b]")
+			add_output_line("     Requirements:")
 			for threshold in stat_thresholds:
 				add_output_line("       • " + str(threshold.get("name", "Unknown")) + ": " + str(threshold.get("threshold", 0)))
 		add_output_line("")
@@ -400,10 +400,10 @@ func _display_achievement_definitions(definitions: Array):
 
 func _display_player_achievements(achievements: Array):
 	if achievements.size() == 0:
-		add_output_line("[color=gray]📝 No player achievements available[/color]")
+		add_output_line("📝 No player achievements available")
 		return
 
-	add_output_line("[b]🎯 Player Achievements (" + str(achievements.size()) + " achievements):[/b]")
+	add_output_line("🎯 Player Achievements (" + str(achievements.size()) + " achievements):")
 	var unlocked_count = 0
 
 	for i in range(achievements.size()):
@@ -416,25 +416,25 @@ func _display_player_achievements(achievements: Array):
 		var progress = ach.get("progress", 0.0)
 		var progress_color = "green" if is_unlocked else "orange"
 
-		add_output_line("  " + status_icon + " [b]" + str(ach.get("display_name", "Unknown Achievement")) + "[/b]")
-		add_output_line("     [b]ID:[/b] " + str(ach.get("achievement_id", "Unknown")))
-		add_output_line("     [color=" + progress_color + "][b]Progress:[/b] " + str(progress) + "%[/color]")
+		add_output_line("  " + status_icon + " " + str(ach.get("display_name", "Unknown Achievement")))
+		add_output_line("     ID: " + str(ach.get("achievement_id", "Unknown")))
+		add_output_line("     [color=" + progress_color + "]Progress: " + str(progress) + "%[/color]")
 
 		if is_unlocked:
 			var unlock_time = ach.get("unlock_time", 0)
 			if unlock_time > 0:
-				add_output_line("     [color=green][b]Unlocked:[/b] " + str(unlock_time) + "[/color]")
+				add_output_line("     [color=green]Unlocked: " + str(unlock_time) + "[/color]")
 
 		var stat_info = ach.get("stat_info", [])
 		if stat_info.size() > 0:
-			add_output_line("     [b]Stats:[/b]")
+			add_output_line("     Stats:")
 			for stat in stat_info:
 				var current = stat.get("current_value", 0)
 				var threshold = stat.get("threshold_value", 0)
 				add_output_line("       • " + str(stat.get("name", "Unknown")) + ": " + str(current) + "/" + str(threshold))
 		add_output_line("")
 
-	add_output_line("[b]📊 Summary: [color=green]" + str(unlocked_count) + "[/color]/" + str(achievements.size()) + " achievements unlocked[/b]")
+	add_output_line("📊 Summary: [color=green]" + str(unlocked_count) + "[/color]/" + str(achievements.size()) + " achievements unlocked")
 	add_output_line("")
 
 
@@ -443,16 +443,16 @@ func _display_single_achievement_definition(definition: Dictionary):
 		add_output_line("[color=red]❌ Achievement definition not found[/color]")
 		return
 
-	add_output_line("[b]🏆 Achievement Definition:[/b]")
-	add_output_line("  [b]Name:[/b] " + str(definition.get("unlocked_display_name", "Unknown")))
-	add_output_line("  [b]ID:[/b] " + str(definition.get("achievement_id", "Unknown")))
-	add_output_line("  [b]Description:[/b] " + str(definition.get("unlocked_description", "No description")))
-	add_output_line("  [b]Locked Description:[/b] " + str(definition.get("locked_description", "No description")))
-	add_output_line("  [b]Hidden:[/b] " + str(definition.get("is_hidden", false)))
+	add_output_line("🏆 Achievement Definition:")
+	add_output_line("  Name: " + str(definition.get("unlocked_display_name", "Unknown")))
+	add_output_line("  ID: " + str(definition.get("achievement_id", "Unknown")))
+	add_output_line("  Description: " + str(definition.get("unlocked_description", "No description")))
+	add_output_line("  Locked Description: " + str(definition.get("locked_description", "No description")))
+	add_output_line("  Hidden: " + str(definition.get("is_hidden", false)))
 
 	var stat_thresholds = definition.get("stat_thresholds", [])
 	if stat_thresholds.size() > 0:
-		add_output_line("  [b]Requirements:[/b]")
+		add_output_line("  Requirements:")
 		for threshold in stat_thresholds:
 			add_output_line("    • " + str(threshold.get("name", "Unknown")) + ": " + str(threshold.get("threshold", 0)))
 	add_output_line("")
@@ -467,19 +467,19 @@ func _display_single_player_achievement(achievement: Dictionary):
 	var status_icon = "🏅" if is_unlocked else "🔒"
 	var progress_color = "green" if is_unlocked else "orange"
 
-	add_output_line("[b]🎯 Player Achievement:[/b]")
-	add_output_line("  " + status_icon + " [b]" + str(achievement.get("display_name", "Unknown")) + "[/b]")
-	add_output_line("  [b]ID:[/b] " + str(achievement.get("achievement_id", "Unknown")))
-	add_output_line("  [color=" + progress_color + "][b]Progress:[/b] " + str(achievement.get("progress", 0.0)) + "%[/color]")
+	add_output_line("🎯 Player Achievement:")
+	add_output_line("  " + status_icon + " " + str(achievement.get("display_name", "Unknown")))
+	add_output_line("  ID: " + str(achievement.get("achievement_id", "Unknown")))
+	add_output_line("  [color=" + progress_color + "]Progress: " + str(achievement.get("progress", 0.0)) + "%[/color]")
 
 	if is_unlocked:
 		var unlock_time = achievement.get("unlock_time", 0)
 		if unlock_time > 0:
-			add_output_line("  [color=green][b]Unlocked:[/b] " + str(unlock_time) + "[/color]")
+			add_output_line("  [color=green]Unlocked: " + str(unlock_time) + "[/color]")
 
 	var stat_info = achievement.get("stat_info", [])
 	if stat_info.size() > 0:
-		add_output_line("  [b]Stats:[/b]")
+		add_output_line("  Stats:")
 		for stat in stat_info:
 			var current = stat.get("current_value", 0)
 			var threshold = stat.get("threshold_value", 0)
@@ -498,10 +498,10 @@ func start_auto_test():
 	auto_test_time_accumulator = 0.0
 	auto_test_current_delay = 2.0  # Initial delay before starting
 	
-	add_output_line("[color=gray]🤖 Process-based timer started (step: " + str(auto_test_step) + ", delay: " + str(auto_test_current_delay) + ")[/color]")
+	add_output_line("🤖 Process-based timer started (step: " + str(auto_test_step) + ", delay: " + str(auto_test_current_delay) + ")")
 
 func _on_auto_test_timer_timeout():
-	add_output_line("[color=gray]🤖 Process timeout triggered (step: " + str(auto_test_step) + ")[/color]")
+	add_output_line("🤖 Process timeout triggered (step: " + str(auto_test_step) + ")")
 	
 	match auto_test_step:
 		0:

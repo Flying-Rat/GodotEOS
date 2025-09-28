@@ -4,6 +4,7 @@
 #include "../eos_sdk/Include/eos_achievements_types.h"
 #include <godot_cpp/variant/array.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
+#include <godot_cpp/variant/callable.hpp>
 
 namespace godot {
 
@@ -33,6 +34,9 @@ public:
     Array GetPlayerAchievements() const override;
     Dictionary GetAchievementDefinition(const String& achievement_id) const override;
     Dictionary GetPlayerAchievement(const String& achievement_id) const override;
+    void SetAchievementDefinitionsCallback(const Callable& callback) override;
+    void SetPlayerAchievementsCallback(const Callable& callback) override;
+    void SetAchievementsUnlockedCallback(const Callable& callback) override;
 
 private:
     EOS_HAchievements achievements_handle;
@@ -43,6 +47,11 @@ private:
 
     bool definitions_cached;
     bool player_achievements_cached;
+
+    // Callback callables
+    Callable achievement_definitions_callback;
+    Callable player_achievements_callback;
+    Callable achievements_unlocked_callback;
 
     // Callback functions
     static void EOS_CALL on_query_definitions_complete(const EOS_Achievements_OnQueryDefinitionsCompleteCallbackInfo* data);

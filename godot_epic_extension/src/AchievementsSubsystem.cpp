@@ -75,10 +75,30 @@ bool AchievementsSubsystem::QueryAchievementDefinitions() {
         return false;
     }
 
+    // Need Product User ID from AuthenticationSubsystem
+    auto auth = Get<IAuthenticationSubsystem>();
+    if (!auth || !auth->IsLoggedIn()) {
+        UtilityFunctions::printerr("AchievementsSubsystem: User not authenticated");
+        return false;
+    }
+
+    String product_user_id_str = auth->GetProductUserId();
+    if (product_user_id_str.is_empty()) {
+        UtilityFunctions::printerr("AchievementsSubsystem: Invalid Product User ID");
+        return false;
+    }
+
+    EOS_ProductUserId product_user_id = EOS_ProductUserId_FromString(product_user_id_str.utf8().get_data());
+    if (!EOS_ProductUserId_IsValid(product_user_id)) {
+        UtilityFunctions::printerr("AchievementsSubsystem: Failed to parse Product User ID");
+        return false;
+    }
+
     EOS_Achievements_QueryDefinitionsOptions options = {};
     options.ApiVersion = EOS_ACHIEVEMENTS_QUERYDEFINITIONS_API_LATEST;
+    options.LocalUserId = product_user_id;
 
-    EOS_Achievements_QueryDefinitions(achievements_handle, &options, nullptr, on_query_definitions_complete);
+    EOS_Achievements_QueryDefinitions(achievements_handle, &options, this, on_query_definitions_complete);
     UtilityFunctions::print("AchievementsSubsystem: Querying achievement definitions...");
     return true;
 }
@@ -113,7 +133,7 @@ bool AchievementsSubsystem::QueryPlayerAchievements() {
     options.TargetUserId = product_user_id;
     options.LocalUserId = product_user_id;
 
-    EOS_Achievements_QueryPlayerAchievements(achievements_handle, &options, nullptr, on_query_player_achievements_complete);
+    EOS_Achievements_QueryPlayerAchievements(achievements_handle, &options, this, on_query_player_achievements_complete);
     UtilityFunctions::print("AchievementsSubsystem: Querying player achievements...");
     return true;
 }
@@ -170,7 +190,7 @@ bool AchievementsSubsystem::UnlockAchievements(const Array& achievement_ids) {
     options.AchievementIds = achievement_id_ptrs.data();
     options.AchievementsCount = achievement_ids.size();
 
-    EOS_Achievements_UnlockAchievements(achievements_handle, &options, nullptr, on_unlock_achievements_complete);
+    EOS_Achievements_UnlockAchievements(achievements_handle, &options, this, on_unlock_achievements_complete);
     UtilityFunctions::print("AchievementsSubsystem: Unlocking " + String::num_int64(achievement_ids.size()) + " achievements...");
     return true;
 }
@@ -262,6 +282,22 @@ Dictionary AchievementsSubsystem::GetPlayerAchievement(const String& achievement
     return result;
 }
 
+void AchievementsSubsystem::SetAchievementDefinitionsCallback(const Callable& callback) {
+    achievement_definitions_callback = callback;
+
+    UtilityFunctions::print("AchievementsSubsystem: Achievement definitions callback set");
+}
+
+void AchievementsSubsystem::SetPlayerAchievementsCallback(const Callable& callback) {
+    player_achievements_callback = callback;
+    UtilityFunctions::print("AchievementsSubsystem: Player achievements callback set");
+}
+
+void AchievementsSubsystem::SetAchievementsUnlockedCallback(const Callable& callback) {
+    achievements_unlocked_callback = callback;
+    UtilityFunctions::print("AchievementsSubsystem: Achievements unlocked callback set");
+}
+
 void AchievementsSubsystem::setup_notifications() {
     if (!achievements_handle) return;
 
@@ -288,35 +324,166 @@ void AchievementsSubsystem::cleanup_notifications() {
 
 // Static callback implementations
 void EOS_CALL AchievementsSubsystem::on_query_definitions_complete(const EOS_Achievements_OnQueryDefinitionsCompleteCallbackInfo* data) {
-    if (!data) return;
+    AchievementsSubsystem* self = static_cast<AchievementsSubsystem*>(data->ClientData);
+    if (!data || !self) return;
 
     if (data->ResultCode == EOS_EResult::EOS_Success) {
-        UtilityFunctions::print("AchievementsSubsystem: Achievement definitions query successful");
-        // Note: In a full implementation, we'd cache the definitions here
+        self->achievement_definitions.clear();
+
+        EOS_Achievements_GetAchievementDefinitionCountOptions count_options = {};
+        count_options.ApiVersion = EOS_ACHIEVEMENTS_GETACHIEVEMENTDEFINITIONCOUNT_API_LATEST;
+
+        uint32_t definitions_count = EOS_Achievements_GetAchievementDefinitionCount(self->achievements_handle, &count_options);
+
+        for (uint32_t i = 0; i < definitions_count; i++) {
+            EOS_Achievements_CopyAchievementDefinitionV2ByIndexOptions copy_options = {};
+            copy_options.ApiVersion = EOS_ACHIEVEMENTS_COPYACHIEVEMENTDEFINITIONV2BYINDEX_API_LATEST;
+            copy_options.AchievementIndex = i;
+
+            EOS_Achievements_DefinitionV2* definition = nullptr;
+            EOS_EResult result = EOS_Achievements_CopyAchievementDefinitionV2ByIndex(self->achievements_handle, &copy_options, &definition);
+
+            if (result == EOS_EResult::EOS_Success && definition) {
+                Dictionary definition_dict;
+                definition_dict["achievement_id"] = String(definition->AchievementId ? definition->AchievementId : "");
+                definition_dict["unlocked_display_name"] = String(definition->UnlockedDisplayName ? definition->UnlockedDisplayName : "");
+                definition_dict["unlocked_description"] = String(definition->UnlockedDescription ? definition->UnlockedDescription : "");
+                definition_dict["locked_display_name"] = String(definition->LockedDisplayName ? definition->LockedDisplayName : "");
+                definition_dict["locked_description"] = String(definition->LockedDescription ? definition->LockedDescription : "");
+                definition_dict["flavor_text"] = String(definition->FlavorText ? definition->FlavorText : "");
+                definition_dict["unlocked_icon_url"] = String(definition->UnlockedIconURL ? definition->UnlockedIconURL : "");
+                definition_dict["locked_icon_url"] = String(definition->LockedIconURL ? definition->LockedIconURL : "");
+                definition_dict["is_hidden"] = definition->bIsHidden == EOS_TRUE;
+
+                self->achievement_definitions.push_back(definition_dict);
+                EOS_Achievements_DefinitionV2_Release(definition);
+            }
+        }
+
+        self->definitions_cached = true;
+        UtilityFunctions::print("AchievementsSubsystem: Achievement definitions cached (" + String::num_int64(definitions_count) + " definitions)");
+
+        // Call the callback if set
+        if (self->achievement_definitions_callback.is_valid()) {
+            Array definitions = self->GetAchievementDefinitions();
+            UtilityFunctions::print("AchievementsSubsystem: Calling achievement definitions callback with " + String::num_int64(definitions.size()) + " definitions");
+            self->achievement_definitions_callback.call(true, definitions);
+        }
     } else {
         UtilityFunctions::printerr("AchievementsSubsystem: Achievement definitions query failed");
+
+        // Call the callback with failure
+        if (self->achievement_definitions_callback.is_valid()) {
+            Array empty_definitions;
+            UtilityFunctions::print("AchievementsSubsystem: Calling achievement definitions callback with failure (empty definitions)");
+            self->achievement_definitions_callback.call(false, empty_definitions);
+        }
     }
 }
 
 void EOS_CALL AchievementsSubsystem::on_query_player_achievements_complete(const EOS_Achievements_OnQueryPlayerAchievementsCompleteCallbackInfo* data) {
-    if (!data) return;
+    AchievementsSubsystem* self = static_cast<AchievementsSubsystem*>(data->ClientData);
+    if (!data || !self) return;
 
     if (data->ResultCode == EOS_EResult::EOS_Success) {
-        UtilityFunctions::print("AchievementsSubsystem: Player achievements query successful");
-        // Note: In a full implementation, we'd cache the achievements here
+        self->player_achievements.clear();
+
+        // Get Product User ID from AuthenticationSubsystem
+        auto auth = godot::Get<IAuthenticationSubsystem>();
+        if (!auth || !auth->IsLoggedIn()) {
+            UtilityFunctions::printerr("AchievementsSubsystem: User not authenticated during player achievements query callback");
+            return;
+        }
+
+        String product_user_id_str = auth->GetProductUserId();
+        if (product_user_id_str.is_empty()) {
+            UtilityFunctions::printerr("AchievementsSubsystem: Invalid Product User ID during player achievements query callback");
+            return;
+        }
+
+        EOS_ProductUserId product_user_id = EOS_ProductUserId_FromString(product_user_id_str.utf8().get_data());
+        if (!EOS_ProductUserId_IsValid(product_user_id)) {
+            UtilityFunctions::printerr("AchievementsSubsystem: Failed to parse Product User ID during player achievements query callback");
+            return;
+        }
+
+        EOS_Achievements_GetPlayerAchievementCountOptions count_options = {};
+        count_options.ApiVersion = EOS_ACHIEVEMENTS_GETPLAYERACHIEVEMENTCOUNT_API_LATEST;
+        count_options.UserId = product_user_id;
+
+        uint32_t achievements_count = EOS_Achievements_GetPlayerAchievementCount(self->achievements_handle, &count_options);
+
+        for (uint32_t i = 0; i < achievements_count; i++) {
+            EOS_Achievements_CopyPlayerAchievementByIndexOptions copy_options = {};
+            copy_options.ApiVersion = EOS_ACHIEVEMENTS_COPYPLAYERACHIEVEMENTBYINDEX_API_LATEST;
+            copy_options.TargetUserId = product_user_id;
+            copy_options.AchievementIndex = i;
+            copy_options.LocalUserId = product_user_id;
+
+            EOS_Achievements_PlayerAchievement* achievement = nullptr;
+            EOS_EResult result = EOS_Achievements_CopyPlayerAchievementByIndex(self->achievements_handle, &copy_options, &achievement);
+
+            if (result == EOS_EResult::EOS_Success && achievement) {
+                Dictionary achievement_dict;
+                achievement_dict["achievement_id"] = String(achievement->AchievementId ? achievement->AchievementId : "");
+                achievement_dict["progress"] = achievement->Progress;
+                achievement_dict["unlock_time"] = achievement->UnlockTime;
+                achievement_dict["is_unlocked"] = achievement->UnlockTime != EOS_ACHIEVEMENTS_ACHIEVEMENT_UNLOCKTIME_UNDEFINED;
+                achievement_dict["display_name"] = String(achievement->DisplayName ? achievement->DisplayName : "");
+                achievement_dict["description"] = String(achievement->Description ? achievement->Description : "");
+                achievement_dict["icon_url"] = String(achievement->IconURL ? achievement->IconURL : "");
+                achievement_dict["flavor_text"] = String(achievement->FlavorText ? achievement->FlavorText : "");
+
+                self->player_achievements.push_back(achievement_dict);
+                EOS_Achievements_PlayerAchievement_Release(achievement);
+            }
+        }
+
+        self->player_achievements_cached = true;
+        UtilityFunctions::print("AchievementsSubsystem: Player achievements cached (" + String::num_int64(achievements_count) + " achievements)");
+
+        // Call the callback if set
+        if (self->player_achievements_callback.is_valid()) {
+            Array achievements = self->GetPlayerAchievements();
+            UtilityFunctions::print("AchievementsSubsystem: Calling player achievements callback with " + String::num_int64(achievements.size()) + " achievements");
+            self->player_achievements_callback.call(true, achievements);
+        }else {
+            UtilityFunctions::print("AchievementsSubsystem: No player achievements callback set");  
+        }
+
     } else {
         UtilityFunctions::printerr("AchievementsSubsystem: Player achievements query failed");
+
+        // Call the callback with failure
+        if (self->player_achievements_callback.is_valid()) {
+            Array empty_achievements;
+            UtilityFunctions::print("AchievementsSubsystem: Calling player achievements callback with failure (empty achievements)");
+            self->player_achievements_callback.call(false, empty_achievements);
+        }
     }
 }
 
 void EOS_CALL AchievementsSubsystem::on_unlock_achievements_complete(const EOS_Achievements_OnUnlockAchievementsCompleteCallbackInfo* data) {
-    if (!data) return;
+    AchievementsSubsystem* self = static_cast<AchievementsSubsystem*>(data->ClientData);
+    if (!data || !self) return;
 
     if (data->ResultCode == EOS_EResult::EOS_Success) {
         UtilityFunctions::print("AchievementsSubsystem: Achievements unlocked successfully (" +
                                String::num_int64(data->AchievementsCount) + " achievements)");
+
+        // Call the callback if set
+        if (self->achievements_unlocked_callback.is_valid()) {
+            Array unlocked_ids; // We don't have the specific IDs here, could be enhanced later
+            self->achievements_unlocked_callback.call(true, unlocked_ids);
+        }
     } else {
         UtilityFunctions::printerr("AchievementsSubsystem: Achievement unlock failed");
+
+        // Call the callback with failure
+        if (self->achievements_unlocked_callback.is_valid()) {
+            Array empty_unlocked;
+            self->achievements_unlocked_callback.call(false, empty_unlocked);
+        }
     }
 }
 

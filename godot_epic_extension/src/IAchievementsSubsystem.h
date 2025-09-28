@@ -65,6 +65,24 @@ public:
      * @return Dictionary containing player achievement, or empty dict if not found.
      */
     virtual Dictionary GetPlayerAchievement(const String& achievement_id) const = 0;
+
+    /**
+     * @brief Set a callback for achievement definitions query completion.
+     * @param callback Callable to invoke when achievement definitions query completes.
+     */
+    virtual void SetAchievementDefinitionsCallback(const Callable& callback) = 0;
+
+    /**
+     * @brief Set a callback for player achievements query completion.
+     * @param callback Callable to invoke when player achievements query completes.
+     */
+    virtual void SetPlayerAchievementsCallback(const Callable& callback) = 0;
+
+    /**
+     * @brief Set a callback for achievements unlocked completion.
+     * @param callback Callable to invoke when achievements unlock completes.
+     */
+    virtual void SetAchievementsUnlockedCallback(const Callable& callback) = 0;
 };
 
 } // namespace godot
