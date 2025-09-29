@@ -206,7 +206,7 @@ func _on_unlock_test_pressed():
 		var product_user_id = godot_epic.get_product_user_id()
 		if not product_user_id.is_empty():
 			add_output_line("[color=purple]🎉 Attempting to unlock test achievement...[/color]")
-			godot_epic.unlock_achievement("test_achievement")
+			godot_epic.unlock_achievement("achievement_first_level")
 		else:
 			add_output_line("[color=orange]⚠️ Achievements require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
 	else:
