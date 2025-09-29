@@ -103,11 +103,15 @@ private:
 	bool _validate_init_options(const EpicInitOptions& options);
 	void setup_authentication_callback();
 	void setup_achievements_callbacks();
+	void setup_leaderboards_callbacks();
 	void on_authentication_completed(bool success, const Dictionary& user_info);
 	void on_achievement_definitions_completed(bool success, const Array& definitions);
 	void on_player_achievements_completed(bool success, const Array& achievements);
 	void on_achievements_unlocked_completed(bool success, const Array& unlocked_achievement_ids);
 	void on_achievement_stats_completed(bool success, const Array& stats);
+	void on_leaderboard_definitions_completed(bool success, const Array& definitions);
+	void on_leaderboard_ranks_completed(bool success, const Array& ranks);
+	void on_leaderboard_user_scores_completed(bool success, const Dictionary& user_scores);
 };
 
 }

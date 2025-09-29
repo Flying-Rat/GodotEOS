@@ -74,6 +74,10 @@ void GodotEpic::_bind_methods() {
 	// Stats callback
 	ClassDB::bind_method(D_METHOD("on_achievement_stats_completed", "success", "stats"), &GodotEpic::on_achievement_stats_completed);
 
+	// Leaderboards callback
+	ClassDB::bind_method(D_METHOD("on_leaderboard_definitions_completed", "success", "definitions"), &GodotEpic::on_leaderboard_definitions_completed);
+	ClassDB::bind_method(D_METHOD("on_leaderboard_ranks_completed", "success", "ranks"), &GodotEpic::on_leaderboard_ranks_completed);
+	ClassDB::bind_method(D_METHOD("on_leaderboard_user_scores_completed", "success", "user_scores"), &GodotEpic::on_leaderboard_user_scores_completed);	
 
 	// Signals
 	ADD_SIGNAL(MethodInfo("login_completed", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::DICTIONARY, "user_info")));
@@ -171,6 +175,9 @@ bool GodotEpic::initialize_platform(const Dictionary& options) {
 
 	// Set up achievements callbacks
 	setup_achievements_callbacks();
+
+	// Set up leaderboards callbacks
+	setup_leaderboards_callbacks();
 
 	return true;
 }
@@ -646,35 +653,43 @@ void GodotEpic::query_leaderboard_user_scores(const String& leaderboard_id, cons
 }
 
 void GodotEpic::ingest_stat(const String& stat_name, int value) {
-	auto leaderboards = Get<ILeaderboardsSubsystem>();
-	if (!leaderboards) {
-		ERR_PRINT("LeaderboardsSubsystem not available");
+	auto achievements = Get<IAchievementsSubsystem>();
+	if (!achievements) {
+		ERR_PRINT("AchievementsSubsystem not available");
 		Array empty_stats;
 		emit_signal("stats_ingested", empty_stats);
 		return;
 	}
 
-	if (!leaderboards->IngestStat(stat_name, value)) {
-		ERR_PRINT("LeaderboardsSubsystem ingest stat failed");
+	if (!achievements->IngestStat(stat_name, value)) {
+		ERR_PRINT("AchievementsSubsystem ingest stat failed");
 		Array empty_stats;
 		emit_signal("stats_ingested", empty_stats);
 	}
 }
 
 void GodotEpic::ingest_stats(const Dictionary& stats) {
-	auto leaderboards = Get<ILeaderboardsSubsystem>();
-	if (!leaderboards) {
-		ERR_PRINT("LeaderboardsSubsystem not available");
+	auto achievements = Get<IAchievementsSubsystem>();
+	if (!achievements) {
+		ERR_PRINT("AchievementsSubsystem not available");
 		Array empty_stats;
 		emit_signal("stats_ingested", empty_stats);
 		return;
 	}
 
-	if (!leaderboards->IngestStats(stats)) {
-		ERR_PRINT("LeaderboardsSubsystem ingest stats failed");
-		Array empty_stats;
-		emit_signal("stats_ingested", empty_stats);
+	// For multiple stats, call IngestStat for each
+	Array keys = stats.keys();
+	for (int i = 0; i < keys.size(); i++) {
+		String stat_name = keys[i];
+		Variant stat_value = stats[stat_name];
+		if (stat_value.get_type() == Variant::INT) {
+			if (!achievements->IngestStat(stat_name, (int)stat_value)) {
+				ERR_PRINT("AchievementsSubsystem ingest stat failed for: " + stat_name);
+			}
+		}
 	}
+	// Emit signal with the stat names that were ingested
+	emit_signal("stats_ingested", keys);
 }
 
 Array GodotEpic::get_leaderboard_definitions() {
@@ -830,6 +845,25 @@ void GodotEpic::setup_achievements_callbacks() {
 	}
 }
 
+void GodotEpic::setup_leaderboards_callbacks() {
+	auto leaderboards = Get<ILeaderboardsSubsystem>();
+	if (leaderboards) {
+		// Create callables that bind to our instance methods
+		Callable definitions_callback(this, "on_leaderboard_definitions_completed");
+		leaderboards->SetLeaderboardDefinitionsCallback(definitions_callback);
+
+		Callable ranks_callback(this, "on_leaderboard_ranks_completed");
+		leaderboards->SetLeaderboardRanksCallback(ranks_callback);
+
+		Callable user_scores_callback(this, "on_leaderboard_user_scores_completed");
+		leaderboards->SetLeaderboardUserScoresCallback(user_scores_callback);
+
+		ERR_PRINT("Leaderboards callbacks set up successfully");
+	} else {
+		ERR_PRINT("Failed to set up leaderboards callbacks - LeaderboardsSubsystem not available");
+	}
+}
+
 void GodotEpic::on_authentication_completed(bool success, const Dictionary& user_info) {
 	ERR_PRINT("GodotEpic: Authentication completed - success: " + String(success ? "true" : "false"));
 
@@ -905,4 +939,43 @@ void GodotEpic::on_achievement_stats_completed(bool success, const Array& stats)
 
 	// Emit the achievement_stats_updated signal
 	emit_signal("achievement_stats_updated", success, stats);
+}
+
+void GodotEpic::on_leaderboard_definitions_completed(bool success, const Array& definitions) {
+	ERR_PRINT("GodotEpic: Leaderboard definitions query completed - success: " + String(success ? "true" : "false"));
+
+	if (success) {
+		ERR_PRINT("GodotEpic: Leaderboard definitions updated (" + String::num_int64(definitions.size()) + " definitions)");
+	} else {
+		ERR_PRINT("GodotEpic: Leaderboard definitions query failed");
+	}
+
+	// Emit the leaderboard_definitions_updated signal
+	emit_signal("leaderboard_definitions_updated", definitions);
+}
+
+void GodotEpic::on_leaderboard_ranks_completed(bool success, const Array& ranks) {
+	ERR_PRINT("GodotEpic: Leaderboard ranks query completed - success: " + String(success ? "true" : "false"));
+
+	if (success) {
+		ERR_PRINT("GodotEpic: Leaderboard ranks updated (" + String::num_int64(ranks.size()) + " ranks)");
+	} else {
+		ERR_PRINT("GodotEpic: Leaderboard ranks query failed");
+	}
+
+	// Emit the leaderboard_ranks_updated signal
+	emit_signal("leaderboard_ranks_updated", ranks);
+}
+
+void GodotEpic::on_leaderboard_user_scores_completed(bool success, const Dictionary& user_scores) {
+	ERR_PRINT("GodotEpic: Leaderboard user scores query completed - success: " + String(success ? "true" : "false"));
+
+	if (success) {
+		ERR_PRINT("GodotEpic: Leaderboard user scores updated (" + String::num_int64(user_scores.size()) + " user scores)");
+	} else {
+		ERR_PRINT("GodotEpic: Leaderboard user scores query failed");
+	}
+
+	// Emit the leaderboard_user_scores_updated signal
+	emit_signal("leaderboard_user_scores_updated", user_scores);
 }

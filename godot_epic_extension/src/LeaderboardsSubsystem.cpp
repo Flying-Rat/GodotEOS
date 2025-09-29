@@ -2,6 +2,8 @@
 #include "SubsystemManager.h"
 #include "IPlatformSubsystem.h"
 #include "IAuthenticationSubsystem.h"
+#include "AuthenticationSubsystem.h"
+#include "AccountHelpers.h"
 #include "../eos_sdk/Include/eos_sdk.h"
 #include "../eos_sdk/Include/eos_leaderboards.h"
 #include "../eos_sdk/Include/eos_stats.h"
@@ -71,10 +73,21 @@ bool LeaderboardsSubsystem::QueryLeaderboardDefinitions() {
         return false;
     }
 
+    if (!validate_user_authentication()) {
+        return false;
+    }
+
+    auto auth = Get<IAuthenticationSubsystem>();
+    String product_user_id_str = auth->GetProductUserId();
+    EOS_ProductUserId product_user_id = FAccountHelpers::ProductUserIDFromString(product_user_id_str.utf8().get_data());
+
     EOS_Leaderboards_QueryLeaderboardDefinitionsOptions options = {};
     options.ApiVersion = EOS_LEADERBOARDS_QUERYLEADERBOARDDEFINITIONS_API_LATEST;
+    options.StartTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
+    options.EndTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
+    options.LocalUserId = product_user_id;
 
-    EOS_Leaderboards_QueryLeaderboardDefinitions(leaderboards_handle, &options, nullptr, on_query_leaderboard_definitions_complete);
+    EOS_Leaderboards_QueryLeaderboardDefinitions(leaderboards_handle, &options, this, on_query_leaderboard_definitions_complete);
     UtilityFunctions::print("LeaderboardsSubsystem: Querying leaderboard definitions...");
     return true;
 }
@@ -100,7 +113,7 @@ bool LeaderboardsSubsystem::QueryLeaderboardRanks(const String& leaderboard_id, 
 
     // Note: Limit field may not be available in this EOS SDK version
 
-    EOS_Leaderboards_QueryLeaderboardRanks(leaderboards_handle, &options, nullptr, on_query_leaderboard_ranks_complete);
+    EOS_Leaderboards_QueryLeaderboardRanks(leaderboards_handle, &options, this, on_query_leaderboard_ranks_complete);
     UtilityFunctions::print("LeaderboardsSubsystem: Querying leaderboard ranks for: " + leaderboard_id);
     return true;
 }
@@ -128,8 +141,8 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
         String user_id_str = user_ids[i];
         user_id_strings.push_back(user_id_str);
 
-        EOS_ProductUserId puid = EOS_ProductUserId_FromString(user_id_str.utf8().get_data());
-        if (!EOS_ProductUserId_IsValid(puid)) {
+        EOS_ProductUserId puid = FAccountHelpers::ProductUserIDFromString(user_id_str.utf8().get_data());
+        if (!TValidateAccount<EOS_ProductUserId>::IsValid(puid)) {
             UtilityFunctions::printerr("LeaderboardsSubsystem: Invalid Product User ID: " + user_id_str);
             return false;
         }
@@ -138,84 +151,11 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
 
     EOS_Leaderboards_QueryLeaderboardUserScoresOptions options = {};
     options.ApiVersion = EOS_LEADERBOARDS_QUERYLEADERBOARDUSERSCORES_API_LATEST;
-    // options.LeaderboardId = leaderboard_id.utf8().get_data(); // Field may not exist in this version
     options.UserIds = product_user_ids.data();
     options.UserIdsCount = product_user_ids.size();
 
-    EOS_Leaderboards_QueryLeaderboardUserScores(leaderboards_handle, &options, nullptr, on_query_leaderboard_user_scores_complete);
+    EOS_Leaderboards_QueryLeaderboardUserScores(leaderboards_handle, &options, this, on_query_leaderboard_user_scores_complete);
     UtilityFunctions::print("LeaderboardsSubsystem: Querying user scores for leaderboard: " + leaderboard_id);
-    return true;
-}
-
-bool LeaderboardsSubsystem::IngestStat(const String& stat_name, int value) {
-    Dictionary stats;
-    stats[stat_name] = value;
-    return IngestStats(stats);
-}
-
-bool LeaderboardsSubsystem::IngestStats(const Dictionary& stats) {
-    if (!stats_handle) {
-        UtilityFunctions::printerr("LeaderboardsSubsystem: Not initialized");
-        return false;
-    }
-
-    if (stats.size() == 0) {
-        UtilityFunctions::printerr("LeaderboardsSubsystem: No stats provided");
-        return false;
-    }
-
-    if (!validate_user_authentication()) {
-        return false;
-    }
-
-    // Need Product User ID from AuthenticationSubsystem
-    auto auth = Get<IAuthenticationSubsystem>();
-    String product_user_id_str = auth->GetProductUserId();
-
-    EOS_ProductUserId product_user_id = EOS_ProductUserId_FromString(product_user_id_str.utf8().get_data());
-    if (!EOS_ProductUserId_IsValid(product_user_id)) {
-        UtilityFunctions::printerr("LeaderboardsSubsystem: Failed to parse Product User ID");
-        return false;
-    }
-
-    // Convert Godot Dictionary to EOS stats
-    std::vector<EOS_Stats_IngestData> ingest_data;
-    std::vector<String> stat_names;
-    std::vector<String> stat_values;
-
-    Array keys = stats.keys();
-    for (int i = 0; i < keys.size(); i++) {
-        String stat_name = keys[i];
-        Variant stat_value = stats[stat_name];
-
-        if (stat_value.get_type() != Variant::INT) {
-            UtilityFunctions::printerr("LeaderboardsSubsystem: Stat value must be integer: " + stat_name);
-            continue;
-        }
-
-        stat_names.push_back(stat_name);
-        stat_values.push_back(String::num_int64((int64_t)stat_value));
-
-        EOS_Stats_IngestData data = {};
-        data.ApiVersion = EOS_STATS_INGESTDATA_API_LATEST;
-        data.StatName = stat_names[i].utf8().get_data();
-        data.IngestAmount = (int64_t)stat_value;
-        ingest_data.push_back(data);
-    }
-
-    if (ingest_data.empty()) {
-        UtilityFunctions::printerr("LeaderboardsSubsystem: No valid stats to ingest");
-        return false;
-    }
-
-    EOS_Stats_IngestStatOptions options = {};
-    options.ApiVersion = EOS_STATS_INGESTSTAT_API_LATEST;
-    options.LocalUserId = product_user_id;
-    options.Stats = ingest_data.data();
-    options.StatsCount = ingest_data.size();
-
-    EOS_Stats_IngestStat(stats_handle, &options, nullptr, on_ingest_stat_complete);
-    UtilityFunctions::print("LeaderboardsSubsystem: Ingesting " + String::num_int64(ingest_data.size()) + " stats...");
     return true;
 }
 
@@ -231,6 +171,18 @@ Dictionary LeaderboardsSubsystem::GetLeaderboardUserScores() const {
     return leaderboard_user_scores;
 }
 
+void LeaderboardsSubsystem::SetLeaderboardDefinitionsCallback(const Callable& callback) {
+    leaderboard_definitions_callback = callback;
+}
+
+void LeaderboardsSubsystem::SetLeaderboardRanksCallback(const Callable& callback) {
+    leaderboard_ranks_callback = callback;
+}
+
+void LeaderboardsSubsystem::SetLeaderboardUserScoresCallback(const Callable& callback) {
+    leaderboard_user_scores_callback = callback;
+}
+
 bool LeaderboardsSubsystem::validate_user_authentication() const {
     auto auth = Get<IAuthenticationSubsystem>();
     if (!auth || !auth->IsLoggedIn()) {
@@ -241,47 +193,164 @@ bool LeaderboardsSubsystem::validate_user_authentication() const {
 }
 
 // Static callback implementations
-void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_definitions_complete(const EOS_Leaderboards_OnQueryLeaderboardDefinitionsCompleteCallbackInfo* data) {
-    if (!data) return;
+void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_definitions_complete(const EOS_Leaderboards_OnQueryLeaderboardDefinitionsCompleteCallbackInfo* Data) {
+    LeaderboardsSubsystem* self = static_cast<LeaderboardsSubsystem*>(Data->ClientData);
+    if (!Data || !self) return;
 
-    if (data->ResultCode == EOS_EResult::EOS_Success) {
-        UtilityFunctions::print("LeaderboardsSubsystem: Leaderboard definitions query successful");
-        // Note: In a full implementation, we'd cache the definitions here
+    if (Data->ResultCode == EOS_EResult::EOS_Success) {
+        self->leaderboard_definitions.clear();
+
+        // Get leaderboard definitions count
+        const EOS_Leaderboards_GetLeaderboardDefinitionCountOptions count_options = { EOS_LEADERBOARDS_GETLEADERBOARDDEFINITIONCOUNT_API_LATEST };
+
+        uint32_t definitions_count = EOS_Leaderboards_GetLeaderboardDefinitionCount(self->leaderboards_handle, &count_options);
+
+        for (uint32_t i = 0; i < definitions_count; i++) {
+            const EOS_Leaderboards_CopyLeaderboardDefinitionByIndexOptions copy_options = { EOS_LEADERBOARDS_COPYLEADERBOARDDEFINITIONBYINDEX_API_LATEST, i };
+
+            EOS_Leaderboards_Definition* definition = nullptr;
+            EOS_EResult result = EOS_Leaderboards_CopyLeaderboardDefinitionByIndex(self->leaderboards_handle, &copy_options, &definition);
+
+            if (result == EOS_EResult::EOS_Success && definition) {
+                Dictionary definition_dict;
+                definition_dict["leaderboard_id"] = String(definition->LeaderboardId ? definition->LeaderboardId : "");
+                definition_dict["stat_name"] = String(definition->StatName ? definition->StatName : "");
+                definition_dict["aggregation"] = String(definition->Aggregation == EOS_ELeaderboardAggregation::EOS_LA_Sum ? "Sum" : 
+                                                     definition->Aggregation == EOS_ELeaderboardAggregation::EOS_LA_Min ? "Min" : 
+                                                     definition->Aggregation == EOS_ELeaderboardAggregation::EOS_LA_Max ? "Max" : "Unknown");
+                definition_dict["start_time"] = definition->StartTime;
+                definition_dict["end_time"] = definition->EndTime;
+
+                self->leaderboard_definitions.push_back(definition_dict);
+                EOS_Leaderboards_Definition_Release(definition);
+            }
+        }
+
+        UtilityFunctions::print("LeaderboardsSubsystem: Leaderboard definitions cached (" + String::num_int64(definitions_count) + " definitions)");
+
+        // Call the callback if set
+        if (self->leaderboard_definitions_callback.is_valid()) {
+            Array definitions = self->GetLeaderboardDefinitions();
+            UtilityFunctions::print("LeaderboardsSubsystem: Calling leaderboard definitions callback with " + String::num_int64(definitions.size()) + " definitions");
+            self->leaderboard_definitions_callback.call(true, definitions);
+        }
     } else {
         UtilityFunctions::printerr("LeaderboardsSubsystem: Leaderboard definitions query failed");
+
+        // Call the callback with failure
+        if (self->leaderboard_definitions_callback.is_valid()) {
+            Array empty_definitions;
+            UtilityFunctions::print("LeaderboardsSubsystem: Calling leaderboard definitions callback with failure (empty definitions)");
+            self->leaderboard_definitions_callback.call(false, empty_definitions);
+        }
     }
 }
 
 void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_ranks_complete(const EOS_Leaderboards_OnQueryLeaderboardRanksCompleteCallbackInfo* data) {
-    if (!data) return;
+    LeaderboardsSubsystem* self = static_cast<LeaderboardsSubsystem*>(data->ClientData);
+    if (!data || !self) return;
 
     if (data->ResultCode == EOS_EResult::EOS_Success) {
-        UtilityFunctions::print("LeaderboardsSubsystem: Leaderboard ranks query successful");
-        // Note: In a full implementation, we'd cache the ranks here
+        self->leaderboard_ranks.clear();
+
+        // Get leaderboard records count
+        EOS_Leaderboards_GetLeaderboardRecordCountOptions count_options = {};
+        count_options.ApiVersion = EOS_LEADERBOARDS_GETLEADERBOARDRECORDCOUNT_API_LATEST;
+
+        uint32_t records_count = EOS_Leaderboards_GetLeaderboardRecordCount(self->leaderboards_handle, &count_options);
+
+        for (uint32_t i = 0; i < records_count; i++) {
+            EOS_Leaderboards_CopyLeaderboardRecordByIndexOptions copy_options = {};
+            copy_options.ApiVersion = EOS_LEADERBOARDS_COPYLEADERBOARDRECORDBYINDEX_API_LATEST;
+            copy_options.LeaderboardRecordIndex = i;
+
+            EOS_Leaderboards_LeaderboardRecord* record = nullptr;
+            EOS_EResult result = EOS_Leaderboards_CopyLeaderboardRecordByIndex(self->leaderboards_handle, &copy_options, &record);
+
+            if (result == EOS_EResult::EOS_Success && record) {
+                Dictionary record_dict;
+                record_dict["rank"] = (int)record->Rank;
+                record_dict["score"] = (int)record->Score;
+                
+                // Convert user ID to string
+                record_dict["user_id"] = String(FAccountHelpers::ProductUserIDToString(record->UserId));
+                
+                // Get display name if available
+                record_dict["display_name"] = String(record->UserDisplayName ? record->UserDisplayName : "");
+
+                self->leaderboard_ranks.push_back(record_dict);
+                EOS_Leaderboards_LeaderboardRecord_Release(record);
+            }
+        }
+
+        UtilityFunctions::print("LeaderboardsSubsystem: Leaderboard ranks cached (" + String::num_int64(records_count) + " records)");
+
+        // Call the callback if set
+        if (self->leaderboard_ranks_callback.is_valid()) {
+            Array ranks = self->GetLeaderboardRanks();
+            UtilityFunctions::print("LeaderboardsSubsystem: Calling leaderboard ranks callback with " + String::num_int64(ranks.size()) + " ranks");
+            self->leaderboard_ranks_callback.call(true, ranks);
+        }
     } else {
         UtilityFunctions::printerr("LeaderboardsSubsystem: Leaderboard ranks query failed");
+
+        // Call the callback with failure
+        if (self->leaderboard_ranks_callback.is_valid()) {
+            Array empty_ranks;
+            UtilityFunctions::print("LeaderboardsSubsystem: Calling leaderboard ranks callback with failure (empty ranks)");
+            self->leaderboard_ranks_callback.call(false, empty_ranks);
+        }
     }
 }
 
 void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_user_scores_complete(const EOS_Leaderboards_OnQueryLeaderboardUserScoresCompleteCallbackInfo* data) {
-    if (!data) return;
+    LeaderboardsSubsystem* self = static_cast<LeaderboardsSubsystem*>(data->ClientData);
+    if (!data || !self) return;
 
     if (data->ResultCode == EOS_EResult::EOS_Success) {
-        UtilityFunctions::print("LeaderboardsSubsystem: Leaderboard user scores query successful");
-        // Note: In a full implementation, we'd cache the user scores here
+        self->leaderboard_user_scores.clear();
+
+        // Get user scores count
+        const EOS_Leaderboards_GetLeaderboardUserScoreCountOptions count_options = { EOS_LEADERBOARDS_GETLEADERBOARDUSERSCORECOUNT_API_LATEST };
+
+        uint32_t scores_count = EOS_Leaderboards_GetLeaderboardUserScoreCount(self->leaderboards_handle, &count_options);
+
+        for (uint32_t i = 0; i < scores_count; i++) {
+            const EOS_Leaderboards_CopyLeaderboardUserScoreByIndexOptions copy_options = { EOS_LEADERBOARDS_COPYLEADERBOARDUSERSCOREBYINDEX_API_LATEST, i };
+
+            EOS_Leaderboards_LeaderboardUserScore* user_score = nullptr;
+            EOS_EResult result = EOS_Leaderboards_CopyLeaderboardUserScoreByIndex(self->leaderboards_handle, &copy_options, &user_score);
+
+            if (result == EOS_EResult::EOS_Success && user_score) {
+                // Convert user ID to string
+                String user_id = String(FAccountHelpers::ProductUserIDToString(user_score->UserId));
+
+                Dictionary score_dict;
+                score_dict["score"] = (int)user_score->Score;
+                score_dict["rank"] = 0;  // Rank not available in user score struct
+
+                self->leaderboard_user_scores[user_id] = score_dict;
+                EOS_Leaderboards_LeaderboardUserScore_Release(user_score);
+            }
+        }
+
+        UtilityFunctions::print("LeaderboardsSubsystem: Leaderboard user scores cached (" + String::num_int64(scores_count) + " scores)");
+
+        // Call the callback if set
+        if (self->leaderboard_user_scores_callback.is_valid()) {
+            Dictionary user_scores = self->GetLeaderboardUserScores();
+            UtilityFunctions::print("LeaderboardsSubsystem: Calling leaderboard user scores callback with " + String::num_int64(user_scores.size()) + " user scores");
+            self->leaderboard_user_scores_callback.call(true, user_scores);
+        }
     } else {
         UtilityFunctions::printerr("LeaderboardsSubsystem: Leaderboard user scores query failed");
-    }
-}
 
-void EOS_CALL LeaderboardsSubsystem::on_ingest_stat_complete(const EOS_Stats_IngestStatCompleteCallbackInfo* data) {
-    if (!data) return;
-
-    if (data->ResultCode == EOS_EResult::EOS_Success) {
-        UtilityFunctions::print("LeaderboardsSubsystem: Stats ingested successfully");
-        // Note: StatsCount field may not be available in this EOS SDK version
-    } else {
-        UtilityFunctions::printerr("LeaderboardsSubsystem: Stats ingestion failed");
+        // Call the callback with failure
+        if (self->leaderboard_user_scores_callback.is_valid()) {
+            Dictionary empty_scores;
+            UtilityFunctions::print("LeaderboardsSubsystem: Calling leaderboard user scores callback with failure (empty scores)");
+            self->leaderboard_user_scores_callback.call(false, empty_scores);
+        }
     }
 }
 

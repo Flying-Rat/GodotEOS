@@ -37,21 +37,6 @@ public:
     virtual bool QueryLeaderboardUserScores(const String& leaderboard_id, const Array& user_ids) = 0;
 
     /**
-     * @brief Ingest a single statistic value.
-     * @param stat_name The statistic name.
-     * @param value The statistic value.
-     * @return true if statistic ingestion initiated successfully.
-     */
-    virtual bool IngestStat(const String& stat_name, int value) = 0;
-
-    /**
-     * @brief Ingest multiple statistics.
-     * @param stats Dictionary of stat names to values.
-     * @return true if statistics ingestion initiated successfully.
-     */
-    virtual bool IngestStats(const Dictionary& stats) = 0;
-
-    /**
      * @brief Get cached leaderboard definitions.
      * @return Array of leaderboard definition dictionaries.
      */
@@ -68,6 +53,24 @@ public:
      * @return Dictionary of user scores.
      */
     virtual Dictionary GetLeaderboardUserScores() const = 0;
+
+    /**
+     * @brief Set a callback for leaderboard definitions query completion.
+     * @param callback Callable to invoke when leaderboard definitions query completes.
+     */
+    virtual void SetLeaderboardDefinitionsCallback(const Callable& callback) = 0;
+
+    /**
+     * @brief Set a callback for leaderboard ranks query completion.
+     * @param callback Callable to invoke when leaderboard ranks query completes.
+     */
+    virtual void SetLeaderboardRanksCallback(const Callable& callback) = 0;
+
+    /**
+     * @brief Set a callback for leaderboard user scores query completion.
+     * @param callback Callable to invoke when leaderboard user scores query completes.
+     */
+    virtual void SetLeaderboardUserScoresCallback(const Callable& callback) = 0;
 };
 
 } // namespace godot

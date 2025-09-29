@@ -26,11 +26,14 @@ public:
     virtual bool QueryLeaderboardDefinitions() override;
     virtual bool QueryLeaderboardRanks(const String& leaderboard_id, int limit) override;
     virtual bool QueryLeaderboardUserScores(const String& leaderboard_id, const Array& user_ids) override;
-    virtual bool IngestStat(const String& stat_name, int value) override;
-    virtual bool IngestStats(const Dictionary& stats) override;
     virtual Array GetLeaderboardDefinitions() const override;
     virtual Array GetLeaderboardRanks() const override;
     virtual Dictionary GetLeaderboardUserScores() const override;
+
+    // Callback setters
+    virtual void SetLeaderboardDefinitionsCallback(const Callable& callback) override;
+    virtual void SetLeaderboardRanksCallback(const Callable& callback) override;
+    virtual void SetLeaderboardUserScoresCallback(const Callable& callback) override;
 
 private:
     // EOS handles
@@ -42,6 +45,11 @@ private:
     Array leaderboard_ranks;
     Dictionary leaderboard_user_scores;
 
+    // Callback callables
+    Callable leaderboard_definitions_callback;
+    Callable leaderboard_ranks_callback;
+    Callable leaderboard_user_scores_callback;
+
     // Internal methods
     bool validate_user_authentication() const;
 
@@ -49,7 +57,6 @@ private:
     static void EOS_CALL on_query_leaderboard_definitions_complete(const EOS_Leaderboards_OnQueryLeaderboardDefinitionsCompleteCallbackInfo* data);
     static void EOS_CALL on_query_leaderboard_ranks_complete(const EOS_Leaderboards_OnQueryLeaderboardRanksCompleteCallbackInfo* data);
     static void EOS_CALL on_query_leaderboard_user_scores_complete(const EOS_Leaderboards_OnQueryLeaderboardUserScoresCompleteCallbackInfo* data);
-    static void EOS_CALL on_ingest_stat_complete(const EOS_Stats_IngestStatCompleteCallbackInfo* data);
 };
 
 } // namespace godot
