@@ -9,6 +9,7 @@
 #include "AuthenticationSubsystem.h"
 #include "AchievementsSubsystem.h"
 #include "LeaderboardsSubsystem.h"
+#include "AccountHelpers.h"
 
 using namespace godot;
 
@@ -36,6 +37,8 @@ void GodotEpic::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("query_friends"), &GodotEpic::query_friends);
 	ClassDB::bind_method(D_METHOD("get_friends_list"), &GodotEpic::get_friends_list);
 	ClassDB::bind_method(D_METHOD("get_friend_info", "friend_id"), &GodotEpic::get_friend_info);
+	ClassDB::bind_method(D_METHOD("query_friend_info", "friend_id"), &GodotEpic::query_friend_info);
+	ClassDB::bind_method(D_METHOD("query_all_friends_info"), &GodotEpic::query_all_friends_info);
 
 	// Achievements methods
 	ClassDB::bind_method(D_METHOD("query_achievement_definitions"), &GodotEpic::query_achievement_definitions);
@@ -83,6 +86,7 @@ void GodotEpic::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("login_completed", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::DICTIONARY, "user_info")));
 	ADD_SIGNAL(MethodInfo("logout_completed", PropertyInfo(Variant::BOOL, "success")));
 	ADD_SIGNAL(MethodInfo("friends_updated", PropertyInfo(Variant::ARRAY, "friends_list")));
+	ADD_SIGNAL(MethodInfo("friend_info_updated", PropertyInfo(Variant::DICTIONARY, "friend_info")));
 	ADD_SIGNAL(MethodInfo("achievement_definitions_updated", PropertyInfo(Variant::ARRAY, "definitions")));
 	ADD_SIGNAL(MethodInfo("player_achievements_updated", PropertyInfo(Variant::ARRAY, "achievements")));
 	ADD_SIGNAL(MethodInfo("achievements_unlocked", PropertyInfo(Variant::ARRAY, "unlocked_achievement_ids")));
@@ -363,40 +367,61 @@ Array GodotEpic::get_friends_list() {
 			Dictionary friend_info;
 
 			// Convert friend ID to string
-			static char friend_id_str[EOS_EPICACCOUNTID_MAX_LENGTH + 1];
-			int32_t buffer_size = sizeof(friend_id_str);
+			const char* friend_id_cstr = FAccountHelpers::EpicAccountIDToString(friend_id);
+			friend_info["id"] = String::utf8(friend_id_cstr);
 
-			EOS_EResult result = EOS_EpicAccountId_ToString(friend_id, friend_id_str, &buffer_size);
-			if (result == EOS_EResult::EOS_Success) {
-				friend_info["id"] = String::utf8(friend_id_str);
+			// Try to get cached user info for display name
+			EOS_HUserInfo user_info_handle = EOS_Platform_GetUserInfoInterface(platform_handle);
+			if (user_info_handle) {
+				EOS_UserInfo_CopyUserInfoOptions copy_options = {};
+				copy_options.ApiVersion = EOS_USERINFO_COPYUSERINFO_API_LATEST;
+				copy_options.LocalUserId = static_cast<AuthenticationSubsystem*>(auth)->GetRawEpicAccountId();
+				copy_options.TargetUserId = friend_id;
 
-				// Get friend status
-				EOS_Friends_GetStatusOptions status_options = {};
-				status_options.ApiVersion = EOS_FRIENDS_GETSTATUS_API_LATEST;
-				status_options.LocalUserId = static_cast<AuthenticationSubsystem*>(auth)->GetRawEpicAccountId();
-				status_options.TargetUserId = friend_id;
+				EOS_UserInfo* user_info = nullptr;
+				EOS_EResult copy_result = EOS_UserInfo_CopyUserInfo(user_info_handle, &copy_options, &user_info);
 
-				EOS_EFriendsStatus status = EOS_Friends_GetStatus(friends_handle, &status_options);
-
-				String status_str = "Unknown";
-				switch (status) {
-					case EOS_EFriendsStatus::EOS_FS_Friends:
-						status_str = "Friends";
-						break;
-					case EOS_EFriendsStatus::EOS_FS_InviteSent:
-						status_str = "Invite Sent";
-						break;
-					case EOS_EFriendsStatus::EOS_FS_InviteReceived:
-						status_str = "Invite Received";
-						break;
-					default:
-						status_str = "Not Friends";
-						break;
+				if (copy_result == EOS_EResult::EOS_Success && user_info) {
+					if (user_info->DisplayName) {
+						friend_info["display_name"] = String::utf8(user_info->DisplayName);
+					} else {
+						friend_info["display_name"] = "Unknown User";
+					}
+					EOS_UserInfo_Release(user_info);
+				} else {
+					// User info not cached, set placeholder
+					friend_info["display_name"] = "Loading...";
 				}
-
-				friend_info["status"] = status_str;
-				friends_array.append(friend_info);
+			} else {
+				friend_info["display_name"] = "Unknown User";
 			}
+
+			// Get friend status
+			EOS_Friends_GetStatusOptions status_options = {};
+			status_options.ApiVersion = EOS_FRIENDS_GETSTATUS_API_LATEST;
+			status_options.LocalUserId = static_cast<AuthenticationSubsystem*>(auth)->GetRawEpicAccountId();
+			status_options.TargetUserId = friend_id;
+
+			EOS_EFriendsStatus status = EOS_Friends_GetStatus(friends_handle, &status_options);
+
+			String status_str = "Unknown";
+			switch (status) {
+				case EOS_EFriendsStatus::EOS_FS_Friends:
+					status_str = "Friends";
+					break;
+				case EOS_EFriendsStatus::EOS_FS_InviteSent:
+					status_str = "Invite Sent";
+					break;
+				case EOS_EFriendsStatus::EOS_FS_InviteReceived:
+					status_str = "Invite Received";
+					break;
+				default:
+					status_str = "Not Friends";
+					break;
+			}
+
+			friend_info["status"] = status_str;
+			friends_array.append(friend_info);
 		}
 	}
 
@@ -418,14 +443,129 @@ Dictionary GodotEpic::get_friend_info(const String& friend_id) {
 		return friend_info;
 	}
 
-	// For now, return basic structure
-	// In a full implementation, you'd query user info, presence, etc.
-	friend_info["id"] = friend_id;
-	friend_info["display_name"] = "Friend";  // Would get from UserInfo interface
-	friend_info["status"] = "Unknown";
-	friend_info["online"] = false;
+	// Convert string friend_id to EOS_EpicAccountId
+	EOS_EpicAccountId target_user_id = FAccountHelpers::EpicAccountIDFromString(friend_id.utf8().get_data());
+	if (!target_user_id) {
+		ERR_PRINT("Invalid friend ID format");
+		return friend_info;
+	}
+
+	// Try to get cached user info
+	EOS_HUserInfo user_info_handle = EOS_Platform_GetUserInfoInterface(platform_handle);
+	if (user_info_handle) {
+		EOS_UserInfo_CopyUserInfoOptions copy_options = {};
+		copy_options.ApiVersion = EOS_USERINFO_COPYUSERINFO_API_LATEST;
+		copy_options.LocalUserId = static_cast<AuthenticationSubsystem*>(auth)->GetRawEpicAccountId();
+		copy_options.TargetUserId = target_user_id;
+
+		EOS_UserInfo* user_info = nullptr;
+		EOS_EResult copy_result = EOS_UserInfo_CopyUserInfo(user_info_handle, &copy_options, &user_info);
+
+		if (copy_result == EOS_EResult::EOS_Success && user_info) {
+			friend_info["id"] = friend_id;
+			if (user_info->DisplayName) {
+				friend_info["display_name"] = String::utf8(user_info->DisplayName);
+			} else {
+				friend_info["display_name"] = "Unknown User";
+			}
+			if (user_info->Country) {
+				friend_info["country"] = String::utf8(user_info->Country);
+			}
+			if (user_info->PreferredLanguage) {
+				friend_info["preferred_language"] = String::utf8(user_info->PreferredLanguage);
+			}
+			if (user_info->Nickname) {
+				friend_info["nickname"] = String::utf8(user_info->Nickname);
+			}
+			EOS_UserInfo_Release(user_info);
+		} else {
+			// User info not cached
+			friend_info["id"] = friend_id;
+			friend_info["display_name"] = "Not loaded";
+			friend_info["status"] = "Call query_friend_info() first";
+		}
+	} else {
+		ERR_PRINT("Failed to get UserInfo interface");
+	}
 
 	return friend_info;
+}
+
+void GodotEpic::query_friend_info(const String& friend_id) {
+	auto auth = Get<IAuthenticationSubsystem>();
+	if (!auth || !auth->IsLoggedIn()) {
+		ERR_PRINT("AuthenticationSubsystem not available or user not logged in");
+		return;
+	}
+
+	EOS_HPlatform platform_handle = get_platform_handle();
+	if (!platform_handle) {
+		ERR_PRINT("Platform not initialized");
+		return;
+	}
+
+	// Convert string friend_id to EOS_EpicAccountId
+	EOS_EpicAccountId target_user_id = FAccountHelpers::EpicAccountIDFromString(friend_id.utf8().get_data());
+	if (!target_user_id) {
+		ERR_PRINT("Invalid friend ID format");
+		return;
+	}
+
+	EOS_HUserInfo user_info_handle = EOS_Platform_GetUserInfoInterface(platform_handle);
+	if (!user_info_handle) {
+		ERR_PRINT("Failed to get UserInfo interface");
+		return;
+	}
+
+	EOS_UserInfo_QueryUserInfoOptions query_options = {};
+	query_options.ApiVersion = EOS_USERINFO_QUERYUSERINFO_API_LATEST;
+	query_options.LocalUserId = static_cast<AuthenticationSubsystem*>(auth)->GetRawEpicAccountId();
+	query_options.TargetUserId = target_user_id;
+
+	EOS_UserInfo_QueryUserInfo(user_info_handle, &query_options, this, friend_info_query_callback);
+	ERR_PRINT("Friend info query initiated for: " + friend_id);
+}
+
+void GodotEpic::query_all_friends_info() {
+	auto auth = Get<IAuthenticationSubsystem>();
+	if (!auth || !auth->IsLoggedIn()) {
+		ERR_PRINT("AuthenticationSubsystem not available or user not logged in");
+		return;
+	}
+
+	EOS_HPlatform platform_handle = get_platform_handle();
+	if (!platform_handle) {
+		ERR_PRINT("Platform not initialized");
+		return;
+	}
+
+	EOS_HUserInfo user_info_handle = EOS_Platform_GetUserInfoInterface(platform_handle);
+	if (!user_info_handle) {
+		ERR_PRINT("Failed to get UserInfo interface");
+		return;
+	}
+
+	// Get current friends list
+	Array friends_list = get_friends_list();
+	EOS_EpicAccountId local_user_id = static_cast<AuthenticationSubsystem*>(auth)->GetRawEpicAccountId();
+
+	// Query user info for each friend
+	for (int i = 0; i < friends_list.size(); i++) {
+		Dictionary friend_info = friends_list[i];
+		String friend_id = friend_info["id"];
+
+		EOS_EpicAccountId target_user_id = FAccountHelpers::EpicAccountIDFromString(friend_id.utf8().get_data());
+		if (target_user_id) {
+			EOS_UserInfo_QueryUserInfoOptions query_options = {};
+			query_options.ApiVersion = EOS_USERINFO_QUERYUSERINFO_API_LATEST;
+			query_options.LocalUserId = local_user_id;
+			query_options.TargetUserId = target_user_id;
+
+			EOS_UserInfo_QueryUserInfo(user_info_handle, &query_options, this, friend_info_query_callback);
+		}
+	}
+
+	ERR_PRINT("Querying user info for " + String::num_int64(friends_list.size()) + " friends");
 }
 
 // Achievements methods
@@ -600,6 +740,32 @@ void EOS_CALL GodotEpic::friends_query_callback(const EOS_Friends_QueryFriendsCa
 		// Emit empty friends list on failure
 		Array empty_friends;
 		instance->emit_signal("friends_updated", empty_friends);
+	}
+}
+
+void EOS_CALL GodotEpic::friend_info_query_callback(const EOS_UserInfo_QueryUserInfoCallbackInfo* data) {
+	if (!data || !instance) {
+		return;
+	}
+
+	if (data->ResultCode == EOS_EResult::EOS_Success) {
+		ERR_PRINT("Friend info query successful");
+
+		// Convert user ID back to string and get friend info
+		const char* user_id_str = FAccountHelpers::EpicAccountIDToString(data->TargetUserId);
+		String friend_id = String::utf8(user_id_str);
+
+		Dictionary friend_info = instance->get_friend_info(friend_id);
+		instance->emit_signal("friend_info_updated", friend_info);
+	} else {
+		String error_msg = "Friend info query failed: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
+		ERR_PRINT(error_msg);
+
+		// Emit empty friend info on failure
+		Dictionary empty_info;
+		empty_info["id"] = FAccountHelpers::EpicAccountIDToString(data->TargetUserId);
+		empty_info["error"] = "Query failed";
+		instance->emit_signal("friend_info_updated", empty_info);
 	}
 }
 

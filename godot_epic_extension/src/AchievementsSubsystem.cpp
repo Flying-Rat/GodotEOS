@@ -2,6 +2,7 @@
 #include "SubsystemManager.h"
 #include "IPlatformSubsystem.h"
 #include "IAuthenticationSubsystem.h"
+#include "AccountHelpers.h"
 #include "../eos_sdk/Include/eos_sdk.h"
 #include "../eos_sdk/Include/eos_achievements.h"
 #include "../eos_sdk/Include/eos_stats.h"
@@ -99,7 +100,7 @@ bool AchievementsSubsystem::QueryAchievementDefinitions() {
         return false;
     }
 
-    EOS_ProductUserId product_user_id = EOS_ProductUserId_FromString(product_user_id_str.utf8().get_data());
+    EOS_ProductUserId product_user_id = FAccountHelpers::ProductUserIDFromString(product_user_id_str.utf8().get_data());
     if (!EOS_ProductUserId_IsValid(product_user_id)) {
         UtilityFunctions::printerr("AchievementsSubsystem: Failed to parse Product User ID");
         return false;
@@ -133,7 +134,7 @@ bool AchievementsSubsystem::QueryPlayerAchievements() {
         return false;
     }
 
-    EOS_ProductUserId product_user_id = EOS_ProductUserId_FromString(product_user_id_str.utf8().get_data());
+    EOS_ProductUserId product_user_id = FAccountHelpers::ProductUserIDFromString(product_user_id_str.utf8().get_data());
     if (!EOS_ProductUserId_IsValid(product_user_id)) {
         UtilityFunctions::printerr("AchievementsSubsystem: Failed to parse Product User ID");
         return false;
@@ -179,7 +180,7 @@ bool AchievementsSubsystem::UnlockAchievements(const Array& achievement_ids) {
         return false;
     }
 
-    EOS_ProductUserId product_user_id = EOS_ProductUserId_FromString(product_user_id_str.utf8().get_data());
+    EOS_ProductUserId product_user_id = FAccountHelpers::ProductUserIDFromString(product_user_id_str.utf8().get_data());
     if (!EOS_ProductUserId_IsValid(product_user_id)) {
         UtilityFunctions::printerr("AchievementsSubsystem: Failed to parse Product User ID");
         return false;
@@ -263,7 +264,7 @@ Dictionary AchievementsSubsystem::GetPlayerAchievement(const String& achievement
         return result;
     }
 
-    EOS_ProductUserId product_user_id = EOS_ProductUserId_FromString(product_user_id_str.utf8().get_data());
+    EOS_ProductUserId product_user_id = FAccountHelpers::ProductUserIDFromString(product_user_id_str.utf8().get_data());
     if (!EOS_ProductUserId_IsValid(product_user_id)) {
         return result;
     }
@@ -328,7 +329,7 @@ bool AchievementsSubsystem::IngestStat(const String& stat_name, int amount) {
         return false;
     }
 
-    EOS_ProductUserId product_user_id = EOS_ProductUserId_FromString(product_user_id_str.utf8().get_data());
+    EOS_ProductUserId product_user_id = FAccountHelpers::ProductUserIDFromString(product_user_id_str.utf8().get_data());
     if (!EOS_ProductUserId_IsValid(product_user_id)) {
         UtilityFunctions::printerr("AchievementsSubsystem: Failed to parse Product User ID");
         return false;
@@ -382,7 +383,7 @@ bool AchievementsSubsystem::QueryStats() {
         return false;
     }
 
-    EOS_ProductUserId product_user_id = EOS_ProductUserId_FromString(product_user_id_str.utf8().get_data());
+    EOS_ProductUserId product_user_id = FAccountHelpers::ProductUserIDFromString(product_user_id_str.utf8().get_data());
     if (!EOS_ProductUserId_IsValid(product_user_id)) {
         UtilityFunctions::printerr("AchievementsSubsystem: Failed to parse Product User ID");
         return false;
@@ -528,7 +529,7 @@ void EOS_CALL AchievementsSubsystem::on_query_player_achievements_complete(const
             return;
         }
 
-        EOS_ProductUserId product_user_id = EOS_ProductUserId_FromString(product_user_id_str.utf8().get_data());
+        EOS_ProductUserId product_user_id = FAccountHelpers::ProductUserIDFromString(product_user_id_str.utf8().get_data());
         if (!EOS_ProductUserId_IsValid(product_user_id)) {
             UtilityFunctions::printerr("AchievementsSubsystem: Failed to parse Product User ID during player achievements query callback");
             return;

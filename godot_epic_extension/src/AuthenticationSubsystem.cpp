@@ -134,7 +134,7 @@ bool AuthenticationSubsystem::Logout() {
 
     // Logout from Connect first
     if (connect_handle && !product_user_id.is_empty()) {
-        EOS_ProductUserId puid = EOS_ProductUserId_FromString(product_user_id.utf8().get_data());
+        EOS_ProductUserId puid = FAccountHelpers::ProductUserIDFromString(product_user_id.utf8().get_data());
         if (EOS_ProductUserId_IsValid(puid)) {
             EOS_Connect_LogoutOptions logout_options = {};
             logout_options.ApiVersion = EOS_CONNECT_LOGOUT_API_LATEST;
@@ -146,7 +146,7 @@ bool AuthenticationSubsystem::Logout() {
 
     // Logout from Auth
     if (auth_handle && !epic_account_id.is_empty()) {
-        EOS_EpicAccountId eaid = EOS_EpicAccountId_FromString(epic_account_id.utf8().get_data());
+        EOS_EpicAccountId eaid = FAccountHelpers::EpicAccountIDFromString(epic_account_id.utf8().get_data());
         if (EOS_EpicAccountId_IsValid(eaid)) {
             EOS_Auth_LogoutOptions logout_options = {};
             logout_options.ApiVersion = EOS_AUTH_LOGOUT_API_LATEST;
@@ -193,7 +193,7 @@ EOS_EpicAccountId AuthenticationSubsystem::GetRawEpicAccountId() const {
     if (epic_account_id.is_empty()) {
         return nullptr;
     }
-    return EOS_EpicAccountId_FromString(epic_account_id.utf8().get_data());
+    return FAccountHelpers::EpicAccountIDFromString(epic_account_id.utf8().get_data());
 }
 
 void AuthenticationSubsystem::setup_notifications() {

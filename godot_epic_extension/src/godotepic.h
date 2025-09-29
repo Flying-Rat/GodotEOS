@@ -13,6 +13,7 @@
 #include <eos_connect.h>
 #include <eos_friends.h>
 #include <eos_achievements.h>
+#include <eos_userinfo.h>
 #include "EpicInitOptions.h"
 #include "SubsystemManager.h"
 
@@ -36,6 +37,7 @@ private:
 
 	// Friends callbacks
 	static void EOS_CALL friends_query_callback(const EOS_Friends_QueryFriendsCallbackInfo* data);
+	static void EOS_CALL friend_info_query_callback(const EOS_UserInfo_QueryUserInfoCallbackInfo* data);
 
 protected:
 	static void _bind_methods();
@@ -66,6 +68,8 @@ public:
 	void query_friends();
 	Array get_friends_list();
 	Dictionary get_friend_info(const String& friend_id);
+	void query_friend_info(const String& friend_id);
+	void query_all_friends_info();
 
 	// Achievements methods
 	void query_achievement_definitions();
