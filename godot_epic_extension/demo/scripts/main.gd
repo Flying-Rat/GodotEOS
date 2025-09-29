@@ -616,8 +616,30 @@ func _display_friends_list(friends: Array):
 	add_output_line("👥 Friends list (" + str(friends.size()) + " friends):")
 	for i in range(friends.size()):
 		var friend = friends[i]
-		add_output_line("  " + str(i + 1) + ". ID: " + str(friend.get("id", "Unknown")))
-		add_output_line("     Status: " + str(friend.get("status", "Unknown")))
+		var friend_id = str(friend.get("id", "Unknown"))
+		var display_name = str(friend.get("display_name", "Loading..."))
+		var status = str(friend.get("status", "Unknown"))
+
+		# Display friend number and name/ID
+		if display_name != "Loading..." and display_name != "Unknown User":
+			add_output_line("  " + str(i + 1) + ". [color=cyan]" + display_name + "[/color] (" + friend_id + ")")
+		else:
+			add_output_line("  " + str(i + 1) + ". " + display_name + " (" + friend_id + ")")
+
+		add_output_line("     Status: " + status)
+
+		# Show additional user info if available
+		var country = friend.get("country", "")
+		var preferred_language = friend.get("preferred_language", "")
+		var nickname = friend.get("nickname", "")
+
+		if country != "":
+			add_output_line("     Country: " + country)
+		if preferred_language != "":
+			add_output_line("     Language: " + preferred_language)
+		if nickname != "" and nickname != display_name:
+			add_output_line("     Nickname: " + nickname)
+
 		add_output_line("")
 
 # ============================================================================
