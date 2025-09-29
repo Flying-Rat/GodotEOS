@@ -78,14 +78,12 @@ bool LeaderboardsSubsystem::QueryLeaderboardDefinitions() {
     }
 
     auto auth = Get<IAuthenticationSubsystem>();
-    String product_user_id_str = auth->GetProductUserId();
-    EOS_ProductUserId product_user_id = FAccountHelpers::ProductUserIDFromString(product_user_id_str.utf8().get_data());
 
     EOS_Leaderboards_QueryLeaderboardDefinitionsOptions options = {};
     options.ApiVersion = EOS_LEADERBOARDS_QUERYLEADERBOARDDEFINITIONS_API_LATEST;
     options.StartTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
     options.EndTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
-    options.LocalUserId = product_user_id;
+    options.LocalUserId = auth->GetProductUserIdHandle();;
 
     EOS_Leaderboards_QueryLeaderboardDefinitions(leaderboards_handle, &options, this, on_query_leaderboard_definitions_complete);
     UtilityFunctions::print("LeaderboardsSubsystem: Querying leaderboard definitions...");
@@ -108,13 +106,11 @@ bool LeaderboardsSubsystem::QueryLeaderboardRanks(const String& leaderboard_id, 
     }
 
     auto auth = Get<IAuthenticationSubsystem>();
-    String product_user_id_str = auth->GetProductUserId();
-    EOS_ProductUserId product_user_id = FAccountHelpers::ProductUserIDFromString(product_user_id_str.utf8().get_data());
 
     EOS_Leaderboards_QueryLeaderboardRanksOptions QueryRanksOptions = { 0 };
 	QueryRanksOptions.ApiVersion = EOS_LEADERBOARDS_QUERYLEADERBOARDRANKS_API_LATEST;
 	QueryRanksOptions.LeaderboardId = leaderboard_id.utf8().get_data();
-	QueryRanksOptions.LocalUserId = product_user_id;
+	QueryRanksOptions.LocalUserId = auth->GetProductUserIdHandle();
 
     EOS_Leaderboards_QueryLeaderboardRanks(leaderboards_handle, &QueryRanksOptions, this, on_query_leaderboard_ranks_complete);
     UtilityFunctions::print("LeaderboardsSubsystem: Querying leaderboard ranks for: " + leaderboard_id);
@@ -174,8 +170,6 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
     }
 
     auto auth = Get<IAuthenticationSubsystem>();
-    String product_user_id_str = auth->GetProductUserId();
-    EOS_ProductUserId local_user_id = FAccountHelpers::ProductUserIDFromString(product_user_id_str.utf8().get_data());
 
     EOS_Leaderboards_UserScoresQueryStatInfo stat_info = {};
     stat_info.ApiVersion = EOS_LEADERBOARDS_USERSCORESQUERYSTATINFO_API_LATEST;
@@ -190,7 +184,7 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
     options.StatInfoCount = 1;
     options.StartTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
     options.EndTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
-    options.LocalUserId = local_user_id;
+    options.LocalUserId = auth->GetProductUserIdHandle();
 
     EOS_Leaderboards_QueryLeaderboardUserScores(leaderboards_handle, &options, this, on_query_leaderboard_user_scores_complete);
     UtilityFunctions::print("LeaderboardsSubsystem: Querying user scores for leaderboard: " + leaderboard_id);

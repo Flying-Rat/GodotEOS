@@ -6,7 +6,6 @@
 #include "../eos_sdk/Include/eos_auth.h"
 #include "../eos_sdk/Include/eos_connect.h"
 #include "../eos_sdk/Include/eos_logging.h"
-#include <godot_cpp/classes/ref.hpp>
 #include <godot_cpp/variant/string.hpp>
 #include <godot_cpp/variant/callable.hpp>
 
@@ -27,14 +26,14 @@ public:
     virtual bool Login(const String& login_type, const Dictionary& credentials) override;
     virtual bool Logout() override;
     virtual bool IsLoggedIn() const override;
-    virtual String GetProductUserId() const override;
-    virtual String GetEpicAccountId() const override;
+    virtual void SetProductUserIdHandle(EOS_ProductUserId product_user_id) override;
     virtual String GetDisplayName() const override;
     virtual int GetLoginStatus() const override;
     virtual void SetLoginCallback(const Callable& callback) override;
-
+    
     // Additional getter for raw EOS handle
-    EOS_EpicAccountId GetRawEpicAccountId() const;
+    virtual EOS_ProductUserId GetProductUserIdHandle() const override;
+    virtual EOS_EpicAccountId GetEpicAccountId() const override;
 
 private:
     // EOS handles
@@ -42,11 +41,10 @@ private:
     EOS_HAuth auth_handle;
     EOS_HConnect connect_handle;
     EOS_ProductUserId local_user_id;
+    EOS_EpicAccountId epic_account_id;
 
     // State
     bool is_logged_in;
-    String product_user_id;
-    String epic_account_id;
     String display_name;
     EOS_ELoginStatus login_status;
 
@@ -66,7 +64,6 @@ private:
     bool perform_persistent_auth_login();
     bool perform_account_portal_login();
     bool perform_developer_login(const Dictionary& credentials);
-    void initiate_connect_login_with_auth_token(EOS_EpicAccountId epic_account_id);
 
     // Static callback implementations
     static void EOS_CALL logging_callback(const EOS_LogMessage* message);
@@ -75,8 +72,6 @@ private:
     static void EOS_CALL connect_login_callback(const EOS_Connect_LoginCallbackInfo* data);
 
     static void EOS_CALL on_auth_logout_complete(const EOS_Auth_LogoutCallbackInfo* data);
-    static void EOS_CALL on_auth_login_complete(const EOS_Auth_LoginCallbackInfo* data);
-    static void EOS_CALL on_connect_login_complete(const EOS_Connect_LoginCallbackInfo* data);
     static void EOS_CALL on_connect_logout_complete(const EOS_Connect_LogoutCallbackInfo* data);
     static void EOS_CALL on_auth_login_status_changed(const EOS_Auth_LoginStatusChangedCallbackInfo* data);
     static void EOS_CALL on_connect_login_status_changed(const EOS_Connect_LoginStatusChangedCallbackInfo* data);

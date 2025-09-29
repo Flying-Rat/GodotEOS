@@ -292,13 +292,19 @@ String GodotEpic::get_current_username() const {
 }
 
 String GodotEpic::get_epic_account_id() const {
-	auto auth = Get<IAuthenticationSubsystem>();
-	return auth ? auth->GetEpicAccountId() : "";
+	EOS_EpicAccountId epic_id = Get<IAuthenticationSubsystem>()->GetEpicAccountId();
+	if (!epic_id) return "";
+	
+	const char* epic_id_str = FAccountHelpers::EpicAccountIDToString(epic_id);
+	return epic_id_str ? String::utf8(epic_id_str) : "";
 }
 
 String GodotEpic::get_product_user_id() const {
-	auto auth = Get<IAuthenticationSubsystem>();
-	return auth ? auth->GetProductUserId() : "";
+	EOS_ProductUserId product_user_id = Get<IAuthenticationSubsystem>()->GetProductUserIdHandle();
+	if (!EOS_ProductUserId_IsValid(product_user_id)) return "";
+	
+	const char* id_string = FAccountHelpers::ProductUserIDToString(product_user_id);
+	return id_string ? String::utf8(id_string) : "";
 }
 
 // Friends methods
@@ -323,7 +329,7 @@ void GodotEpic::query_friends() {
 
 	EOS_Friends_QueryFriendsOptions query_options = {};
 	query_options.ApiVersion = EOS_FRIENDS_QUERYFRIENDS_API_LATEST;
-	query_options.LocalUserId = static_cast<AuthenticationSubsystem*>(auth)->GetRawEpicAccountId();
+	query_options.LocalUserId = auth->GetEpicAccountId();
 
 	EOS_Friends_QueryFriends(friends_handle, &query_options, nullptr, friends_query_callback);
 	ERR_PRINT("Friends query initiated");
@@ -352,14 +358,14 @@ Array GodotEpic::get_friends_list() {
 
 	EOS_Friends_GetFriendsCountOptions count_options = {};
 	count_options.ApiVersion = EOS_FRIENDS_GETFRIENDSCOUNT_API_LATEST;
-	count_options.LocalUserId = static_cast<AuthenticationSubsystem*>(auth)->GetRawEpicAccountId();
+	count_options.LocalUserId = auth->GetEpicAccountId();
 
 	int32_t friends_count = EOS_Friends_GetFriendsCount(friends_handle, &count_options);
 
 	for (int32_t i = 0; i < friends_count; i++) {
 		EOS_Friends_GetFriendAtIndexOptions friend_options = {};
 		friend_options.ApiVersion = EOS_FRIENDS_GETFRIENDATINDEX_API_LATEST;
-		friend_options.LocalUserId = static_cast<AuthenticationSubsystem*>(auth)->GetRawEpicAccountId();
+		friend_options.LocalUserId = auth->GetEpicAccountId();
 		friend_options.Index = i;
 
 		EOS_EpicAccountId friend_id = EOS_Friends_GetFriendAtIndex(friends_handle, &friend_options);
@@ -375,9 +381,8 @@ Array GodotEpic::get_friends_list() {
 			if (user_info_handle) {
 				EOS_UserInfo_CopyUserInfoOptions copy_options = {};
 				copy_options.ApiVersion = EOS_USERINFO_COPYUSERINFO_API_LATEST;
-				copy_options.LocalUserId = static_cast<AuthenticationSubsystem*>(auth)->GetRawEpicAccountId();
-				copy_options.TargetUserId = friend_id;
-
+				copy_options.LocalUserId = auth->GetEpicAccountId();
+				copy_options.TargetUserId = friend_id;				
 				EOS_UserInfo* user_info = nullptr;
 				EOS_EResult copy_result = EOS_UserInfo_CopyUserInfo(user_info_handle, &copy_options, &user_info);
 
@@ -399,7 +404,7 @@ Array GodotEpic::get_friends_list() {
 			// Get friend status
 			EOS_Friends_GetStatusOptions status_options = {};
 			status_options.ApiVersion = EOS_FRIENDS_GETSTATUS_API_LATEST;
-			status_options.LocalUserId = static_cast<AuthenticationSubsystem*>(auth)->GetRawEpicAccountId();
+			status_options.LocalUserId = auth->GetEpicAccountId();
 			status_options.TargetUserId = friend_id;
 
 			EOS_EFriendsStatus status = EOS_Friends_GetStatus(friends_handle, &status_options);
@@ -455,7 +460,7 @@ Dictionary GodotEpic::get_friend_info(const String& friend_id) {
 	if (user_info_handle) {
 		EOS_UserInfo_CopyUserInfoOptions copy_options = {};
 		copy_options.ApiVersion = EOS_USERINFO_COPYUSERINFO_API_LATEST;
-		copy_options.LocalUserId = static_cast<AuthenticationSubsystem*>(auth)->GetRawEpicAccountId();
+		copy_options.LocalUserId = auth->GetEpicAccountId();
 		copy_options.TargetUserId = target_user_id;
 
 		EOS_UserInfo* user_info = nullptr;
@@ -519,7 +524,7 @@ void GodotEpic::query_friend_info(const String& friend_id) {
 
 	EOS_UserInfo_QueryUserInfoOptions query_options = {};
 	query_options.ApiVersion = EOS_USERINFO_QUERYUSERINFO_API_LATEST;
-	query_options.LocalUserId = static_cast<AuthenticationSubsystem*>(auth)->GetRawEpicAccountId();
+	query_options.LocalUserId = auth->GetEpicAccountId();
 	query_options.TargetUserId = target_user_id;
 
 	EOS_UserInfo_QueryUserInfo(user_info_handle, &query_options, this, friend_info_query_callback);
@@ -547,7 +552,7 @@ void GodotEpic::query_all_friends_info() {
 
 	// Get current friends list
 	Array friends_list = get_friends_list();
-	EOS_EpicAccountId local_user_id = static_cast<AuthenticationSubsystem*>(auth)->GetRawEpicAccountId();
+	EOS_EpicAccountId local_user_id = auth->GetEpicAccountId();
 
 	// Query user info for each friend
 	for (int i = 0; i < friends_list.size(); i++) {
