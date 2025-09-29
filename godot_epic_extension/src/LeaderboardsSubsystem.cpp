@@ -36,7 +36,7 @@ bool LeaderboardsSubsystem::Init() {
         return false;
     }
 
-    EOS_HPlatform platform_handle = static_cast<EOS_HPlatform>(platform->GetPlatformHandle());
+    EOS_HPlatform platform_handle = platform->GetPlatformHandle();
     if (!platform_handle) {
         UtilityFunctions::printerr("LeaderboardsSubsystem: Invalid platform handle");
         return false;

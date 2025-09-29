@@ -71,6 +71,12 @@ public:
      * @param callback Callable to invoke when login completes.
      */
     virtual void SetLoginCallback(const Callable& callback) = 0;
+
+    /**
+     * @brief Get the current login callback.
+     * @return The login callback callable.
+     */
+    virtual Callable GetLoginCallback() const = 0;
 };
 
 } // namespace godot

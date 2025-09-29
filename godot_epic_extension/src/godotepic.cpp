@@ -205,7 +205,7 @@ bool GodotEpic::is_platform_initialized() const {
 
 EOS_HPlatform GodotEpic::get_platform_handle() const {
 	auto platform_subsystem = Get<IPlatformSubsystem>();
-	return platform_subsystem ? static_cast<EOS_HPlatform>(platform_subsystem->GetPlatformHandle()) : nullptr;
+	return platform_subsystem ? platform_subsystem->GetPlatformHandle() : nullptr;
 }
 
 // Authentication methods

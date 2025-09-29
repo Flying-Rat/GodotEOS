@@ -2,6 +2,7 @@
 
 #include "ISubsystem.h"
 #include "EpicInitOptions.h"
+#include "../eos_sdk/Include/eos_types.h"
 #include <godot_cpp/variant/string.hpp>
 
 namespace godot {
@@ -25,7 +26,7 @@ public:
      * @brief Get the EOS platform handle.
      * @return EOS platform handle, or nullptr if not initialized.
      */
-    virtual void* GetPlatformHandle() const = 0;
+    virtual EOS_HPlatform GetPlatformHandle() const = 0;
 
     /**
      * @brief Check if the platform is online.

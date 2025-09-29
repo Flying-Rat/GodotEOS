@@ -150,7 +150,7 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
     return true;
 }
 
-void* PlatformSubsystem::GetPlatformHandle() const {
+EOS_HPlatform PlatformSubsystem::GetPlatformHandle() const {
     return platform_handle;
 }
 

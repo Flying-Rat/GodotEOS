@@ -26,7 +26,7 @@ public:
 
     // IPlatformSubsystem interface
     bool InitializePlatform(const EpicInitOptions& options) override;
-    void* GetPlatformHandle() const override;
+    EOS_HPlatform GetPlatformHandle() const override;
     bool IsOnline() const override;
     void SetLogLevel(int level) override;
 

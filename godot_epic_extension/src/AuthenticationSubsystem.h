@@ -30,6 +30,7 @@ public:
     virtual String GetDisplayName() const override;
     virtual int GetLoginStatus() const override;
     virtual void SetLoginCallback(const Callable& callback) override;
+    virtual Callable GetLoginCallback() const override;
     
     // Additional getter for raw EOS handle
     virtual EOS_ProductUserId GetProductUserIdHandle() const override;

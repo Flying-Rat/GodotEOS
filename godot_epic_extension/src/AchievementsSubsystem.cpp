@@ -39,7 +39,7 @@ bool AchievementsSubsystem::Init() {
         return false;
     }
 
-    EOS_HPlatform platform_handle = static_cast<EOS_HPlatform>(platform->GetPlatformHandle());
+    EOS_HPlatform platform_handle = platform->GetPlatformHandle();
     if (!platform_handle) {
         UtilityFunctions::printerr("AchievementsSubsystem: Invalid platform handle");
         return false;
