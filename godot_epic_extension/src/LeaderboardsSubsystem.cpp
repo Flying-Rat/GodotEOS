@@ -107,13 +107,16 @@ bool LeaderboardsSubsystem::QueryLeaderboardRanks(const String& leaderboard_id, 
         return false;
     }
 
-    EOS_Leaderboards_QueryLeaderboardRanksOptions options = {};
-    options.ApiVersion = EOS_LEADERBOARDS_QUERYLEADERBOARDRANKS_API_LATEST;
-    options.LeaderboardId = leaderboard_id.utf8().get_data();
+    auto auth = Get<IAuthenticationSubsystem>();
+    String product_user_id_str = auth->GetProductUserId();
+    EOS_ProductUserId product_user_id = FAccountHelpers::ProductUserIDFromString(product_user_id_str.utf8().get_data());
 
-    // Note: Limit field may not be available in this EOS SDK version
+    EOS_Leaderboards_QueryLeaderboardRanksOptions QueryRanksOptions = { 0 };
+	QueryRanksOptions.ApiVersion = EOS_LEADERBOARDS_QUERYLEADERBOARDRANKS_API_LATEST;
+	QueryRanksOptions.LeaderboardId = leaderboard_id.utf8().get_data();
+	QueryRanksOptions.LocalUserId = product_user_id;
 
-    EOS_Leaderboards_QueryLeaderboardRanks(leaderboards_handle, &options, this, on_query_leaderboard_ranks_complete);
+    EOS_Leaderboards_QueryLeaderboardRanks(leaderboards_handle, &QueryRanksOptions, this, on_query_leaderboard_ranks_complete);
     UtilityFunctions::print("LeaderboardsSubsystem: Querying leaderboard ranks for: " + leaderboard_id);
     return true;
 }
@@ -133,6 +136,27 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
         return false;
     }
 
+    // Find the leaderboard definition to get stat info
+    Dictionary leaderboard_def;
+    bool found = false;
+    for (int i = 0; i < leaderboard_definitions.size(); i++) {
+        Dictionary def = leaderboard_definitions[i];
+        if (def["leaderboard_id"] == leaderboard_id) {
+            leaderboard_def = def;
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        UtilityFunctions::printerr("LeaderboardsSubsystem: Leaderboard definition not found for ID: " + leaderboard_id);
+        return false;
+    }
+
+    String stat_name = leaderboard_def["stat_name"];
+    int aggregation_int = leaderboard_def["aggregation"];
+    EOS_ELeaderboardAggregation aggregation = static_cast<EOS_ELeaderboardAggregation>(aggregation_int);
+
     // Convert Godot Array to C array
     std::vector<EOS_ProductUserId> product_user_ids;
     std::vector<String> user_id_strings;
@@ -149,10 +173,24 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
         product_user_ids.push_back(puid);
     }
 
+    auto auth = Get<IAuthenticationSubsystem>();
+    String product_user_id_str = auth->GetProductUserId();
+    EOS_ProductUserId local_user_id = FAccountHelpers::ProductUserIDFromString(product_user_id_str.utf8().get_data());
+
+    EOS_Leaderboards_UserScoresQueryStatInfo stat_info = {};
+    stat_info.ApiVersion = EOS_LEADERBOARDS_USERSCORESQUERYSTATINFO_API_LATEST;
+    stat_info.StatName = stat_name.utf8().get_data();
+    stat_info.Aggregation = aggregation;
+
     EOS_Leaderboards_QueryLeaderboardUserScoresOptions options = {};
     options.ApiVersion = EOS_LEADERBOARDS_QUERYLEADERBOARDUSERSCORES_API_LATEST;
     options.UserIds = product_user_ids.data();
     options.UserIdsCount = product_user_ids.size();
+    options.StatInfo = &stat_info;
+    options.StatInfoCount = 1;
+    options.StartTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
+    options.EndTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
+    options.LocalUserId = local_user_id;
 
     EOS_Leaderboards_QueryLeaderboardUserScores(leaderboards_handle, &options, this, on_query_leaderboard_user_scores_complete);
     UtilityFunctions::print("LeaderboardsSubsystem: Querying user scores for leaderboard: " + leaderboard_id);
@@ -215,9 +253,7 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_definitions_complete(c
                 Dictionary definition_dict;
                 definition_dict["leaderboard_id"] = String(definition->LeaderboardId ? definition->LeaderboardId : "");
                 definition_dict["stat_name"] = String(definition->StatName ? definition->StatName : "");
-                definition_dict["aggregation"] = String(definition->Aggregation == EOS_ELeaderboardAggregation::EOS_LA_Sum ? "Sum" : 
-                                                     definition->Aggregation == EOS_ELeaderboardAggregation::EOS_LA_Min ? "Min" : 
-                                                     definition->Aggregation == EOS_ELeaderboardAggregation::EOS_LA_Max ? "Max" : "Unknown");
+                definition_dict["aggregation"] = (int)definition->Aggregation;
                 definition_dict["start_time"] = definition->StartTime;
                 definition_dict["end_time"] = definition->EndTime;
 
