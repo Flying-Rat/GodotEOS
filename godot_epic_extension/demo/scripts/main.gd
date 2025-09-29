@@ -25,6 +25,12 @@ extends Node2D
 #   • Ingest Achievement Stats (requires Product User ID)
 #   • Query/Get Achievement Stats (requires Product User ID)
 #
+# 🏁 LEADERBOARDS TAB - Leaderboard system
+#   • Query/Get Leaderboard Definitions (available without login)
+#   • Query/Get Leaderboard Ranks (requires Product User ID)
+#   • Query/Get User Scores (requires Product User ID)
+#   • Ingest Leaderboard Stats (requires Product User ID)
+#
 # ⚙️ SYSTEM TAB - Utility functions
 #   • Clear Output
 #
@@ -67,6 +73,16 @@ var godot_epic: GodotEpic = null
 @onready var query_stats_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/StatsTab/VBoxContainer/QueryStatsButton
 @onready var get_stats_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/StatsTab/VBoxContainer/GetStatsButton
 
+# Leaderboards Tab UI References
+@onready var leaderboards_tab: Control = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/LeaderboardsTab
+@onready var query_leaderboard_defs_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/LeaderboardsTab/VBoxContainer/QueryLeaderboardDefsButton
+@onready var get_leaderboard_defs_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/LeaderboardsTab/VBoxContainer/GetLeaderboardDefsButton
+@onready var query_leaderboard_ranks_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/LeaderboardsTab/VBoxContainer/QueryLeaderboardRanksButton
+@onready var get_leaderboard_ranks_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/LeaderboardsTab/VBoxContainer/GetLeaderboardRanksButton
+@onready var query_user_scores_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/LeaderboardsTab/VBoxContainer/QueryUserScoresButton
+@onready var get_user_scores_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/LeaderboardsTab/VBoxContainer/GetUserScoresButton
+@onready var ingest_leaderboard_stat_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/LeaderboardsTab/VBoxContainer/IngestLeaderboardStatButton
+
 # System Tab UI References
 @onready var system_tab: Control = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/SystemTab
 @onready var clear_output_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/ClearOutputButton
@@ -87,6 +103,7 @@ func _ready():
 	tab_container.set_tab_title(1, "👥 Friends")
 	tab_container.set_tab_title(2, "🏆 Achievements")
 	tab_container.set_tab_title(3, "📊 Statistics")
+	tab_container.set_tab_title(4, "🏁 Leaderboards")
 
 	# Connect to signals for async operations
 	godot_epic.connect("login_completed", _on_login_completed)
@@ -97,12 +114,17 @@ func _ready():
 	godot_epic.connect("achievements_unlocked", _on_achievements_unlocked)
 	godot_epic.connect("achievement_unlocked", _on_achievement_unlocked)
 	godot_epic.connect("achievement_stats_updated", _on_achievement_stats_updated)
+	godot_epic.connect("leaderboard_definitions_updated", _on_leaderboard_definitions_updated)
+	godot_epic.connect("leaderboard_ranks_updated", _on_leaderboard_ranks_updated)
+	godot_epic.connect("leaderboard_user_scores_updated", _on_leaderboard_user_scores_updated)
+	godot_epic.connect("stats_ingested", _on_stats_ingested)
 
 	# Connect button signals by tab groups
 	_connect_authentication_buttons()
 	_connect_friends_buttons()
 	_connect_achievements_buttons()
 	_connect_stats_buttons()
+	_connect_leaderboards_buttons()
 	_connect_system_buttons()
 
 	var init_options = {
@@ -128,8 +150,9 @@ func _ready():
 		add_output_line("• Friends Management")
 		add_output_line("• Achievements System")
 		add_output_line("• Stats Tracking")
+		add_output_line("• Leaderboards System")
 		add_output_line("")
-		add_output_line("[i]Use the tabs above to organize your testing, or keyboard shortcuts (1-9, 0, Q, W, R, T, Y)[/i]")
+		add_output_line("[i]Use the tabs above to organize your testing, or keyboard shortcuts (1-9, 0, Q, W, R, T, Y, E, I, O, P, A, S, D)[/i]")
 
 		# Start auto-test if enabled
 		if auto_test_enabled:
@@ -184,6 +207,15 @@ func _connect_stats_buttons():
 	query_stats_button.pressed.connect(_on_query_stats_pressed)
 	get_stats_button.pressed.connect(_on_get_stats_pressed)
 
+func _connect_leaderboards_buttons():
+	query_leaderboard_defs_button.pressed.connect(_on_query_leaderboard_defs_pressed)
+	get_leaderboard_defs_button.pressed.connect(_on_get_leaderboard_defs_pressed)
+	query_leaderboard_ranks_button.pressed.connect(_on_query_leaderboard_ranks_pressed)
+	get_leaderboard_ranks_button.pressed.connect(_on_get_leaderboard_ranks_pressed)
+	query_user_scores_button.pressed.connect(_on_query_user_scores_pressed)
+	get_user_scores_button.pressed.connect(_on_get_user_scores_pressed)
+	ingest_leaderboard_stat_button.pressed.connect(_on_ingest_leaderboard_stat_pressed)
+
 func _connect_system_buttons():
 	clear_output_button.pressed.connect(_on_clear_output_pressed)
 
@@ -209,6 +241,9 @@ func update_button_states():
 	# Update Stats tab buttons (require Product User ID for cross-platform features)
 	_update_stats_tab_buttons(is_logged_in, has_product_user_id)
 
+	# Update Leaderboards tab buttons (require Product User ID for cross-platform features)
+	_update_leaderboards_tab_buttons(is_logged_in, has_product_user_id)
+
 func _update_friends_tab_buttons(is_logged_in: bool):
 	query_friends_button.disabled = not is_logged_in
 	get_friends_button.disabled = not is_logged_in
@@ -230,6 +265,18 @@ func _update_stats_tab_buttons(is_logged_in: bool, has_product_user_id: bool):
 	ingest_stat_button.disabled = not (is_logged_in and has_product_user_id)
 	query_stats_button.disabled = not (is_logged_in and has_product_user_id)
 	get_stats_button.disabled = not (is_logged_in and has_product_user_id)
+
+func _update_leaderboards_tab_buttons(is_logged_in: bool, has_product_user_id: bool):
+	# Leaderboard definitions can be queried without login
+	# query_leaderboard_defs_button.disabled = false
+	# get_leaderboard_defs_button.disabled = false
+
+	# Leaderboard operations require Product User ID for cross-platform features
+	query_leaderboard_ranks_button.disabled = not (is_logged_in and has_product_user_id)
+	get_leaderboard_ranks_button.disabled = not (is_logged_in and has_product_user_id)
+	query_user_scores_button.disabled = not (is_logged_in and has_product_user_id)
+	get_user_scores_button.disabled = not (is_logged_in and has_product_user_id)
+	ingest_leaderboard_stat_button.disabled = not (is_logged_in and has_product_user_id)
 
 # ============================================================================
 # AUTHENTICATION TAB BUTTON HANDLERS
@@ -376,6 +423,77 @@ func _on_get_stats_pressed():
 		add_output_line("[color=red]❌ Please login first![/color]")
 
 # ============================================================================
+# LEADERBOARDS TAB BUTTON HANDLERS
+# ============================================================================
+
+func _on_query_leaderboard_defs_pressed():
+	add_output_line("[color=cyan]🏁 Querying leaderboard definitions...[/color]")
+	godot_epic.query_leaderboard_definitions()
+
+func _on_get_leaderboard_defs_pressed():
+	add_output_line("[color=cyan]🏁 Getting current leaderboard definitions...[/color]")
+	var definitions = godot_epic.get_leaderboard_definitions()
+	_display_leaderboard_definitions(definitions)
+
+func _on_query_leaderboard_ranks_pressed():
+	if godot_epic.is_user_logged_in():
+		var product_user_id = godot_epic.get_product_user_id()
+		if not product_user_id.is_empty():
+			add_output_line("[color=cyan]🏁 Querying leaderboard ranks (top 10)...[/color]")
+			godot_epic.query_leaderboard_ranks("EnemiesSmashedEver", 10)
+		else:
+			add_output_line("[color=orange]⚠️ Leaderboards require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
+	else:
+		add_output_line("[color=red]❌ Please login first![/color]")
+
+func _on_get_leaderboard_ranks_pressed():
+	if godot_epic.is_user_logged_in():
+		var product_user_id = godot_epic.get_product_user_id()
+		if not product_user_id.is_empty():
+			add_output_line("[color=cyan]🏁 Getting current leaderboard ranks...[/color]")
+			var ranks = godot_epic.get_leaderboard_ranks()
+			_display_leaderboard_ranks(ranks)
+		else:
+			add_output_line("[color=orange]⚠️ Leaderboards require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
+	else:
+		add_output_line("[color=red]❌ Please login first![/color]")
+
+func _on_query_user_scores_pressed():
+	if godot_epic.is_user_logged_in():
+		var product_user_id = godot_epic.get_product_user_id()
+		if not product_user_id.is_empty():
+			add_output_line("[color=cyan]🏁 Querying user scores...[/color]")
+			var user_ids = [product_user_id]  # Query current user's score
+			godot_epic.query_leaderboard_user_scores("EnemiesSmashedEver", user_ids)
+		else:
+			add_output_line("[color=orange]⚠️ Leaderboards require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
+	else:
+		add_output_line("[color=red]❌ Please login first![/color]")
+
+func _on_get_user_scores_pressed():
+	if godot_epic.is_user_logged_in():
+		var product_user_id = godot_epic.get_product_user_id()
+		if not product_user_id.is_empty():
+			add_output_line("[color=cyan]🏁 Getting current user scores...[/color]")
+			var user_scores = godot_epic.get_leaderboard_user_scores()
+			_display_leaderboard_user_scores(user_scores)
+		else:
+			add_output_line("[color=orange]⚠️ Leaderboards require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
+	else:
+		add_output_line("[color=red]❌ Please login first![/color]")
+
+func _on_ingest_leaderboard_stat_pressed():
+	if godot_epic.is_user_logged_in():
+		var product_user_id = godot_epic.get_product_user_id()
+		if not product_user_id.is_empty():
+			add_output_line("[color=cyan]🏁 Ingesting test leaderboard stat (Score: +100)...[/color]")
+			godot_epic.ingest_stat("Score", 100)
+		else:
+			add_output_line("[color=orange]⚠️ Leaderboards require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
+	else:
+		add_output_line("[color=red]❌ Please login first![/color]")
+
+# ============================================================================
 # SYSTEM TAB BUTTON HANDLERS
 # ============================================================================
 
@@ -426,6 +544,20 @@ func _input(event):
 				_on_query_stats_pressed()
 			KEY_Y:
 				_on_get_stats_pressed()
+			KEY_E:
+				_on_query_leaderboard_defs_pressed()
+			KEY_I:
+				_on_get_leaderboard_defs_pressed()
+			KEY_O:
+				_on_query_leaderboard_ranks_pressed()
+			KEY_P:
+				_on_get_leaderboard_ranks_pressed()
+			KEY_A:
+				_on_query_user_scores_pressed()
+			KEY_S:
+				_on_get_user_scores_pressed()
+			KEY_D:
+				_on_ingest_leaderboard_stat_pressed()
 
 # ============================================================================
 # EOS SIGNAL HANDLERS
@@ -523,6 +655,30 @@ func _on_achievement_stats_updated(success: bool, stats: Array):
 		_display_achievement_stats(stats)
 	else:
 		add_output_line("[color=red]❌ Failed to update achievement stats[/color]")
+
+# ============================================================================
+# LEADERBOARD SIGNAL HANDLERS
+# ============================================================================
+
+# Leaderboard signal handlers
+func _on_leaderboard_definitions_updated(definitions: Array):
+	add_output_line("[color=cyan]🏁 Leaderboard definitions updated![/color]")
+	_display_leaderboard_definitions(definitions)
+
+func _on_leaderboard_ranks_updated(ranks: Array):
+	add_output_line("[color=cyan]🏁 Leaderboard ranks updated![/color]")
+	_display_leaderboard_ranks(ranks)
+
+func _on_leaderboard_user_scores_updated(user_scores: Dictionary):
+	add_output_line("[color=cyan]🏁 Leaderboard user scores updated![/color]")
+	_display_leaderboard_user_scores(user_scores)
+
+func _on_stats_ingested(stat_names: Array):
+	add_output_line("[color=cyan]🏁 Stats ingested successfully![/color]")
+	if stat_names.size() > 0:
+		add_output_line("Ingested stats: " + str(stat_names))
+	else:
+		add_output_line("[i]Stat ingestion completed[/i]")
 
 
 # Achievement display functions
@@ -650,6 +806,54 @@ func _display_achievement_stats(stats: Array):
 		var stat = stats[i]
 		add_output_line("  " + str(i + 1) + ". " + str(stat.get("name", "Unknown Stat")))
 		add_output_line("     Value: " + str(stat.get("value", 0)))
+		add_output_line("")
+
+# ============================================================================
+# LEADERBOARD DISPLAY FUNCTIONS
+# ============================================================================
+
+# Leaderboard display functions
+func _display_leaderboard_definitions(definitions: Array):
+	if definitions.size() == 0:
+		add_output_line("🏁 No leaderboard definitions available")
+		return
+
+	add_output_line("🏁 Leaderboard Definitions (" + str(definitions.size()) + " leaderboards):")
+	for i in range(definitions.size()):
+		var def = definitions[i]
+		add_output_line("  " + str(i + 1) + ". " + str(def.get("leaderboard_id", "Unknown Leaderboard")))
+		add_output_line("     Display Name: " + str(def.get("display_name", "No name")))
+		add_output_line("     Stat Name: " + str(def.get("stat_name", "Unknown")))
+		add_output_line("     Aggregation: " + str(def.get("aggregation", "Unknown")))
+		add_output_line("")
+
+func _display_leaderboard_ranks(ranks: Array):
+	if ranks.size() == 0:
+		add_output_line("🏁 No leaderboard ranks available")
+		return
+
+	add_output_line("🏁 Leaderboard Ranks (" + str(ranks.size()) + " entries):")
+	for i in range(ranks.size()):
+		var rank = ranks[i]
+		var rank_number = rank.get("rank", i + 1)
+		var user_id = rank.get("user_id", "Unknown User")
+		var score = rank.get("score", 0)
+
+		add_output_line("  #" + str(rank_number) + " - Score: " + str(score))
+		add_output_line("     User ID: " + str(user_id))
+		add_output_line("")
+
+func _display_leaderboard_user_scores(user_scores: Dictionary):
+	if user_scores.is_empty():
+		add_output_line("🏁 No user scores available")
+		return
+
+	add_output_line("🏁 User Scores:")
+	for user_id in user_scores:
+		var score_data = user_scores[user_id]
+		add_output_line("  User: " + str(user_id))
+		add_output_line("     Score: " + str(score_data.get("score", 0)))
+		add_output_line("     Rank: " + str(score_data.get("rank", "Unknown")))
 		add_output_line("")
 
 # ============================================================================

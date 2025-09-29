@@ -157,6 +157,43 @@ text = "T - Query Stats"
 layout_mode = 2
 text = "Y - Get Current Stats"
 
+[node name="LeaderboardsTab" type="ScrollContainer" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_name = "🏁 Leaderboards"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/LeaderboardsTab"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="QueryLeaderboardDefsButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/LeaderboardsTab/VBoxContainer"]
+layout_mode = 2
+text = "E - Query Leaderboard Definitions"
+
+[node name="GetLeaderboardDefsButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/LeaderboardsTab/VBoxContainer"]
+layout_mode = 2
+text = "I - Get Leaderboard Definitions"
+
+[node name="QueryLeaderboardRanksButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/LeaderboardsTab/VBoxContainer"]
+layout_mode = 2
+text = "O - Query Leaderboard Ranks"
+
+[node name="GetLeaderboardRanksButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/LeaderboardsTab/VBoxContainer"]
+layout_mode = 2
+text = "P - Get Leaderboard Ranks"
+
+[node name="QueryUserScoresButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/LeaderboardsTab/VBoxContainer"]
+layout_mode = 2
+text = "A - Query User Scores"
+
+[node name="GetUserScoresButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/LeaderboardsTab/VBoxContainer"]
+layout_mode = 2
+text = "S - Get User Scores"
+
+[node name="IngestLeaderboardStatButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/LeaderboardsTab/VBoxContainer"]
+layout_mode = 2
+text = "D - Ingest Leaderboard Stat"
+
 [node name="HSeparator3" type="HSeparator" parent="CanvasLayer/UI/MainContainer/LeftPanel"]
 layout_mode = 2
 
