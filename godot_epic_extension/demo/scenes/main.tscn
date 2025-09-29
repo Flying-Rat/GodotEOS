@@ -31,147 +31,138 @@ offset_bottom = 687.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="ButtonsPanel" type="VBoxContainer" parent="CanvasLayer/UI/MainContainer"]
-custom_minimum_size = Vector2(300, 0)
+[node name="LeftPanel" type="VBoxContainer" parent="CanvasLayer/UI/MainContainer"]
+custom_minimum_size = Vector2(400, 0)
 layout_mode = 2
 size_flags_horizontal = 0
 
-[node name="Title" type="Label" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+[node name="Title" type="Label" parent="CanvasLayer/UI/MainContainer/LeftPanel"]
 layout_mode = 2
 theme_type_variation = &"HeaderMedium"
 text = "GodotEpic Demo"
 horizontal_alignment = 1
 
-[node name="HSeparator" type="HSeparator" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+[node name="HSeparator" type="HSeparator" parent="CanvasLayer/UI/MainContainer/LeftPanel"]
 layout_mode = 2
 
-[node name="StatusLabel" type="Label" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+[node name="StatusLabel" type="Label" parent="CanvasLayer/UI/MainContainer/LeftPanel"]
 layout_mode = 2
 theme_type_variation = &"TooltipLabel"
 text = "Initializing..."
 
-[node name="HSeparator2" type="HSeparator" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+[node name="HSeparator2" type="HSeparator" parent="CanvasLayer/UI/MainContainer/LeftPanel"]
 layout_mode = 2
 
-[node name="AuthGroup" type="VBoxContainer" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+[node name="TabContainer" type="TabContainer" parent="CanvasLayer/UI/MainContainer/LeftPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+clip_tabs = false
+
+[node name="AuthenticationTab" type="ScrollContainer" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer"]
 layout_mode = 2
 
-[node name="AuthLabel" type="Label" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup"]
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab"]
 layout_mode = 2
-theme_type_variation = &"HeaderSmall"
-text = "Authentication"
+size_flags_horizontal = 3
 
-[node name="LoginEpicButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup"]
+[node name="LoginEpicButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab/VBoxContainer"]
 layout_mode = 2
 text = "1 - Login with Epic Account"
 
-[node name="LoginDevice1Button" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup"]
+[node name="LoginDevice1Button" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab/VBoxContainer"]
 layout_mode = 2
 text = "2 - Login with Dev ID (TestUser123)"
 
-[node name="LoginDevice2Button" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup"]
+[node name="LoginDevice2Button" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab/VBoxContainer"]
 layout_mode = 2
-text = "3 - Login with Device ID (Player1)"
+text = "Alt+2 - Login with Dev ID (Player1)"
 
-[node name="LogoutButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup"]
+[node name="LogoutButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab/VBoxContainer"]
 layout_mode = 2
-text = "4 - Logout"
+text = "3 - Logout"
 
-[node name="HSeparator3" type="HSeparator" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
-layout_mode = 2
-
-[node name="FriendsGroup" type="VBoxContainer" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+[node name="FriendsTab" type="ScrollContainer" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer"]
+visible = false
 layout_mode = 2
 
-[node name="FriendsLabel" type="Label" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/FriendsGroup"]
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/FriendsTab"]
 layout_mode = 2
-theme_type_variation = &"HeaderSmall"
-text = "Friends"
+size_flags_horizontal = 3
 
-[node name="QueryFriendsButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/FriendsGroup"]
+[node name="QueryFriendsButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/FriendsTab/VBoxContainer"]
 layout_mode = 2
-text = "5 - Query Friends"
+text = "4 - Query Friends"
 
-[node name="GetFriendsButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/FriendsGroup"]
+[node name="GetFriendsButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/FriendsTab/VBoxContainer"]
 layout_mode = 2
-text = "6 - Get Current Friends"
+text = "5 - Get Current Friends"
 
-[node name="HSeparator4" type="HSeparator" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
-layout_mode = 2
-
-[node name="AchievementsGroup" type="VBoxContainer" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+[node name="AchievementsTab" type="ScrollContainer" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer"]
+visible = false
 layout_mode = 2
 
-[node name="AchievementsLabel" type="Label" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup"]
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AchievementsTab"]
 layout_mode = 2
-theme_type_variation = &"HeaderSmall"
-text = "Achievements"
+size_flags_horizontal = 3
 
-[node name="QueryAchDefsButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup"]
+[node name="QueryAchDefsButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AchievementsTab/VBoxContainer"]
 layout_mode = 2
-text = "7 - Query Achievement Definitions"
+text = "6 - Query Achievement Definitions"
 
-[node name="QueryPlayerAchButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup"]
+[node name="GetAchDefsButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AchievementsTab/VBoxContainer"]
 layout_mode = 2
-text = "8 - Query Player Achievements"
+text = "8 - Get Achievement Definitions"
 
-[node name="GetAchDefsButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup"]
+[node name="GetSpecificDefButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AchievementsTab/VBoxContainer"]
 layout_mode = 2
-text = "9 - Get Current Achievement Definitions"
+text = "Q - Get Specific Achievement Definition"
 
-[node name="GetPlayerAchButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup"]
+[node name="QueryPlayerAchButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AchievementsTab/VBoxContainer"]
 layout_mode = 2
-text = "0 - Get Current Player Achievements"
+text = "7 - Query Player Achievements"
 
-[node name="UnlockTestButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup"]
+[node name="GetPlayerAchButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AchievementsTab/VBoxContainer"]
 layout_mode = 2
-text = "Q - Unlock Test Achievement"
+text = "9 - Get Player Achievements"
 
-[node name="GetSpecificDefButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup"]
+[node name="GetSpecificPlayerButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AchievementsTab/VBoxContainer"]
 layout_mode = 2
-text = "W - Get Specific Achievement Definition"
+text = "W - Get Specific Player Achievement"
 
-[node name="GetSpecificPlayerButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup"]
+[node name="UnlockTestButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AchievementsTab/VBoxContainer"]
 layout_mode = 2
-text = "E - Get Specific Player Achievement"
+text = "0 - Unlock Test Achievement"
 
-[node name="HSeparator6" type="HSeparator" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+[node name="UnlockTestButton2" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AchievementsTab/VBoxContainer"]
+layout_mode = 2
+text = "0 - Unlock Test Achievement"
+
+[node name="StatsTab" type="ScrollContainer" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer"]
+visible = false
 layout_mode = 2
 
-[node name="StatsGroup" type="VBoxContainer" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/StatsTab"]
 layout_mode = 2
+size_flags_horizontal = 3
 
-[node name="StatsLabel" type="Label" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/StatsGroup"]
-layout_mode = 2
-theme_type_variation = &"HeaderSmall"
-text = "Stats"
-
-[node name="IngestStatButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/StatsGroup"]
+[node name="IngestStatButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/StatsTab/VBoxContainer"]
 layout_mode = 2
 text = "R - Ingest Test Stat"
 
-[node name="QueryStatsButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/StatsGroup"]
+[node name="QueryStatsButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/StatsTab/VBoxContainer"]
 layout_mode = 2
 text = "T - Query Stats"
 
-[node name="GetStatsButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/StatsGroup"]
+[node name="GetStatsButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/StatsTab/VBoxContainer"]
 layout_mode = 2
 text = "Y - Get Current Stats"
 
-[node name="HSeparator7" type="HSeparator" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+[node name="HSeparator3" type="HSeparator" parent="CanvasLayer/UI/MainContainer/LeftPanel"]
 layout_mode = 2
 
-[node name="ClearOutputButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+[node name="ClearOutputButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel"]
 layout_mode = 2
 text = "Clear Output"
-
-[node name="TestIPlatformButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
-layout_mode = 2
-text = "Test IPlatform::get()"
-
-[node name="TestSubsystemButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
-layout_mode = 2
-text = "Test Subsystem Manager"
 
 [node name="VSeparator" type="VSeparator" parent="CanvasLayer/UI/MainContainer"]
 layout_mode = 2
@@ -196,6 +187,7 @@ size_flags_vertical = 3
 bbcode_enabled = true
 text = "GodotEpic Demo Starting...
 "
+fit_content = true
 scroll_following = true
 
 [node name="Camera2D" type="Camera2D" parent="."]

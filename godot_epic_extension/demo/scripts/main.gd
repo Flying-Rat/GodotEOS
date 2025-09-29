@@ -1,31 +1,75 @@
 extends Node2D
 
+# ============================================================================
+# GODOT EPIC DEMO - TAB-BASED UI
+# ============================================================================
+# This demo showcases Epic Online Services (EOS) integration with Godot.
+# The UI is organized into logical tabs for better user experience:
+#
+# 📱 AUTHENTICATION TAB - Login/logout functionality
+#   • Epic Account Login (requires Epic Games credentials)
+#   • Device ID Login (Dev/TestUser123 and Dev/Player1)
+#   • Logout
+#
+# 👥 FRIENDS TAB - Friends management
+#   • Query Friends (fetch from EOS)
+#   • Get Friends (display cached list)
+#
+# 🏆 ACHIEVEMENTS TAB - Achievement system
+#   • Query/Get Achievement Definitions (available without login)
+#   • Query/Get Player Achievements (requires Product User ID)
+#   • Unlock Test Achievement (requires Product User ID)
+#   • Get Specific Achievement Data (both definition and player)
+#
+# 📊 STATS TAB - Statistics tracking
+#   • Ingest Achievement Stats (requires Product User ID)
+#   • Query/Get Achievement Stats (requires Product User ID)
+#
+# ⚙️ SYSTEM TAB - Utility functions
+#   • Clear Output
+#
+# Note: Features requiring "Product User ID" need cross-platform Connect service,
+# which may not be available for developer accounts.
+# ============================================================================
+
 var godot_epic: GodotEpic = null
 
 # UI References
-@onready var status_label: Label = $CanvasLayer/UI/MainContainer/ButtonsPanel/StatusLabel
+@onready var status_label: Label = $CanvasLayer/UI/MainContainer/LeftPanel/StatusLabel
 @onready var output_text: RichTextLabel = $CanvasLayer/UI/MainContainer/OutputPanel/OutputScroll/OutputText
+@onready var tab_container: TabContainer = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer
 
-# Button references
-@onready var login_epic_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup/LoginEpicButton
-@onready var login_device1_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup/LoginDevice1Button
-@onready var login_device2_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup/LoginDevice2Button
-@onready var logout_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/AuthGroup/LogoutButton
-@onready var query_friends_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/FriendsGroup/QueryFriendsButton
-@onready var get_friends_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/FriendsGroup/GetFriendsButton
-@onready var query_ach_defs_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup/QueryAchDefsButton
-@onready var query_player_ach_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup/QueryPlayerAchButton
-@onready var get_ach_defs_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup/GetAchDefsButton
-@onready var get_player_ach_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup/GetPlayerAchButton
-@onready var unlock_test_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup/UnlockTestButton
-@onready var get_specific_def_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup/GetSpecificDefButton
-@onready var get_specific_player_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup/GetSpecificPlayerButton
-@onready var clear_output_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/ClearOutputButton
+# Authentication Tab UI References
+@onready var auth_tab: Control = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab
+@onready var login_epic_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab/VBoxContainer/LoginEpicButton
+@onready var login_device1_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab/VBoxContainer/LoginDevice1Button
+@onready var login_device2_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab/VBoxContainer/LoginDevice2Button
+@onready var logout_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab/VBoxContainer/LogoutButton
 
-# Stats button references
-@onready var ingest_stat_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/StatsGroup/IngestStatButton
-@onready var query_stats_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/StatsGroup/QueryStatsButton
-@onready var get_stats_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/StatsGroup/GetStatsButton
+# Friends Tab UI References
+@onready var friends_tab: Control = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/FriendsTab
+@onready var query_friends_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/FriendsTab/VBoxContainer/QueryFriendsButton
+@onready var get_friends_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/FriendsTab/VBoxContainer/GetFriendsButton
+
+# Achievements Tab UI References
+@onready var achievements_tab: Control = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AchievementsTab
+@onready var query_ach_defs_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AchievementsTab/VBoxContainer/QueryAchDefsButton
+@onready var get_ach_defs_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AchievementsTab/VBoxContainer/GetAchDefsButton
+@onready var get_specific_def_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AchievementsTab/VBoxContainer/GetSpecificDefButton
+@onready var query_player_ach_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AchievementsTab/VBoxContainer/QueryPlayerAchButton
+@onready var get_player_ach_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AchievementsTab/VBoxContainer/GetPlayerAchButton
+@onready var get_specific_player_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AchievementsTab/VBoxContainer/GetSpecificPlayerButton
+@onready var unlock_test_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AchievementsTab/VBoxContainer/UnlockTestButton
+
+# Stats Tab UI References
+@onready var stats_tab: Control = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/StatsTab
+@onready var ingest_stat_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/StatsTab/VBoxContainer/IngestStatButton
+@onready var query_stats_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/StatsTab/VBoxContainer/QueryStatsButton
+@onready var get_stats_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/StatsTab/VBoxContainer/GetStatsButton
+
+# System Tab UI References
+@onready var system_tab: Control = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/SystemTab
+@onready var clear_output_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/ClearOutputButton
 
 # Auto-test variables
 var auto_test_timer: Timer = null
@@ -38,6 +82,12 @@ var auto_test_current_delay: float = 0.0
 func _ready():
 	godot_epic = GodotEpic.get_singleton()
 
+	# Set tab names by index (0, 1, 2, etc.)
+	tab_container.set_tab_title(0, "🔐 Login")
+	tab_container.set_tab_title(1, "👥 Friends")
+	tab_container.set_tab_title(2, "🏆 Achievements")
+	tab_container.set_tab_title(3, "📊 Statistics")
+
 	# Connect to signals for async operations
 	godot_epic.connect("login_completed", _on_login_completed)
 	godot_epic.connect("logout_completed", _on_logout_completed)
@@ -48,27 +98,13 @@ func _ready():
 	godot_epic.connect("achievement_unlocked", _on_achievement_unlocked)
 	godot_epic.connect("achievement_stats_updated", _on_achievement_stats_updated)
 
-	# Connect button signals
-	login_epic_button.pressed.connect(_on_login_epic_pressed)
-	login_device1_button.pressed.connect(_on_login_device1_pressed)
-	login_device2_button.pressed.connect(_on_login_device2_pressed)
-	logout_button.pressed.connect(_on_logout_pressed)
-	query_friends_button.pressed.connect(_on_query_friends_pressed)
-	get_friends_button.pressed.connect(_on_get_friends_pressed)
-	query_ach_defs_button.pressed.connect(_on_query_ach_defs_pressed)
-	query_player_ach_button.pressed.connect(_on_query_player_ach_pressed)
-	get_ach_defs_button.pressed.connect(_on_get_ach_defs_pressed)
-	get_player_ach_button.pressed.connect(_on_get_player_ach_pressed)
-	unlock_test_button.pressed.connect(_on_unlock_test_pressed)
-	get_specific_def_button.pressed.connect(_on_get_specific_def_pressed)
-	get_specific_player_button.pressed.connect(_on_get_specific_player_pressed)
-	clear_output_button.connect("pressed", Callable(self, "_on_clear_output_pressed"))
-	
-	# Connect stats buttons
-	ingest_stat_button.pressed.connect(_on_ingest_stat_pressed)
-	query_stats_button.pressed.connect(_on_query_stats_pressed)
-	get_stats_button.pressed.connect(_on_get_stats_pressed)
-	
+	# Connect button signals by tab groups
+	_connect_authentication_buttons()
+	_connect_friends_buttons()
+	_connect_achievements_buttons()
+	_connect_stats_buttons()
+	_connect_system_buttons()
+
 	var init_options = {
 		"product_name": "GodotEpic Demo",
 		"product_version": "1.0.0",
@@ -93,8 +129,8 @@ func _ready():
 		add_output_line("• Achievements System")
 		add_output_line("• Stats Tracking")
 		add_output_line("")
-		add_output_line("[i]Use the buttons on the left or keyboard shortcuts (1-9, 0, Q, W, R, T, Y)[/i]")
-		
+		add_output_line("[i]Use the tabs above to organize your testing, or keyboard shortcuts (1-9, 0, Q, W, R, T, Y)[/i]")
+
 		# Start auto-test if enabled
 		if auto_test_enabled:
 			start_auto_test()
@@ -112,7 +148,7 @@ func _process(_delta):
 	# Tick the EOS platform to handle callbacks and updates
 	if godot_epic and godot_epic.is_platform_initialized():
 		godot_epic.tick()
-	
+
 	# Handle auto-test timing
 	if auto_test_enabled and auto_test_step >= 0 and auto_test_current_delay > 0:
 		auto_test_time_accumulator += _delta
@@ -121,6 +157,35 @@ func _process(_delta):
 			auto_test_current_delay = 0.0
 			_on_auto_test_timer_timeout()
 
+
+# Helper function to add formatted output
+# Tab-based button connection functions
+func _connect_authentication_buttons():
+	login_epic_button.pressed.connect(_on_login_epic_pressed)
+	login_device1_button.pressed.connect(_on_login_device1_pressed)
+	login_device2_button.pressed.connect(_on_login_device2_pressed)
+	logout_button.pressed.connect(_on_logout_pressed)
+
+func _connect_friends_buttons():
+	query_friends_button.pressed.connect(_on_query_friends_pressed)
+	get_friends_button.pressed.connect(_on_get_friends_pressed)
+
+func _connect_achievements_buttons():
+	query_ach_defs_button.pressed.connect(_on_query_ach_defs_pressed)
+	get_ach_defs_button.pressed.connect(_on_get_ach_defs_pressed)
+	get_specific_def_button.pressed.connect(_on_get_specific_def_pressed)
+	query_player_ach_button.pressed.connect(_on_query_player_ach_pressed)
+	get_player_ach_button.pressed.connect(_on_get_player_ach_pressed)
+	get_specific_player_button.pressed.connect(_on_get_specific_player_pressed)
+	unlock_test_button.pressed.connect(_on_unlock_test_pressed)
+
+func _connect_stats_buttons():
+	ingest_stat_button.pressed.connect(_on_ingest_stat_pressed)
+	query_stats_button.pressed.connect(_on_query_stats_pressed)
+	get_stats_button.pressed.connect(_on_get_stats_pressed)
+
+func _connect_system_buttons():
+	clear_output_button.pressed.connect(_on_clear_output_pressed)
 
 # Helper function to add formatted output
 func add_output_line(text: String):
@@ -132,24 +197,44 @@ func update_button_states():
 	var is_logged_in = godot_epic and godot_epic.is_user_logged_in()
 	var has_product_user_id = godot_epic and not godot_epic.get_product_user_id().is_empty()
 
-	# Update buttons that require login
+	# Update Authentication tab buttons
+	logout_button.disabled = not is_logged_in
+
+	# Update Friends tab buttons (require login)
+	_update_friends_tab_buttons(is_logged_in)
+
+	# Update Achievements tab buttons (require Product User ID for cross-platform features)
+	_update_achievements_tab_buttons(is_logged_in, has_product_user_id)
+
+	# Update Stats tab buttons (require Product User ID for cross-platform features)
+	_update_stats_tab_buttons(is_logged_in, has_product_user_id)
+
+func _update_friends_tab_buttons(is_logged_in: bool):
 	query_friends_button.disabled = not is_logged_in
 	get_friends_button.disabled = not is_logged_in
-	
-	# Achievements require Product User ID (cross-platform features)
+
+func _update_achievements_tab_buttons(is_logged_in: bool, has_product_user_id: bool):
+	# Definition queries don't require login
+	# query_ach_defs_button.disabled = false
+	# get_ach_defs_button.disabled = false
+	# get_specific_def_button.disabled = false
+
+	# Player achievements require Product User ID (cross-platform features)
 	query_player_ach_button.disabled = not (is_logged_in and has_product_user_id)
 	get_player_ach_button.disabled = not (is_logged_in and has_product_user_id)
 	unlock_test_button.disabled = not (is_logged_in and has_product_user_id)
 	get_specific_player_button.disabled = not (is_logged_in and has_product_user_id)
-	
-	# Stats also require Product User ID
+
+func _update_stats_tab_buttons(is_logged_in: bool, has_product_user_id: bool):
+	# Stats require Product User ID for cross-platform features
 	ingest_stat_button.disabled = not (is_logged_in and has_product_user_id)
 	query_stats_button.disabled = not (is_logged_in and has_product_user_id)
 	get_stats_button.disabled = not (is_logged_in and has_product_user_id)
 
-	logout_button.disabled = not is_logged_in
+# ============================================================================
+# AUTHENTICATION TAB BUTTON HANDLERS
+# ============================================================================
 
-# Button handlers
 func _on_login_epic_pressed():
 	add_output_line("[color=cyan]🔐 Starting Epic Account login...[/color]")
 	godot_epic.login_with_epic_account("", "")
@@ -169,6 +254,10 @@ func _on_logout_pressed():
 	else:
 		add_output_line("[color=orange]⚠️ Not logged in![/color]")
 
+# ============================================================================
+# FRIENDS TAB BUTTON HANDLERS
+# ============================================================================
+
 func _on_query_friends_pressed():
 	if godot_epic.is_user_logged_in():
 		add_output_line("[color=blue]👥 Querying friends list...[/color]")
@@ -183,6 +272,10 @@ func _on_get_friends_pressed():
 		_display_friends_list(friends)
 	else:
 		add_output_line("[color=red]❌ Please login first![/color]")
+
+# ============================================================================
+# ACHIEVEMENTS TAB BUTTON HANDLERS
+# ============================================================================
 
 func _on_query_ach_defs_pressed():
 	add_output_line("[color=yellow]🏆 Querying achievement definitions...[/color]")
@@ -244,12 +337,10 @@ func _on_get_specific_player_pressed():
 	else:
 		add_output_line("[color=red]❌ Please login first![/color]")
 
-func _on_clear_output_pressed():
-	if output_text:
-		output_text.clear()
-		add_output_line("[i]Output cleared[/i]")
+# ============================================================================
+# STATS TAB BUTTON HANDLERS
+# ============================================================================
 
-# Stats button handlers
 func _on_ingest_stat_pressed():
 	if godot_epic.is_user_logged_in():
 		var product_user_id = godot_epic.get_product_user_id()
@@ -283,6 +374,19 @@ func _on_get_stats_pressed():
 			add_output_line("[color=orange]⚠️ Stats require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
 	else:
 		add_output_line("[color=red]❌ Please login first![/color]")
+
+# ============================================================================
+# SYSTEM TAB BUTTON HANDLERS
+# ============================================================================
+
+func _on_clear_output_pressed():
+	if output_text:
+		output_text.clear()
+		add_output_line("[i]Output cleared[/i]")
+
+# ============================================================================
+# INPUT HANDLING
+# ============================================================================
 
 func _input(event):
 	if event is InputEventKey and event.pressed:
@@ -323,6 +427,9 @@ func _input(event):
 			KEY_Y:
 				_on_get_stats_pressed()
 
+# ============================================================================
+# EOS SIGNAL HANDLERS
+# ============================================================================
 
 # Signal handlers
 func _on_login_completed(success: bool, user_info: Dictionary):
@@ -381,6 +488,9 @@ func _display_friends_list(friends: Array):
 		add_output_line("     Status: " + str(friend.get("status", "Unknown")))
 		add_output_line("")
 
+# ============================================================================
+# ACHIEVEMENT SIGNAL HANDLERS & DISPLAY FUNCTIONS
+# ============================================================================
 
 # Achievement signal handlers
 func _on_achievement_definitions_updated(definitions: Array):
@@ -525,6 +635,9 @@ func _display_single_player_achievement(achievement: Dictionary):
 			add_output_line("    • " + str(stat.get("name", "Unknown")) + ": " + str(current) + "/" + str(threshold))
 	add_output_line("")
 
+# ============================================================================
+# STATS DISPLAY FUNCTIONS
+# ============================================================================
 
 # Stats display functions
 func _display_achievement_stats(stats: Array):
@@ -539,6 +652,9 @@ func _display_achievement_stats(stats: Array):
 		add_output_line("     Value: " + str(stat.get("value", 0)))
 		add_output_line("")
 
+# ============================================================================
+# AUTO-TEST FUNCTIONS
+# ============================================================================
 
 # Auto-test functions
 func start_auto_test():
@@ -546,16 +662,16 @@ func start_auto_test():
 	add_output_line("[color=magenta]🤖 Starting automated test sequence...[/color]")
 	add_output_line("[color=magenta]Test steps: Login → Query Friends → Query Achievements[/color]")
 	add_output_line("")
-	
+
 	auto_test_step = 0
 	auto_test_time_accumulator = 0.0
 	auto_test_current_delay = 2.0  # Initial delay before starting
-	
+
 	add_output_line("🤖 Process-based timer started (step: " + str(auto_test_step) + ", delay: " + str(auto_test_current_delay) + ")")
 
 func _on_auto_test_timer_timeout():
 	add_output_line("🤖 Process timeout triggered (step: " + str(auto_test_step) + ")")
-	
+
 	match auto_test_step:
 		0:
 			# Step 0: Login with dev id "TestUser123"
@@ -563,7 +679,7 @@ func _on_auto_test_timer_timeout():
 			godot_epic.login_with_dev("TestUser123")
 			auto_test_step = 1
 			auto_test_current_delay = 5.0
-			
+
 		1:
 			# Step 1: Query friends (only if logged in)
 			if godot_epic.is_user_logged_in():
@@ -575,7 +691,7 @@ func _on_auto_test_timer_timeout():
 				add_output_line("[color=red]🤖 Auto-test failed: Not logged in, skipping friends query[/color]")
 				auto_test_step = 3
 				auto_test_current_delay = 5.0
-				
+
 		2:
 			# Step 2: Query achievements (only if we have Product User ID)
 			if godot_epic.is_user_logged_in():
@@ -593,7 +709,7 @@ func _on_auto_test_timer_timeout():
 				add_output_line("[color=red]🤖 Auto-test failed: Not logged in, skipping achievements query[/color]")
 				auto_test_step = 3
 				auto_test_current_delay = 5.0
-				
+
 		3:
 			# Step 3: Finish auto-test
 			add_output_line("[color=magenta]🤖 Auto-test completed![/color]")
@@ -604,11 +720,14 @@ func _on_auto_test_timer_timeout():
 				add_output_line("[color=orange]⚠ Cross-platform features disabled (no Product User ID)[/color]")
 			add_output_line("[color=magenta]You can now interact with the demo manually.[/color]")
 			add_output_line("")
-			
+
 			# Clean up
 			auto_test_step = -1  # Disable auto-test
 			auto_test_current_delay = 0.0
 
+# ============================================================================
+# CLEANUP
+# ============================================================================
 
 # Called when the node is about to be removed from the scene
 func _exit_tree():
