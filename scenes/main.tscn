@@ -73,9 +73,24 @@ layout_mode = 2
 text = "Unlock Achievement"
 disabled = true
 
-[node name="StatsButton" type="Button" parent="VBoxContainer/FeaturesSection/FeaturesGrid"]
+[node name="StatsSection" type="VBoxContainer" parent="VBoxContainer/FeaturesSection/FeaturesGrid"]
 layout_mode = 2
-text = "Update Stats"
+
+[node name="StatsLabel" type="Label" parent="VBoxContainer/FeaturesSection/FeaturesGrid/StatsSection"]
+layout_mode = 2
+text = "Stats:"
+
+[node name="StatsButtons" type="HBoxContainer" parent="VBoxContainer/FeaturesSection/FeaturesGrid/StatsSection"]
+layout_mode = 2
+
+[node name="IngestStatButton" type="Button" parent="VBoxContainer/FeaturesSection/FeaturesGrid/StatsSection/StatsButtons"]
+layout_mode = 2
+text = "Ingest Stat"
+disabled = true
+
+[node name="QueryStatsButton" type="Button" parent="VBoxContainer/FeaturesSection/FeaturesGrid/StatsSection/StatsButtons"]
+layout_mode = 2
+text = "Query Stats"
 disabled = true
 
 [node name="LeaderboardButton" type="Button" parent="VBoxContainer/FeaturesSection/FeaturesGrid"]

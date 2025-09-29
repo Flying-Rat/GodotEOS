@@ -77,6 +77,12 @@ public:
 	Dictionary get_achievement_definition(const String& achievement_id);
 	Dictionary get_player_achievement(const String& achievement_id);
 
+	// Achievement Stats methods
+	void ingest_achievement_stat(const String& stat_name, int amount);
+	void query_achievement_stats();
+	Array get_achievement_stats();
+	Dictionary get_achievement_stat(const String& stat_name);
+
 	// Leaderboards methods
 	void query_leaderboard_definitions();
 	void query_leaderboard_ranks(const String& leaderboard_id, int limit = 100);
@@ -101,6 +107,7 @@ private:
 	void on_achievement_definitions_completed(bool success, const Array& definitions);
 	void on_player_achievements_completed(bool success, const Array& achievements);
 	void on_achievements_unlocked_completed(bool success, const Array& unlocked_achievement_ids);
+	void on_achievement_stats_completed(bool success, const Array& stats);
 };
 
 }

@@ -4,15 +4,18 @@
 #include "IAuthenticationSubsystem.h"
 #include "../eos_sdk/Include/eos_sdk.h"
 #include "../eos_sdk/Include/eos_achievements.h"
+#include "../eos_sdk/Include/eos_stats.h"
 #include <godot_cpp/core/error_macros.hpp>
 
 namespace godot {
 
 AchievementsSubsystem::AchievementsSubsystem()
     : achievements_handle(nullptr)
+    , stats_handle(nullptr)
     , unlock_notification_id(EOS_INVALID_NOTIFICATIONID)
     , definitions_cached(false)
     , player_achievements_cached(false)
+    , stats_cached(false)
 {
 }
 
@@ -47,6 +50,12 @@ bool AchievementsSubsystem::Init() {
         return false;
     }
 
+    stats_handle = EOS_Platform_GetStatsInterface(platform_handle);
+    if (!stats_handle) {
+        UtilityFunctions::printerr("AchievementsSubsystem: Failed to get stats interface");
+        return false;
+    }
+
     setup_notifications();
     UtilityFunctions::print("AchievementsSubsystem: Initialized successfully");
     return true;
@@ -62,9 +71,11 @@ void AchievementsSubsystem::Shutdown() {
 
     achievement_definitions.clear();
     player_achievements.clear();
+    stats.clear();
 
     definitions_cached = false;
     player_achievements_cached = false;
+    stats_cached = false;
 
     UtilityFunctions::print("AchievementsSubsystem: Shutdown complete");
 }
@@ -298,6 +309,122 @@ void AchievementsSubsystem::SetAchievementsUnlockedCallback(const Callable& call
     UtilityFunctions::print("AchievementsSubsystem: Achievements unlocked callback set");
 }
 
+bool AchievementsSubsystem::IngestStat(const String& stat_name, int amount) {
+    if (!stats_handle) {
+        UtilityFunctions::printerr("AchievementsSubsystem: Not initialized");
+        return false;
+    }
+
+    // Need Product User ID from AuthenticationSubsystem
+    auto auth = Get<IAuthenticationSubsystem>();
+    if (!auth || !auth->IsLoggedIn()) {
+        UtilityFunctions::printerr("AchievementsSubsystem: User not authenticated");
+        return false;
+    }
+
+    String product_user_id_str = auth->GetProductUserId();
+    if (product_user_id_str.is_empty()) {
+        UtilityFunctions::printerr("AchievementsSubsystem: Invalid Product User ID");
+        return false;
+    }
+
+    EOS_ProductUserId product_user_id = EOS_ProductUserId_FromString(product_user_id_str.utf8().get_data());
+    if (!EOS_ProductUserId_IsValid(product_user_id)) {
+        UtilityFunctions::printerr("AchievementsSubsystem: Failed to parse Product User ID");
+        return false;
+    }
+
+    if (stat_name.is_empty()) {
+        UtilityFunctions::printerr("AchievementsSubsystem: Stat name is empty");
+        return false;
+    }
+
+    if (amount <= 0) {
+        UtilityFunctions::printerr("AchievementsSubsystem: Amount must be positive");
+        return false;
+    }
+
+    EOS_Stats_IngestStatOptions options = {};
+    options.ApiVersion = EOS_STATS_INGESTSTAT_API_LATEST;
+    options.LocalUserId = product_user_id;
+    options.TargetUserId = product_user_id;
+    options.StatsCount = 1;
+
+    EOS_Stats_IngestData ingest_data = {};
+    ingest_data.ApiVersion = EOS_STATS_INGESTDATA_API_LATEST;
+    std::string stat_name_str = stat_name.utf8().get_data();
+    ingest_data.StatName = stat_name_str.c_str();
+    ingest_data.IngestAmount = amount;
+
+    options.Stats = &ingest_data;
+
+    EOS_Stats_IngestStat(stats_handle, &options, this, on_ingest_stat_complete);
+    UtilityFunctions::print("AchievementsSubsystem: Ingesting stat '" + stat_name + "' with amount " + String::num_int64(amount));
+    return true;
+}
+
+bool AchievementsSubsystem::QueryStats() {
+    if (!stats_handle) {
+        UtilityFunctions::printerr("AchievementsSubsystem: Not initialized");
+        return false;
+    }
+
+    // Need Product User ID from AuthenticationSubsystem
+    auto auth = Get<IAuthenticationSubsystem>();
+    if (!auth || !auth->IsLoggedIn()) {
+        UtilityFunctions::printerr("AchievementsSubsystem: User not authenticated");
+        return false;
+    }
+
+    String product_user_id_str = auth->GetProductUserId();
+    if (product_user_id_str.is_empty()) {
+        UtilityFunctions::printerr("AchievementsSubsystem: Invalid Product User ID");
+        return false;
+    }
+
+    EOS_ProductUserId product_user_id = EOS_ProductUserId_FromString(product_user_id_str.utf8().get_data());
+    if (!EOS_ProductUserId_IsValid(product_user_id)) {
+        UtilityFunctions::printerr("AchievementsSubsystem: Failed to parse Product User ID");
+        return false;
+    }
+
+    EOS_Stats_QueryStatsOptions options = {};
+    options.ApiVersion = EOS_STATS_QUERYSTATS_API_LATEST;
+    options.LocalUserId = product_user_id;
+    options.TargetUserId = product_user_id;
+    options.StartTime = EOS_STATS_TIME_UNDEFINED;
+    options.EndTime = EOS_STATS_TIME_UNDEFINED;
+    options.StatNamesCount = 0;
+    options.StatNames = nullptr;
+
+    EOS_Stats_QueryStats(stats_handle, &options, this, on_query_stats_complete);
+    UtilityFunctions::print("AchievementsSubsystem: Querying stats...");
+    return true;
+}
+
+Array AchievementsSubsystem::GetStats() const {
+    return stats;
+}
+
+Dictionary AchievementsSubsystem::GetStat(const String& stat_name) const {
+    Dictionary result;
+
+    for (int i = 0; i < stats.size(); i++) {
+        Dictionary stat = stats[i];
+        if (stat.has("name") && String(stat["name"]) == stat_name) {
+            result = stat;
+            break;
+        }
+    }
+
+    return result;
+}
+
+void AchievementsSubsystem::SetStatsCallback(const Callable& callback) {
+    stats_callback = callback;
+    UtilityFunctions::print("AchievementsSubsystem: Stats callback set");
+}
+
 void AchievementsSubsystem::setup_notifications() {
     if (!achievements_handle) return;
 
@@ -492,6 +619,68 @@ void EOS_CALL AchievementsSubsystem::on_achievements_unlocked(const EOS_Achievem
 
     String achievement_id = String(data->AchievementId ? data->AchievementId : "");
     UtilityFunctions::print("AchievementsSubsystem: Achievement unlocked: " + achievement_id);
+}
+
+void EOS_CALL AchievementsSubsystem::on_ingest_stat_complete(const EOS_Stats_IngestStatCompleteCallbackInfo* data) {
+    AchievementsSubsystem* self = static_cast<AchievementsSubsystem*>(data->ClientData);
+    if (!data || !self) return;
+
+    if (data->ResultCode == EOS_EResult::EOS_Success) {
+        UtilityFunctions::print("AchievementsSubsystem: Stat ingested successfully");
+    } else {
+        UtilityFunctions::printerr("AchievementsSubsystem: Failed to ingest stat, error: " + String::num_int64((int64_t)data->ResultCode));
+    }
+}
+
+void EOS_CALL AchievementsSubsystem::on_query_stats_complete(const EOS_Stats_OnQueryStatsCompleteCallbackInfo* data) {
+    AchievementsSubsystem* self = static_cast<AchievementsSubsystem*>(data->ClientData);
+    if (!data || !self) return;
+
+    if (data->ResultCode == EOS_EResult::EOS_Success) {
+        UtilityFunctions::print("AchievementsSubsystem: Stats queried successfully");
+
+        // Cache the stats
+        self->stats.clear();
+
+        EOS_Stats_GetStatCountOptions count_options = {};
+        count_options.ApiVersion = EOS_STATS_GETSTATCOUNT_API_LATEST;
+        count_options.TargetUserId = data->TargetUserId;
+
+        uint32_t stat_count = EOS_Stats_GetStatsCount(self->stats_handle, &count_options);
+
+        for (uint32_t i = 0; i < stat_count; ++i) {
+            EOS_Stats_Stat* stat = nullptr;
+            EOS_Stats_CopyStatByIndexOptions copy_options = {};
+            copy_options.ApiVersion = EOS_STATS_COPYSTATBYINDEX_API_LATEST;
+            copy_options.TargetUserId = data->TargetUserId;
+            copy_options.StatIndex = i;
+
+            EOS_EResult copy_result = EOS_Stats_CopyStatByIndex(self->stats_handle, &copy_options, &stat);
+            if (copy_result == EOS_EResult::EOS_Success && stat) {
+                Dictionary stat_dict;
+                stat_dict["name"] = String(stat->Name ? stat->Name : "");
+                stat_dict["value"] = stat->Value;
+                stat_dict["start_time"] = stat->StartTime;
+                stat_dict["end_time"] = stat->EndTime;
+
+                self->stats.append(stat_dict);
+                EOS_Stats_Stat_Release(stat);
+            }
+        }
+
+        self->stats_cached = true;
+
+        if (self->stats_callback.is_valid()) {
+            self->stats_callback.call(true, self->stats);
+        }
+    } else {
+        UtilityFunctions::printerr("AchievementsSubsystem: Failed to query stats, error: " + String::num_int64((int64_t)data->ResultCode));
+
+        if (self->stats_callback.is_valid()) {
+            Array empty_stats;
+            self->stats_callback.call(false, empty_stats);
+        }
+    }
 }
 
 } // namespace godot

@@ -135,7 +135,30 @@ text = "W - Get Specific Achievement Definition"
 layout_mode = 2
 text = "E - Get Specific Player Achievement"
 
-[node name="HSeparator5" type="HSeparator" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+[node name="HSeparator6" type="HSeparator" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+layout_mode = 2
+
+[node name="StatsGroup" type="VBoxContainer" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
+layout_mode = 2
+
+[node name="StatsLabel" type="Label" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/StatsGroup"]
+layout_mode = 2
+theme_type_variation = &"HeaderSmall"
+text = "Stats"
+
+[node name="IngestStatButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/StatsGroup"]
+layout_mode = 2
+text = "R - Ingest Test Stat"
+
+[node name="QueryStatsButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/StatsGroup"]
+layout_mode = 2
+text = "T - Query Stats"
+
+[node name="GetStatsButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel/StatsGroup"]
+layout_mode = 2
+text = "Y - Get Current Stats"
+
+[node name="HSeparator7" type="HSeparator" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]
 layout_mode = 2
 
 [node name="ClearOutputButton" type="Button" parent="CanvasLayer/UI/MainContainer/ButtonsPanel"]

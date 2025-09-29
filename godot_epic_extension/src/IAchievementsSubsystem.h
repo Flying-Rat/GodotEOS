@@ -83,6 +83,39 @@ public:
      * @param callback Callable to invoke when achievements unlock completes.
      */
     virtual void SetAchievementsUnlockedCallback(const Callable& callback) = 0;
+
+    /**
+     * @brief Ingest a stat for the current player.
+     * @param stat_name The name of the stat to ingest.
+     * @param amount The amount to add to the stat.
+     * @return true if ingest request initiated successfully.
+     */
+    virtual bool IngestStat(const String& stat_name, int amount) = 0;
+
+    /**
+     * @brief Query stats for the current player.
+     * @return true if query initiated successfully.
+     */
+    virtual bool QueryStats() = 0;
+
+    /**
+     * @brief Get cached stats.
+     * @return Array of stat dictionaries.
+     */
+    virtual Array GetStats() const = 0;
+
+    /**
+     * @brief Get a specific stat.
+     * @param stat_name The stat name to retrieve.
+     * @return Dictionary containing stat, or empty dict if not found.
+     */
+    virtual Dictionary GetStat(const String& stat_name) const = 0;
+
+    /**
+     * @brief Set a callback for stats query completion.
+     * @param callback Callable to invoke when stats query completes.
+     */
+    virtual void SetStatsCallback(const Callable& callback) = 0;
 };
 
 } // namespace godot

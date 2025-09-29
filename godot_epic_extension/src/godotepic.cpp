@@ -47,6 +47,12 @@ void GodotEpic::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_achievement_definition", "achievement_id"), &GodotEpic::get_achievement_definition);
 	ClassDB::bind_method(D_METHOD("get_player_achievement", "achievement_id"), &GodotEpic::get_player_achievement);
 
+	// Stats methods (AchievementsSubsystem)
+	ClassDB::bind_method(D_METHOD("ingest_achievement_stat", "stat_name", "amount"), &GodotEpic::ingest_achievement_stat);
+	ClassDB::bind_method(D_METHOD("query_achievement_stats"), &GodotEpic::query_achievement_stats);
+	ClassDB::bind_method(D_METHOD("get_achievement_stats"), &GodotEpic::get_achievement_stats);
+	ClassDB::bind_method(D_METHOD("get_achievement_stat", "stat_name"), &GodotEpic::get_achievement_stat);
+
 	// Leaderboards methods
 	ClassDB::bind_method(D_METHOD("query_leaderboard_definitions"), &GodotEpic::query_leaderboard_definitions);
 	ClassDB::bind_method(D_METHOD("query_leaderboard_ranks", "leaderboard_id", "limit"), &GodotEpic::query_leaderboard_ranks);
@@ -65,6 +71,9 @@ void GodotEpic::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("on_player_achievements_completed", "success", "achievements"), &GodotEpic::on_player_achievements_completed);
 	ClassDB::bind_method(D_METHOD("on_achievements_unlocked_completed", "success", "unlocked_achievement_ids"), &GodotEpic::on_achievements_unlocked_completed);
 
+	// Stats callback
+	ClassDB::bind_method(D_METHOD("on_achievement_stats_completed", "success", "stats"), &GodotEpic::on_achievement_stats_completed);
+
 
 	// Signals
 	ADD_SIGNAL(MethodInfo("login_completed", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::DICTIONARY, "user_info")));
@@ -74,6 +83,7 @@ void GodotEpic::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("player_achievements_updated", PropertyInfo(Variant::ARRAY, "achievements")));
 	ADD_SIGNAL(MethodInfo("achievements_unlocked", PropertyInfo(Variant::ARRAY, "unlocked_achievement_ids")));
 	ADD_SIGNAL(MethodInfo("achievement_unlocked", PropertyInfo(Variant::STRING, "achievement_id"), PropertyInfo(Variant::INT, "unlock_time")));
+	ADD_SIGNAL(MethodInfo("achievement_stats_updated", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::ARRAY, "stats")));
 	ADD_SIGNAL(MethodInfo("leaderboard_definitions_updated", PropertyInfo(Variant::ARRAY, "definitions")));
 	ADD_SIGNAL(MethodInfo("leaderboard_ranks_updated", PropertyInfo(Variant::ARRAY, "ranks")));
 	ADD_SIGNAL(MethodInfo("leaderboard_user_scores_updated", PropertyInfo(Variant::DICTIONARY, "user_scores")));
@@ -486,6 +496,49 @@ Dictionary GodotEpic::get_player_achievement(const String& achievement_id) {
 	return achievements ? achievements->GetPlayerAchievement(achievement_id) : Dictionary();
 }
 
+// Achievement Stats methods
+void GodotEpic::ingest_achievement_stat(const String& stat_name, int amount) {
+	auto achievements = Get<IAchievementsSubsystem>();
+	if (!achievements) {
+		ERR_PRINT("AchievementsSubsystem not available");
+		Array empty_stats;
+		emit_signal("achievement_stats_updated", false, empty_stats);
+		return;
+	}
+
+	if (!achievements->IngestStat(stat_name, amount)) {
+		ERR_PRINT("AchievementsSubsystem ingest stat failed");
+		Array empty_stats;
+		emit_signal("achievement_stats_updated", false, empty_stats);
+	}
+}
+
+void GodotEpic::query_achievement_stats() {
+	auto achievements = Get<IAchievementsSubsystem>();
+	if (!achievements) {
+		ERR_PRINT("AchievementsSubsystem not available");
+		Array empty_stats;
+		emit_signal("achievement_stats_updated", false, empty_stats);
+		return;
+	}
+
+	if (!achievements->QueryStats()) {
+		ERR_PRINT("AchievementsSubsystem query stats failed");
+		Array empty_stats;
+		emit_signal("achievement_stats_updated", false, empty_stats);
+	}
+}
+
+Array GodotEpic::get_achievement_stats() {
+	auto achievements = Get<IAchievementsSubsystem>();
+	return achievements ? achievements->GetStats() : Array();
+}
+
+Dictionary GodotEpic::get_achievement_stat(const String& stat_name) {
+	auto achievements = Get<IAchievementsSubsystem>();
+	return achievements ? achievements->GetStat(stat_name) : Dictionary();
+}
+
 // Static logging callback
 void EOS_CALL GodotEpic::logging_callback(const EOS_LogMessage* message) {
 	if (!message || !message->Message) {
@@ -768,6 +821,9 @@ void GodotEpic::setup_achievements_callbacks() {
 		Callable unlocked_callback(this, "on_achievements_unlocked_completed");
 		achievements->SetAchievementsUnlockedCallback(unlocked_callback);
 
+		Callable stats_callback(this, "on_achievement_stats_completed");
+		achievements->SetStatsCallback(stats_callback);
+
 		ERR_PRINT("Achievements callbacks set up successfully");
 	} else {
 		ERR_PRINT("Failed to set up achievements callbacks - AchievementsSubsystem not available");
@@ -836,4 +892,17 @@ void GodotEpic::on_achievements_unlocked_completed(bool success, const Array& un
 
 	// Emit the achievements_unlocked signal
 	emit_signal("achievements_unlocked", unlocked_achievement_ids);
+}
+
+void GodotEpic::on_achievement_stats_completed(bool success, const Array& stats) {
+	ERR_PRINT("GodotEpic: Achievement stats query completed - success: " + String(success ? "true" : "false"));
+
+	if (success) {
+		ERR_PRINT("GodotEpic: Achievement stats updated (" + String::num_int64(stats.size()) + " stats)");
+	} else {
+		ERR_PRINT("GodotEpic: Achievement stats query failed");
+	}
+
+	// Emit the achievement_stats_updated signal
+	emit_signal("achievement_stats_updated", success, stats);
 }

@@ -7,7 +7,8 @@ extends Control
 @onready var status_label = $VBoxContainer/StatusLabel
 
 @onready var achievement_button = $VBoxContainer/FeaturesSection/AchievementButton
-@onready var stats_button = $VBoxContainer/FeaturesSection/StatsButton
+@onready var ingest_stat_button = $VBoxContainer/FeaturesSection/StatsSection/IngestStatButton
+@onready var query_stats_button = $VBoxContainer/FeaturesSection/StatsSection/QueryStatsButton
 @onready var leaderboard_button = $VBoxContainer/FeaturesSection/LeaderboardButton
 @onready var save_button = $VBoxContainer/FeaturesSection/FeaturesGrid/SaveButton
 @onready var load_button = $VBoxContainer/FeaturesSection/FeaturesGrid/LoadButton
@@ -19,7 +20,8 @@ func _ready():
 	login_button.pressed.connect(_on_login_pressed)
 	logout_button.pressed.connect(_on_logout_pressed)
 	achievement_button.pressed.connect(_on_achievement_pressed)
-	stats_button.pressed.connect(_on_stats_pressed)
+	ingest_stat_button.pressed.connect(_on_ingest_stat_pressed)
+	query_stats_button.pressed.connect(_on_query_stats_pressed)
 	leaderboard_button.pressed.connect(_on_leaderboard_pressed)
 	save_button.pressed.connect(_on_save_pressed)
 	load_button.pressed.connect(_on_load_pressed)
@@ -27,6 +29,7 @@ func _ready():
 	# Connect EOS signals
 	EpicOS.login_completed.connect(_on_login_completed)
 	EpicOS.achievement_unlocked.connect(_on_achievement_unlocked)
+	EpicOS.achievement_stats_updated.connect(_on_achievement_stats_updated)
 	EpicOS.stats_updated.connect(_on_stats_updated)
 	EpicOS.leaderboard_retrieved.connect(_on_leaderboard_retrieved)
 	EpicOS.file_saved.connect(_on_file_saved)
@@ -47,7 +50,8 @@ func update_ui_state():
 
 	# Feature buttons only available when logged in
 	achievement_button.disabled = not logged_in
-	stats_button.disabled = not logged_in
+	ingest_stat_button.disabled = not logged_in
+	query_stats_button.disabled = not logged_in
 	leaderboard_button.disabled = not logged_in
 	save_button.disabled = not logged_in
 	load_button.disabled = not logged_in
@@ -79,14 +83,15 @@ func _on_achievement_pressed():
 	_add_output("Unlocking test achievement...")
 	EpicOS.unlock_achievement("first_login")
 
-func _on_stats_pressed():
-	_add_output("Updating stats...")
-	var random_score = randi_range(100, 1000)
-	EpicOS.update_stat("demo_score", random_score)
+func _on_ingest_stat_pressed():
+	_add_output("Ingesting stat...")
+	var random_amount = randi_range(1, 100)
+	EpicOS.ingest_achievement_stat("EnemiesDefeated", random_amount)
+	_add_output("Ingested stat 'EnemiesDefeated' with amount: " + str(random_amount))
 
-	# Also get current stats
-	var stats = EpicOS.get_stats()
-	_add_output("Current stats: " + str(stats))
+func _on_query_stats_pressed():
+	_add_output("Querying stats...")
+	EpicOS.query_achievement_stats()
 
 func _on_leaderboard_pressed():
 	_add_output("Submitting score and getting leaderboard...")
@@ -129,6 +134,16 @@ func _on_login_completed(success: bool, user_info: Dictionary):
 
 func _on_achievement_unlocked(achievement_id: String):
 	_add_output("Achievement unlocked: " + achievement_id)
+
+func _on_achievement_stats_updated(success: bool, stats: Array):
+	if success:
+		_add_output("Stats query successful!")
+		_add_output("Retrieved stats: " + str(stats))
+		for stat in stats:
+			if stat is Dictionary and stat.has("name") and stat.has("value"):
+				_add_output("  " + stat.name + ": " + str(stat.value))
+	else:
+		_add_output("Stats query failed!")
 
 func _on_stats_updated(stats: Dictionary):
 	_add_output("Stats updated: " + str(stats))

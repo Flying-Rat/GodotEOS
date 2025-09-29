@@ -22,6 +22,11 @@ var godot_epic: GodotEpic = null
 @onready var get_specific_player_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/AchievementsGroup/GetSpecificPlayerButton
 @onready var clear_output_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/ClearOutputButton
 
+# Stats button references
+@onready var ingest_stat_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/StatsGroup/IngestStatButton
+@onready var query_stats_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/StatsGroup/QueryStatsButton
+@onready var get_stats_button: Button = $CanvasLayer/UI/MainContainer/ButtonsPanel/StatsGroup/GetStatsButton
+
 # Auto-test variables
 var auto_test_timer: Timer = null
 var auto_test_step: int = 0
@@ -41,6 +46,7 @@ func _ready():
 	godot_epic.connect("player_achievements_updated", _on_player_achievements_updated)
 	godot_epic.connect("achievements_unlocked", _on_achievements_unlocked)
 	godot_epic.connect("achievement_unlocked", _on_achievement_unlocked)
+	godot_epic.connect("achievement_stats_updated", _on_achievement_stats_updated)
 
 	# Connect button signals
 	login_epic_button.pressed.connect(_on_login_epic_pressed)
@@ -58,8 +64,11 @@ func _ready():
 	get_specific_player_button.pressed.connect(_on_get_specific_player_pressed)
 	clear_output_button.connect("pressed", Callable(self, "_on_clear_output_pressed"))
 	
-	# Connect achievement buttons
-	get_specific_player_button.connect("pressed", Callable(self, "_on_get_specific_player_pressed"))	# Example initialization options for Epic Online Services
+	# Connect stats buttons
+	ingest_stat_button.pressed.connect(_on_ingest_stat_pressed)
+	query_stats_button.pressed.connect(_on_query_stats_pressed)
+	get_stats_button.pressed.connect(_on_get_stats_pressed)
+	
 	var init_options = {
 		"product_name": "GodotEpic Demo",
 		"product_version": "1.0.0",
@@ -82,8 +91,9 @@ func _ready():
 		add_output_line("• Authentication (Epic Account & Device ID)")
 		add_output_line("• Friends Management")
 		add_output_line("• Achievements System")
+		add_output_line("• Stats Tracking")
 		add_output_line("")
-		add_output_line("[i]Use the buttons on the left or keyboard shortcuts (1-9, 0, Q, W, Alt+2)[/i]")
+		add_output_line("[i]Use the buttons on the left or keyboard shortcuts (1-9, 0, Q, W, R, T, Y)[/i]")
 		
 		# Start auto-test if enabled
 		if auto_test_enabled:
@@ -131,6 +141,11 @@ func update_button_states():
 	get_player_ach_button.disabled = not (is_logged_in and has_product_user_id)
 	unlock_test_button.disabled = not (is_logged_in and has_product_user_id)
 	get_specific_player_button.disabled = not (is_logged_in and has_product_user_id)
+	
+	# Stats also require Product User ID
+	ingest_stat_button.disabled = not (is_logged_in and has_product_user_id)
+	query_stats_button.disabled = not (is_logged_in and has_product_user_id)
+	get_stats_button.disabled = not (is_logged_in and has_product_user_id)
 
 	logout_button.disabled = not is_logged_in
 
@@ -234,6 +249,41 @@ func _on_clear_output_pressed():
 		output_text.clear()
 		add_output_line("[i]Output cleared[/i]")
 
+# Stats button handlers
+func _on_ingest_stat_pressed():
+	if godot_epic.is_user_logged_in():
+		var product_user_id = godot_epic.get_product_user_id()
+		if not product_user_id.is_empty():
+			add_output_line("[color=purple]📊 Ingesting test stat (EnemiesDefeated: +1)...[/color]")
+			godot_epic.ingest_achievement_stat("EnemiesDefeated", 1)
+		else:
+			add_output_line("[color=orange]⚠️ Stats require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
+	else:
+		add_output_line("[color=red]❌ Please login first![/color]")
+
+func _on_query_stats_pressed():
+	if godot_epic.is_user_logged_in():
+		var product_user_id = godot_epic.get_product_user_id()
+		if not product_user_id.is_empty():
+			add_output_line("[color=purple]📊 Querying achievement stats...[/color]")
+			godot_epic.query_achievement_stats()
+		else:
+			add_output_line("[color=orange]⚠️ Stats require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
+	else:
+		add_output_line("[color=red]❌ Please login first![/color]")
+
+func _on_get_stats_pressed():
+	if godot_epic.is_user_logged_in():
+		var product_user_id = godot_epic.get_product_user_id()
+		if not product_user_id.is_empty():
+			add_output_line("[color=purple]📊 Getting current achievement stats...[/color]")
+			var stats = godot_epic.get_achievement_stats()
+			_display_achievement_stats(stats)
+		else:
+			add_output_line("[color=orange]⚠️ Stats require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
+	else:
+		add_output_line("[color=red]❌ Please login first![/color]")
+
 func _input(event):
 	if event is InputEventKey and event.pressed:
 		# Check for Alt+2 combination for second device login
@@ -266,6 +316,12 @@ func _input(event):
 				_on_get_specific_def_pressed()
 			KEY_W:
 				_on_get_specific_player_pressed()
+			KEY_R:
+				_on_ingest_stat_pressed()
+			KEY_T:
+				_on_query_stats_pressed()
+			KEY_Y:
+				_on_get_stats_pressed()
 
 
 # Signal handlers
@@ -348,6 +404,15 @@ func _on_achievements_unlocked(unlocked_achievement_ids: Array):
 func _on_achievement_unlocked(achievement_id: String, unlock_time: int):
 	add_output_line("[color=purple]🏅 Achievement unlocked: " + achievement_id + "[/color]")
 	add_output_line("Unlock time: " + str(unlock_time))
+
+
+# Stats signal handlers
+func _on_achievement_stats_updated(success: bool, stats: Array):
+	add_output_line("[color=purple]📊 Achievement stats updated![/color]")
+	if success:
+		_display_achievement_stats(stats)
+	else:
+		add_output_line("[color=red]❌ Failed to update achievement stats[/color]")
 
 
 # Achievement display functions
@@ -459,6 +524,20 @@ func _display_single_player_achievement(achievement: Dictionary):
 			var threshold = stat.get("threshold_value", 0)
 			add_output_line("    • " + str(stat.get("name", "Unknown")) + ": " + str(current) + "/" + str(threshold))
 	add_output_line("")
+
+
+# Stats display functions
+func _display_achievement_stats(stats: Array):
+	if stats.size() == 0:
+		add_output_line("📊 No achievement stats available")
+		return
+
+	add_output_line("📊 Achievement Stats (" + str(stats.size()) + " stats):")
+	for i in range(stats.size()):
+		var stat = stats[i]
+		add_output_line("  " + str(i + 1) + ". " + str(stat.get("name", "Unknown Stat")))
+		add_output_line("     Value: " + str(stat.get("value", 0)))
+		add_output_line("")
 
 
 # Auto-test functions
