@@ -16,6 +16,7 @@
 #include <eos_userinfo.h>
 #include "EpicInitOptions.h"
 #include "SubsystemManager.h"
+#include "IFriendsSubsystem.h"
 
 namespace godot {
 
@@ -34,10 +35,6 @@ private:
 
 	// EOS logging callback
 	static void EOS_CALL logging_callback(const EOS_LogMessage* message);
-
-	// Friends callbacks
-	static void EOS_CALL friends_query_callback(const EOS_Friends_QueryFriendsCallbackInfo* data);
-	static void EOS_CALL friend_info_query_callback(const EOS_UserInfo_QueryUserInfoCallbackInfo* data);
 
 protected:
 	static void _bind_methods();
@@ -105,9 +102,12 @@ private:
 	// Helper methods
 	EpicInitOptions _dict_to_init_options(const Dictionary& options_dict);
 	bool _validate_init_options(const EpicInitOptions& options);
+	
 	void setup_authentication_callback();
 	void setup_achievements_callbacks();
 	void setup_leaderboards_callbacks();
+	void setup_friends_callbacks();
+
 	void on_authentication_completed(bool success, const Dictionary& user_info);
 	void on_achievement_definitions_completed(bool success, const Array& definitions);
 	void on_player_achievements_completed(bool success, const Array& achievements);
@@ -116,6 +116,8 @@ private:
 	void on_leaderboard_definitions_completed(bool success, const Array& definitions);
 	void on_leaderboard_ranks_completed(bool success, const Array& ranks);
 	void on_leaderboard_user_scores_completed(bool success, const Dictionary& user_scores);
+	void on_friends_query_completed(bool success, const Array& friends_list);
+	void on_friend_info_query_completed(bool success, const Dictionary& friend_info);
 };
 
 }
