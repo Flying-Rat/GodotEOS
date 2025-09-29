@@ -125,12 +125,10 @@ GodotEpic* GodotEpic::get_singleton() {
 }
 
 bool GodotEpic::initialize_platform(const Dictionary& options) {
+	ERR_PRINT("Starting EOS Platform initialization");
+
 	// Convert dictionary to init options
 	EpicInitOptions init_options = _dict_to_init_options(options);
-
-	// Debug: print product name/version we will pass to platform
-	ERR_PRINT("[initialize_platform] product_name: " + init_options.product_name);
-	ERR_PRINT("[initialize_platform] product_version: " + init_options.product_version);
 
 	// Validate options
 	if (!_validate_init_options(init_options)) {
@@ -210,6 +208,8 @@ EOS_HPlatform GodotEpic::get_platform_handle() const {
 
 // Authentication methods
 void GodotEpic::login_with_epic_account(const String& email, const String& password) {
+	ERR_PRINT("Starting Epic account login");
+
 	auto auth = Get<IAuthenticationSubsystem>();
 	if (!auth) {
 		ERR_PRINT("AuthenticationSubsystem not available");
@@ -230,6 +230,8 @@ void GodotEpic::login_with_epic_account(const String& email, const String& passw
 }
 
 void GodotEpic::login_with_dev(const String& display_name) {
+	ERR_PRINT("Starting dev login");
+
 	auto auth = Get<IAuthenticationSubsystem>();
 	if (!auth) {
 		ERR_PRINT("AuthenticationSubsystem not available");
@@ -247,10 +249,11 @@ void GodotEpic::login_with_dev(const String& display_name) {
 		Dictionary empty_user_info;
 		emit_signal("login_completed", false, empty_user_info);
 	}
-	WARN_PRINT("Dev login initiated with display name: " + (display_name.is_empty() ? String("TestUser") : display_name));
 }
 
 void GodotEpic::login_with_device_id(const String& display_name) {
+	ERR_PRINT("Starting device ID login");
+
 	auto auth = Get<IAuthenticationSubsystem>();
 	if (!auth) {
 		ERR_PRINT("AuthenticationSubsystem not available");
@@ -264,10 +267,11 @@ void GodotEpic::login_with_device_id(const String& display_name) {
 		Dictionary empty_user_info;
 		emit_signal("login_completed", false, empty_user_info);
 	}
-	WARN_PRINT("Device ID login initiated with display name: " + display_name);
 }
 
 void GodotEpic::logout() {
+	ERR_PRINT("Starting logout");
+
 	auto auth = Get<IAuthenticationSubsystem>();
 	if (!auth) {
 		ERR_PRINT("AuthenticationSubsystem not available");
@@ -309,6 +313,8 @@ String GodotEpic::get_product_user_id() const {
 
 // Friends methods
 void GodotEpic::query_friends() {
+	ERR_PRINT("Starting friends query");
+
 	auto auth = Get<IAuthenticationSubsystem>();
 	if (!auth || !auth->IsLoggedIn()) {
 		ERR_PRINT("AuthenticationSubsystem not available or user not logged in");
@@ -332,7 +338,6 @@ void GodotEpic::query_friends() {
 	query_options.LocalUserId = auth->GetEpicAccountId();
 
 	EOS_Friends_QueryFriends(friends_handle, &query_options, nullptr, friends_query_callback);
-	ERR_PRINT("Friends query initiated");
 }
 
 Array GodotEpic::get_friends_list() {
@@ -497,6 +502,8 @@ Dictionary GodotEpic::get_friend_info(const String& friend_id) {
 }
 
 void GodotEpic::query_friend_info(const String& friend_id) {
+	ERR_PRINT("Starting friend info query for: " + friend_id);
+
 	auto auth = Get<IAuthenticationSubsystem>();
 	if (!auth || !auth->IsLoggedIn()) {
 		ERR_PRINT("AuthenticationSubsystem not available or user not logged in");
@@ -528,10 +535,11 @@ void GodotEpic::query_friend_info(const String& friend_id) {
 	query_options.TargetUserId = target_user_id;
 
 	EOS_UserInfo_QueryUserInfo(user_info_handle, &query_options, this, friend_info_query_callback);
-	ERR_PRINT("Friend info query initiated for: " + friend_id);
 }
 
 void GodotEpic::query_all_friends_info() {
+	ERR_PRINT("Starting query for all friends info");
+
 	auto auth = Get<IAuthenticationSubsystem>();
 	if (!auth || !auth->IsLoggedIn()) {
 		ERR_PRINT("AuthenticationSubsystem not available or user not logged in");
@@ -575,6 +583,8 @@ void GodotEpic::query_all_friends_info() {
 
 // Achievements methods
 void GodotEpic::query_achievement_definitions() {
+	ERR_PRINT("Starting achievement definitions query");
+
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
 		ERR_PRINT("AchievementsSubsystem not available");
@@ -591,6 +601,8 @@ void GodotEpic::query_achievement_definitions() {
 }
 
 void GodotEpic::query_player_achievements() {
+	ERR_PRINT("Starting player achievements query");
+
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
 		ERR_PRINT("AchievementsSubsystem not available");
@@ -613,6 +625,8 @@ void GodotEpic::unlock_achievement(const String& achievement_id) {
 }
 
 void GodotEpic::unlock_achievements(const Array& achievement_ids) {
+	ERR_PRINT("Starting achievement unlock for " + String::num_int64(achievement_ids.size()) + " achievements");
+
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
 		ERR_PRINT("AchievementsSubsystem not available");
@@ -650,6 +664,8 @@ Dictionary GodotEpic::get_player_achievement(const String& achievement_id) {
 
 // Achievement Stats methods
 void GodotEpic::ingest_achievement_stat(const String& stat_name, int amount) {
+	ERR_PRINT("Starting stat ingestion: " + stat_name + " = " + String::num_int64(amount));
+
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
 		ERR_PRINT("AchievementsSubsystem not available");
@@ -666,6 +682,8 @@ void GodotEpic::ingest_achievement_stat(const String& stat_name, int amount) {
 }
 
 void GodotEpic::query_achievement_stats() {
+	ERR_PRINT("Starting achievement stats query");
+
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
 		ERR_PRINT("AchievementsSubsystem not available");
@@ -776,6 +794,8 @@ void EOS_CALL GodotEpic::friend_info_query_callback(const EOS_UserInfo_QueryUser
 
 // Leaderboards methods
 void GodotEpic::query_leaderboard_definitions() {
+	ERR_PRINT("Starting leaderboard definitions query");
+
 	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	if (!leaderboards) {
 		ERR_PRINT("LeaderboardsSubsystem not available");
@@ -792,6 +812,8 @@ void GodotEpic::query_leaderboard_definitions() {
 }
 
 void GodotEpic::query_leaderboard_ranks(const String& leaderboard_id, int limit) {
+	ERR_PRINT("Starting leaderboard ranks query for: " + leaderboard_id + " (limit: " + String::num_int64(limit) + ")");
+
 	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	if (!leaderboards) {
 		ERR_PRINT("LeaderboardsSubsystem not available");
@@ -808,6 +830,8 @@ void GodotEpic::query_leaderboard_ranks(const String& leaderboard_id, int limit)
 }
 
 void GodotEpic::query_leaderboard_user_scores(const String& leaderboard_id, const Array& user_ids) {
+	ERR_PRINT("Starting leaderboard user scores query for: " + leaderboard_id + " (" + String::num_int64(user_ids.size()) + " users)");
+
 	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	if (!leaderboards) {
 		ERR_PRINT("LeaderboardsSubsystem not available");
@@ -824,6 +848,8 @@ void GodotEpic::query_leaderboard_user_scores(const String& leaderboard_id, cons
 }
 
 void GodotEpic::ingest_stat(const String& stat_name, int value) {
+	ERR_PRINT("Starting stat ingestion: " + stat_name + " = " + String::num_int64(value));
+
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
 		ERR_PRINT("AchievementsSubsystem not available");
@@ -840,6 +866,8 @@ void GodotEpic::ingest_stat(const String& stat_name, int value) {
 }
 
 void GodotEpic::ingest_stats(const Dictionary& stats) {
+	ERR_PRINT("Starting bulk stat ingestion for " + String::num_int64(stats.size()) + " stats");
+
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
 		ERR_PRINT("AchievementsSubsystem not available");
@@ -930,17 +958,6 @@ EpicInitOptions GodotEpic::_dict_to_init_options(const Dictionary& options_dict)
 		options.encryption_key = String();
 	}
 
-	// Debug print to verify values are being set correctly
-	ERR_PRINT("EOS Init Options:");
-	ERR_PRINT("  Product Name: " + options.product_name);
-	ERR_PRINT("  Product Version: " + options.product_version);
-	ERR_PRINT("  Product ID: " + options.product_id);
-	ERR_PRINT("  Sandbox ID: " + options.sandbox_id);
-	ERR_PRINT("  Deployment ID: " + options.deployment_id);
-	ERR_PRINT("  Client ID: " + options.client_id);
-	ERR_PRINT("  Client Secret: " + String(options.client_secret.is_empty() ? "EMPTY" : "SET"));
-	ERR_PRINT("  Encryption Key: " + String(options.encryption_key.is_empty() ? "EMPTY" : "SET"));
-
 	return options;
 }
 
@@ -988,7 +1005,6 @@ void GodotEpic::setup_authentication_callback() {
 		// Create a callable that binds to our instance method
 		Callable callback = Callable(this, "on_authentication_completed");
 		auth->SetLoginCallback(callback);
-		ERR_PRINT("Authentication callback set up successfully");
 	} else {
 		ERR_PRINT("Failed to set up authentication callback - AuthenticationSubsystem not available");
 	}
@@ -1009,8 +1025,6 @@ void GodotEpic::setup_achievements_callbacks() {
 
 		Callable stats_callback(this, "on_achievement_stats_completed");
 		achievements->SetStatsCallback(stats_callback);
-
-		ERR_PRINT("Achievements callbacks set up successfully");
 	} else {
 		ERR_PRINT("Failed to set up achievements callbacks - AchievementsSubsystem not available");
 	}
@@ -1028,8 +1042,6 @@ void GodotEpic::setup_leaderboards_callbacks() {
 
 		Callable user_scores_callback(this, "on_leaderboard_user_scores_completed");
 		leaderboards->SetLeaderboardUserScoresCallback(user_scores_callback);
-
-		ERR_PRINT("Leaderboards callbacks set up successfully");
 	} else {
 		ERR_PRINT("Failed to set up leaderboards callbacks - LeaderboardsSubsystem not available");
 	}

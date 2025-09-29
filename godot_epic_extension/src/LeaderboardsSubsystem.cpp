@@ -6,14 +6,12 @@
 #include "AccountHelpers.h"
 #include "../eos_sdk/Include/eos_sdk.h"
 #include "../eos_sdk/Include/eos_leaderboards.h"
-#include "../eos_sdk/Include/eos_stats.h"
 #include <godot_cpp/core/error_macros.hpp>
 
 namespace godot {
 
 LeaderboardsSubsystem::LeaderboardsSubsystem()
     : leaderboards_handle(nullptr)
-    , stats_handle(nullptr)
 {
 }
 
@@ -24,15 +22,10 @@ LeaderboardsSubsystem::~LeaderboardsSubsystem() {
 bool LeaderboardsSubsystem::Init() {
     UtilityFunctions::print("LeaderboardsSubsystem: Initializing...");
 
-    // Get platform handle from PlatformSubsystem
+    // Get and validate platform
     auto platform = Get<IPlatformSubsystem>();
-    if (!platform) {
-        UtilityFunctions::printerr("LeaderboardsSubsystem: PlatformSubsystem not available");
-        return false;
-    }
-
-    if (!platform->IsOnline()) {
-        UtilityFunctions::printerr("LeaderboardsSubsystem: Platform not online");
+    if (!platform || !platform->IsOnline()) {
+        UtilityFunctions::printerr("LeaderboardsSubsystem: Platform not available or offline");
         return false;
     }
 
@@ -43,10 +36,9 @@ bool LeaderboardsSubsystem::Init() {
     }
 
     leaderboards_handle = EOS_Platform_GetLeaderboardsInterface(platform_handle);
-    stats_handle = EOS_Platform_GetStatsInterface(platform_handle);
 
-    if (!leaderboards_handle || !stats_handle) {
-        UtilityFunctions::printerr("LeaderboardsSubsystem: Failed to get leaderboards/stats interfaces");
+    if (!leaderboards_handle) {
+        UtilityFunctions::printerr("LeaderboardsSubsystem: Failed to get leaderboards interface");
         return false;
     }
 
@@ -86,7 +78,7 @@ bool LeaderboardsSubsystem::QueryLeaderboardDefinitions() {
     options.LocalUserId = auth->GetProductUserIdHandle();;
 
     EOS_Leaderboards_QueryLeaderboardDefinitions(leaderboards_handle, &options, this, on_query_leaderboard_definitions_complete);
-    UtilityFunctions::print("LeaderboardsSubsystem: Querying leaderboard definitions...");
+    UtilityFunctions::print("LeaderboardsSubsystem: Starting leaderboard definitions query");
     return true;
 }
 
@@ -113,7 +105,6 @@ bool LeaderboardsSubsystem::QueryLeaderboardRanks(const String& leaderboard_id, 
 	QueryRanksOptions.LocalUserId = auth->GetProductUserIdHandle();
 
     EOS_Leaderboards_QueryLeaderboardRanks(leaderboards_handle, &QueryRanksOptions, this, on_query_leaderboard_ranks_complete);
-    UtilityFunctions::print("LeaderboardsSubsystem: Querying leaderboard ranks for: " + leaderboard_id);
     return true;
 }
 
@@ -187,7 +178,6 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
     options.LocalUserId = auth->GetProductUserIdHandle();
 
     EOS_Leaderboards_QueryLeaderboardUserScores(leaderboards_handle, &options, this, on_query_leaderboard_user_scores_complete);
-    UtilityFunctions::print("LeaderboardsSubsystem: Querying user scores for leaderboard: " + leaderboard_id);
     return true;
 }
 
@@ -256,12 +246,9 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_definitions_complete(c
             }
         }
 
-        UtilityFunctions::print("LeaderboardsSubsystem: Leaderboard definitions cached (" + String::num_int64(definitions_count) + " definitions)");
-
         // Call the callback if set
         if (self->leaderboard_definitions_callback.is_valid()) {
             Array definitions = self->GetLeaderboardDefinitions();
-            UtilityFunctions::print("LeaderboardsSubsystem: Calling leaderboard definitions callback with " + String::num_int64(definitions.size()) + " definitions");
             self->leaderboard_definitions_callback.call(true, definitions);
         }
     } else {
@@ -270,7 +257,6 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_definitions_complete(c
         // Call the callback with failure
         if (self->leaderboard_definitions_callback.is_valid()) {
             Array empty_definitions;
-            UtilityFunctions::print("LeaderboardsSubsystem: Calling leaderboard definitions callback with failure (empty definitions)");
             self->leaderboard_definitions_callback.call(false, empty_definitions);
         }
     }
@@ -313,12 +299,9 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_ranks_complete(const E
             }
         }
 
-        UtilityFunctions::print("LeaderboardsSubsystem: Leaderboard ranks cached (" + String::num_int64(records_count) + " records)");
-
         // Call the callback if set
         if (self->leaderboard_ranks_callback.is_valid()) {
             Array ranks = self->GetLeaderboardRanks();
-            UtilityFunctions::print("LeaderboardsSubsystem: Calling leaderboard ranks callback with " + String::num_int64(ranks.size()) + " ranks");
             self->leaderboard_ranks_callback.call(true, ranks);
         }
     } else {
@@ -327,7 +310,6 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_ranks_complete(const E
         // Call the callback with failure
         if (self->leaderboard_ranks_callback.is_valid()) {
             Array empty_ranks;
-            UtilityFunctions::print("LeaderboardsSubsystem: Calling leaderboard ranks callback with failure (empty ranks)");
             self->leaderboard_ranks_callback.call(false, empty_ranks);
         }
     }
@@ -364,12 +346,9 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_user_scores_complete(c
             }
         }
 
-        UtilityFunctions::print("LeaderboardsSubsystem: Leaderboard user scores cached (" + String::num_int64(scores_count) + " scores)");
-
         // Call the callback if set
         if (self->leaderboard_user_scores_callback.is_valid()) {
             Dictionary user_scores = self->GetLeaderboardUserScores();
-            UtilityFunctions::print("LeaderboardsSubsystem: Calling leaderboard user scores callback with " + String::num_int64(user_scores.size()) + " user scores");
             self->leaderboard_user_scores_callback.call(true, user_scores);
         }
     } else {
@@ -378,7 +357,6 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_user_scores_complete(c
         // Call the callback with failure
         if (self->leaderboard_user_scores_callback.is_valid()) {
             Dictionary empty_scores;
-            UtilityFunctions::print("LeaderboardsSubsystem: Calling leaderboard user scores callback with failure (empty scores)");
             self->leaderboard_user_scores_callback.call(false, empty_scores);
         }
     }

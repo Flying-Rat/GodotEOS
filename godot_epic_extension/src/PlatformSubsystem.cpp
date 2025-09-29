@@ -105,33 +105,6 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
     PlatformOptions.OverrideCountryCode = nullptr;
     PlatformOptions.OverrideLocaleCode = nullptr;
 
-    // Log platform options (mask secrets)
-    String platform_log = String("Creating EOS Platform with: \n");
-    platform_log += String("  ProductId: ");
-    platform_log += String(PlatformOptions.ProductId ? PlatformOptions.ProductId : "(null)");
-    platform_log += String("\n");
-
-    platform_log += String("  SandboxId: ");
-    platform_log += String(PlatformOptions.SandboxId ? PlatformOptions.SandboxId : "(null)");
-    platform_log += String("\n");
-
-    platform_log += String("  DeploymentId: ");
-    platform_log += String(PlatformOptions.DeploymentId ? PlatformOptions.DeploymentId : "(null)");
-    platform_log += String("\n");
-
-    platform_log += String("  ClientId: ");
-    platform_log += String(PlatformOptions.ClientCredentials.ClientId ? PlatformOptions.ClientCredentials.ClientId : "(null)");
-    platform_log += String("\n");
-
-    platform_log += String("  ClientSecret: ");
-    platform_log += String(PlatformOptions.ClientCredentials.ClientSecret ? "(masked)" : "(null)");
-    platform_log += String("\n");
-
-    platform_log += String("  EncryptionKey: ");
-    platform_log += String(PlatformOptions.EncryptionKey ? "(masked)" : "(null)");
-    platform_log += String("\n");
-    WARN_PRINT(platform_log);
-
     platform_handle = EOS_Platform_Create(&PlatformOptions);
     if (!platform_handle) {
         // Try to get a more specific error from the last result if available
@@ -172,7 +145,6 @@ void PlatformSubsystem::SetLogLevel(int level) {
     }
 
     EOS_Logging_SetLogLevel(EOS_ELogCategory::EOS_LC_ALL_CATEGORIES, eos_level);
-    UtilityFunctions::print("PlatformSubsystem: Log level set to " + String::num_int64(level));
 }
 
 } // namespace godot

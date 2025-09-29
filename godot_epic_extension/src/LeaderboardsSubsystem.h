@@ -38,7 +38,6 @@ public:
 private:
     // EOS handles
     EOS_HLeaderboards leaderboards_handle;
-    EOS_HStats stats_handle;
 
     // Cached data
     Array leaderboard_definitions;

@@ -27,15 +27,10 @@ AchievementsSubsystem::~AchievementsSubsystem() {
 bool AchievementsSubsystem::Init() {
     UtilityFunctions::print("AchievementsSubsystem: Initializing...");
 
-    // Get platform handle from PlatformSubsystem
+    // Get and validate platform
     auto platform = Get<IPlatformSubsystem>();
-    if (!platform) {
-        UtilityFunctions::printerr("AchievementsSubsystem: PlatformSubsystem not available");
-        return false;
-    }
-
-    if (!platform->IsOnline()) {
-        UtilityFunctions::printerr("AchievementsSubsystem: Platform not online");
+    if (!platform || !platform->IsOnline()) {
+        UtilityFunctions::printerr("AchievementsSubsystem: Platform not available or offline");
         return false;
     }
 
@@ -105,7 +100,6 @@ bool AchievementsSubsystem::QueryAchievementDefinitions() {
     options.LocalUserId = product_user_id;
 
     EOS_Achievements_QueryDefinitions(achievements_handle, &options, this, on_query_definitions_complete);
-    UtilityFunctions::print("AchievementsSubsystem: Querying achievement definitions...");
     return true;
 }
 
@@ -134,7 +128,6 @@ bool AchievementsSubsystem::QueryPlayerAchievements() {
     options.LocalUserId = product_user_id;
 
     EOS_Achievements_QueryPlayerAchievements(achievements_handle, &options, this, on_query_player_achievements_complete);
-    UtilityFunctions::print("AchievementsSubsystem: Querying player achievements...");
     return true;
 }
 
@@ -185,7 +178,7 @@ bool AchievementsSubsystem::UnlockAchievements(const Array& achievement_ids) {
     options.AchievementsCount = achievement_ids.size();
 
     EOS_Achievements_UnlockAchievements(achievements_handle, &options, this, on_unlock_achievements_complete);
-    UtilityFunctions::print("AchievementsSubsystem: Unlocking " + String::num_int64(achievement_ids.size()) + " achievements...");
+    UtilityFunctions::print("AchievementsSubsystem: Starting achievement unlock operation");
     return true;
 }
 
@@ -273,18 +266,14 @@ Dictionary AchievementsSubsystem::GetPlayerAchievement(const String& achievement
 
 void AchievementsSubsystem::SetAchievementDefinitionsCallback(const Callable& callback) {
     achievement_definitions_callback = callback;
-
-    UtilityFunctions::print("AchievementsSubsystem: Achievement definitions callback set");
 }
 
 void AchievementsSubsystem::SetPlayerAchievementsCallback(const Callable& callback) {
     player_achievements_callback = callback;
-    UtilityFunctions::print("AchievementsSubsystem: Player achievements callback set");
 }
 
 void AchievementsSubsystem::SetAchievementsUnlockedCallback(const Callable& callback) {
     achievements_unlocked_callback = callback;
-    UtilityFunctions::print("AchievementsSubsystem: Achievements unlocked callback set");
 }
 
 bool AchievementsSubsystem::IngestStat(const String& stat_name, int amount) {
@@ -331,7 +320,6 @@ bool AchievementsSubsystem::IngestStat(const String& stat_name, int amount) {
     options.Stats = &ingest_data;
 
     EOS_Stats_IngestStat(stats_handle, &options, this, on_ingest_stat_complete);
-    UtilityFunctions::print("AchievementsSubsystem: Ingesting stat '" + stat_name + "' with amount " + String::num_int64(amount));
     return true;
 }
 
@@ -364,7 +352,6 @@ bool AchievementsSubsystem::QueryStats() {
     options.StatNames = nullptr;
 
     EOS_Stats_QueryStats(stats_handle, &options, this, on_query_stats_complete);
-    UtilityFunctions::print("AchievementsSubsystem: Querying stats...");
     return true;
 }
 
@@ -388,7 +375,6 @@ Dictionary AchievementsSubsystem::GetStat(const String& stat_name) const {
 
 void AchievementsSubsystem::SetStatsCallback(const Callable& callback) {
     stats_callback = callback;
-    UtilityFunctions::print("AchievementsSubsystem: Stats callback set");
 }
 
 void AchievementsSubsystem::setup_notifications() {
@@ -400,9 +386,7 @@ void AchievementsSubsystem::setup_notifications() {
     unlock_notification_id = EOS_Achievements_AddNotifyAchievementsUnlockedV2(
         achievements_handle, &options, nullptr, on_achievements_unlocked);
 
-    if (unlock_notification_id != EOS_INVALID_NOTIFICATIONID) {
-        UtilityFunctions::print("AchievementsSubsystem: Unlock notifications registered");
-    } else {
+    if (unlock_notification_id == EOS_INVALID_NOTIFICATIONID) {
         UtilityFunctions::printerr("AchievementsSubsystem: Failed to register unlock notifications");
     }
 }
@@ -411,7 +395,6 @@ void AchievementsSubsystem::cleanup_notifications() {
     if (achievements_handle && unlock_notification_id != EOS_INVALID_NOTIFICATIONID) {
         EOS_Achievements_RemoveNotifyAchievementsUnlocked(achievements_handle, unlock_notification_id);
         unlock_notification_id = EOS_INVALID_NOTIFICATIONID;
-        UtilityFunctions::print("AchievementsSubsystem: Unlock notifications unregistered");
     }
 }
 
@@ -454,12 +437,10 @@ void EOS_CALL AchievementsSubsystem::on_query_definitions_complete(const EOS_Ach
         }
 
         self->definitions_cached = true;
-        UtilityFunctions::print("AchievementsSubsystem: Achievement definitions cached (" + String::num_int64(definitions_count) + " definitions)");
 
         // Call the callback if set
         if (self->achievement_definitions_callback.is_valid()) {
             Array definitions = self->GetAchievementDefinitions();
-            UtilityFunctions::print("AchievementsSubsystem: Calling achievement definitions callback with " + String::num_int64(definitions.size()) + " definitions");
             self->achievement_definitions_callback.call(true, definitions);
         }
     } else {
@@ -527,15 +508,11 @@ void EOS_CALL AchievementsSubsystem::on_query_player_achievements_complete(const
         }
 
         self->player_achievements_cached = true;
-        UtilityFunctions::print("AchievementsSubsystem: Player achievements cached (" + String::num_int64(achievements_count) + " achievements)");
 
         // Call the callback if set
         if (self->player_achievements_callback.is_valid()) {
             Array achievements = self->GetPlayerAchievements();
-            UtilityFunctions::print("AchievementsSubsystem: Calling player achievements callback with " + String::num_int64(achievements.size()) + " achievements");
             self->player_achievements_callback.call(true, achievements);
-        }else {
-            UtilityFunctions::print("AchievementsSubsystem: No player achievements callback set");  
         }
 
     } else {
@@ -555,9 +532,6 @@ void EOS_CALL AchievementsSubsystem::on_unlock_achievements_complete(const EOS_A
     if (!data || !self) return;
 
     if (data->ResultCode == EOS_EResult::EOS_Success) {
-        UtilityFunctions::print("AchievementsSubsystem: Achievements unlocked successfully (" +
-                               String::num_int64(data->AchievementsCount) + " achievements)");
-
         // Call the callback if set
         if (self->achievements_unlocked_callback.is_valid()) {
             Array unlocked_ids; // We don't have the specific IDs here, could be enhanced later
@@ -586,7 +560,7 @@ void EOS_CALL AchievementsSubsystem::on_ingest_stat_complete(const EOS_Stats_Ing
     if (!data || !self) return;
 
     if (data->ResultCode == EOS_EResult::EOS_Success) {
-        UtilityFunctions::print("AchievementsSubsystem: Stat ingested successfully");
+        // Stat ingested successfully - no need to log
     } else {
         UtilityFunctions::printerr("AchievementsSubsystem: Failed to ingest stat, error: " + String::num_int64((int64_t)data->ResultCode));
     }
@@ -597,8 +571,6 @@ void EOS_CALL AchievementsSubsystem::on_query_stats_complete(const EOS_Stats_OnQ
     if (!data || !self) return;
 
     if (data->ResultCode == EOS_EResult::EOS_Success) {
-        UtilityFunctions::print("AchievementsSubsystem: Stats queried successfully");
-
         // Cache the stats
         self->stats.clear();
 

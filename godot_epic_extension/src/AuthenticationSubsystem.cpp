@@ -41,15 +41,10 @@ AuthenticationSubsystem::~AuthenticationSubsystem() {
 bool AuthenticationSubsystem::Init() {
     UtilityFunctions::print("AuthenticationSubsystem: Initializing...");
 
-    // Get platform handle from PlatformSubsystem
+    // Get and validate platform
     auto platform = Get<IPlatformSubsystem>();
-    if (!platform) {
-        UtilityFunctions::printerr("AuthenticationSubsystem: PlatformSubsystem not available");
-        return false;
-    }
-
-    if (!platform->IsOnline()) {
-        UtilityFunctions::printerr("AuthenticationSubsystem: Platform not online");
+    if (!platform || !platform->IsOnline()) {
+        UtilityFunctions::printerr("AuthenticationSubsystem: Platform not available or offline");
         return false;
     }
 
