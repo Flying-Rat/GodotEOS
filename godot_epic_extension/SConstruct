@@ -16,6 +16,7 @@ env = SConscript("godot-cpp/SConstruct")
 eos_sdk = "eos_sdk"
 env.Append(CPPPATH=["src/", eos_sdk + "/Include"])
 
+
 if env["platform"] == "windows":
     env.Append(LIBPATH=[eos_sdk + "/Lib"])
     env.Append(LIBS=["EOSSDK-Win64-Shipping"])
@@ -24,6 +25,13 @@ elif env["platform"] == "linux":
     env.Append(LIBS=["EOSSDK-Linux-Shipping"])
 
 sources = Glob("src/*.cpp")
+
+if env["target"] in ["editor", "template_debug"]:
+    try:
+        doc_data = env.GodotCPPDocData("src/gen/doc_data.gen.cpp", source=Glob("doc_classes/*.xml"))
+        sources.append(doc_data)
+    except AttributeError:
+        print("Not including class reference as we're targeting a pre-4.3 baseline.")
 
 if env["platform"] == "macos":
     library = env.SharedLibrary(
@@ -54,7 +62,7 @@ import shutil
 
 def copy_eos_library(target, source, env):
     platform = env["platform"]
-    
+
     if platform == "windows":
         eos_lib_src = os.path.join(eos_sdk, "Bin", "EOSSDK-Win64-Shipping.dll")
         eos_lib_dst = os.path.join("demo", "bin", "EOSSDK-Win64-Shipping.dll")
@@ -69,7 +77,7 @@ def copy_eos_library(target, source, env):
         lib_name = "libEOSSDK-Mac-Shipping.dylib"
     else:
         return  # Unsupported platform
-    
+
     if os.path.exists(eos_lib_src):
         # Ensure the destination directory exists
         os.makedirs(os.path.dirname(eos_lib_dst), exist_ok=True)
