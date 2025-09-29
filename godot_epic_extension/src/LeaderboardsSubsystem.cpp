@@ -75,7 +75,7 @@ bool LeaderboardsSubsystem::QueryLeaderboardDefinitions() {
     options.ApiVersion = EOS_LEADERBOARDS_QUERYLEADERBOARDDEFINITIONS_API_LATEST;
     options.StartTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
     options.EndTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
-    options.LocalUserId = auth->GetProductUserIdHandle();;
+    options.LocalUserId = auth->GetProductUserId();
 
     EOS_Leaderboards_QueryLeaderboardDefinitions(leaderboards_handle, &options, this, on_query_leaderboard_definitions_complete);
     UtilityFunctions::print("LeaderboardsSubsystem: Starting leaderboard definitions query");
@@ -102,7 +102,7 @@ bool LeaderboardsSubsystem::QueryLeaderboardRanks(const String& leaderboard_id, 
     EOS_Leaderboards_QueryLeaderboardRanksOptions QueryRanksOptions = { 0 };
 	QueryRanksOptions.ApiVersion = EOS_LEADERBOARDS_QUERYLEADERBOARDRANKS_API_LATEST;
 	QueryRanksOptions.LeaderboardId = leaderboard_id.utf8().get_data();
-	QueryRanksOptions.LocalUserId = auth->GetProductUserIdHandle();
+	QueryRanksOptions.LocalUserId = auth->GetProductUserId();
 
     EOS_Leaderboards_QueryLeaderboardRanks(leaderboards_handle, &QueryRanksOptions, this, on_query_leaderboard_ranks_complete);
     return true;
@@ -175,7 +175,7 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
     options.StatInfoCount = 1;
     options.StartTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
     options.EndTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
-    options.LocalUserId = auth->GetProductUserIdHandle();
+    options.LocalUserId = auth->GetProductUserId();
 
     EOS_Leaderboards_QueryLeaderboardUserScores(leaderboards_handle, &options, this, on_query_leaderboard_user_scores_complete);
     return true;

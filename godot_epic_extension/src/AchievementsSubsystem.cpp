@@ -89,7 +89,7 @@ bool AchievementsSubsystem::QueryAchievementDefinitions() {
         return false;
     }
 
-    EOS_ProductUserId product_user_id = auth->GetProductUserIdHandle();
+    EOS_ProductUserId product_user_id = auth->GetProductUserId();
     if (!EOS_ProductUserId_IsValid(product_user_id)) {
         UtilityFunctions::printerr("AchievementsSubsystem: Invalid Product User ID");
         return false;
@@ -116,7 +116,7 @@ bool AchievementsSubsystem::QueryPlayerAchievements() {
         return false;
     }
 
-    EOS_ProductUserId product_user_id = auth->GetProductUserIdHandle();
+    EOS_ProductUserId product_user_id = auth->GetProductUserId();
     if (!EOS_ProductUserId_IsValid(product_user_id)) {
         UtilityFunctions::printerr("AchievementsSubsystem: Invalid Product User ID");
         return false;
@@ -155,7 +155,7 @@ bool AchievementsSubsystem::UnlockAchievements(const Array& achievement_ids) {
         return false;
     }
 
-    EOS_ProductUserId product_user_id = auth->GetProductUserIdHandle();
+    EOS_ProductUserId product_user_id = auth->GetProductUserId();
     if (!EOS_ProductUserId_IsValid(product_user_id)) {
         UtilityFunctions::printerr("AchievementsSubsystem: Invalid Product User ID");
         return false;
@@ -234,7 +234,7 @@ Dictionary AchievementsSubsystem::GetPlayerAchievement(const String& achievement
         return result;
     }
 
-    EOS_ProductUserId product_user_id = auth->GetProductUserIdHandle();
+    EOS_ProductUserId product_user_id = auth->GetProductUserId();
     if (!EOS_ProductUserId_IsValid(product_user_id)) {
         return result;
     }
@@ -289,7 +289,7 @@ bool AchievementsSubsystem::IngestStat(const String& stat_name, int amount) {
         return false;
     }
 
-    EOS_ProductUserId product_user_id = auth->GetProductUserIdHandle();
+    EOS_ProductUserId product_user_id = auth->GetProductUserId();
     if (!EOS_ProductUserId_IsValid(product_user_id)) {
         UtilityFunctions::printerr("AchievementsSubsystem: Invalid Product User ID");
         return false;
@@ -336,7 +336,7 @@ bool AchievementsSubsystem::QueryStats() {
         return false;
     }
 
-    EOS_ProductUserId product_user_id = auth->GetProductUserIdHandle();
+    EOS_ProductUserId product_user_id = auth->GetProductUserId();
     if (!EOS_ProductUserId_IsValid(product_user_id)) {
         UtilityFunctions::printerr("AchievementsSubsystem: Invalid Product User ID");
         return false;
@@ -469,7 +469,7 @@ void EOS_CALL AchievementsSubsystem::on_query_player_achievements_complete(const
             return;
         }
 
-        EOS_ProductUserId product_user_id = auth->GetProductUserIdHandle();
+        EOS_ProductUserId product_user_id = auth->GetProductUserId();
         if (!EOS_ProductUserId_IsValid(product_user_id)) {
             UtilityFunctions::printerr("AchievementsSubsystem: Invalid Product User ID during player achievements query callback");
             return;

@@ -314,7 +314,7 @@ String GodotEpic::get_epic_account_id() const {
 }
 
 String GodotEpic::get_product_user_id() const {
-	EOS_ProductUserId product_user_id = Get<IAuthenticationSubsystem>()->GetProductUserIdHandle();
+	EOS_ProductUserId product_user_id = Get<IAuthenticationSubsystem>()->GetProductUserId();
 	if (!EOS_ProductUserId_IsValid(product_user_id)) return "";
 	
 	const char* id_string = FAccountHelpers::ProductUserIDToString(product_user_id);

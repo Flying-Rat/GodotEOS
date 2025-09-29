@@ -37,16 +37,16 @@ public:
     virtual bool IsLoggedIn() const = 0;
 
     /**
-     * @brief Get the Product User ID handle.
-     * @return Product User ID handle, or nullptr if not logged in.
+     * @brief Get the Product User ID.
+     * @return Product User ID, or nullptr if not logged in.
      */
-    virtual EOS_ProductUserId GetProductUserIdHandle() const = 0;
+    virtual EOS_ProductUserId GetProductUserId() const = 0;
 
     /**
-     * @brief Set the Product User ID from handle.
-     * @param product_user_id The Product User ID handle to set.
+     * @brief Set the Product User ID.
+     * @param product_user_id The Product User ID to set.
      */
-    virtual void SetProductUserIdHandle(EOS_ProductUserId product_user_id) = 0;
+    virtual void SetProductUserId(EOS_ProductUserId product_user_id) = 0;
 
     /**
      * @brief Get the Epic Account ID.

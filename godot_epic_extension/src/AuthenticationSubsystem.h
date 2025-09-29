@@ -26,14 +26,14 @@ public:
     virtual bool Login(const String& login_type, const Dictionary& credentials) override;
     virtual bool Logout() override;
     virtual bool IsLoggedIn() const override;
-    virtual void SetProductUserIdHandle(EOS_ProductUserId product_user_id) override;
+    virtual void SetProductUserId(EOS_ProductUserId product_user_id) override;
     virtual String GetDisplayName() const override;
     virtual int GetLoginStatus() const override;
     virtual void SetLoginCallback(const Callable& callback) override;
     virtual Callable GetLoginCallback() const override;
     
     // Additional getter for raw EOS handle
-    virtual EOS_ProductUserId GetProductUserIdHandle() const override;
+    virtual EOS_ProductUserId GetProductUserId() const override;
     virtual EOS_EpicAccountId GetEpicAccountId() const override;
 
 private:

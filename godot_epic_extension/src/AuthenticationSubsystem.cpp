@@ -159,11 +159,11 @@ bool AuthenticationSubsystem::IsLoggedIn() const {
     return is_logged_in;
 }
 
-EOS_ProductUserId AuthenticationSubsystem::GetProductUserIdHandle() const {
+EOS_ProductUserId AuthenticationSubsystem::GetProductUserId() const {
     return local_user_id;
 }
 
-void AuthenticationSubsystem::SetProductUserIdHandle(EOS_ProductUserId product_user_id) {
+void AuthenticationSubsystem::SetProductUserId(EOS_ProductUserId product_user_id) {
     local_user_id = product_user_id;
 }
 
@@ -521,14 +521,14 @@ void EOS_CALL AuthenticationSubsystem::connect_login_callback(const EOS_Connect_
 	
 	if (data->ResultCode == EOS_EResult::EOS_Success) {
 		// Set Product User ID directly from handle
-		authIterface->SetProductUserIdHandle(data->LocalUserId);
+		authIterface->SetProductUserId(data->LocalUserId);
 
 		// Now both Auth and Connect logins are complete, emit the signal
 		Dictionary user_info;
 		user_info["display_name"] = authIterface->GetDisplayName();
 		EOS_EpicAccountId epic_id = authIterface->GetEpicAccountId();
 		user_info["epic_account_id"] = epic_id ? String::utf8(FAccountHelpers::EpicAccountIDToString(epic_id)) : "";
-		EOS_ProductUserId product_user_id = authIterface->GetProductUserIdHandle();
+		EOS_ProductUserId product_user_id = authIterface->GetProductUserId();
 		String product_user_id_str = "";
 		if (EOS_ProductUserId_IsValid(product_user_id)) {
 			const char* id_string = FAccountHelpers::ProductUserIDToString(product_user_id);
