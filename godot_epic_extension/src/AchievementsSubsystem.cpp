@@ -19,6 +19,12 @@ struct UnlockAchievementsContext {
     std::vector<const char*> achievement_id_ptrs;
 };
 
+struct IngestStatContext {
+    AchievementsSubsystem* subsystem = nullptr;
+    std::string stat_name_storage;  // Keeps the string alive during async operation
+    EOS_Stats_IngestData ingest_data{};
+};
+
 AchievementsSubsystem::AchievementsSubsystem()
     : achievements_handle(nullptr)
     , stats_handle(nullptr)
@@ -317,21 +323,24 @@ bool AchievementsSubsystem::IngestStat(const String& stat_name, int amount) {
         return false;
     }
 
+    // Create context to keep string data alive during async operation
+    auto context = std::make_unique<IngestStatContext>();
+    context->subsystem = this;
+    context->stat_name_storage = stat_name.utf8().get_data();
+    
+    context->ingest_data = {};
+    context->ingest_data.ApiVersion = EOS_STATS_INGESTDATA_API_LATEST;
+    context->ingest_data.StatName = context->stat_name_storage.c_str();
+    context->ingest_data.IngestAmount = amount;
+
     EOS_Stats_IngestStatOptions options = {};
     options.ApiVersion = EOS_STATS_INGESTSTAT_API_LATEST;
     options.LocalUserId = product_user_id;
     options.TargetUserId = product_user_id;
     options.StatsCount = 1;
+    options.Stats = &context->ingest_data;
 
-    EOS_Stats_IngestData ingest_data = {};
-    ingest_data.ApiVersion = EOS_STATS_INGESTDATA_API_LATEST;
-    std::string stat_name_str = stat_name.utf8().get_data();
-    ingest_data.StatName = stat_name_str.c_str();
-    ingest_data.IngestAmount = amount;
-
-    options.Stats = &ingest_data;
-
-    EOS_Stats_IngestStat(stats_handle, &options, this, on_ingest_stat_complete);
+    EOS_Stats_IngestStat(stats_handle, &options, context.release(), on_ingest_stat_complete);
     return true;
 }
 
@@ -579,8 +588,12 @@ void EOS_CALL AchievementsSubsystem::on_achievements_unlocked(const EOS_Achievem
 }
 
 void EOS_CALL AchievementsSubsystem::on_ingest_stat_complete(const EOS_Stats_IngestStatCompleteCallbackInfo* data) {
-    AchievementsSubsystem* self = static_cast<AchievementsSubsystem*>(data->ClientData);
-    if (!data || !self) return;
+    if (!data || !data->ClientData) {
+        UtilityFunctions::printerr("AchievementsSubsystem: Invalid callback data");
+        return;
+    }
+
+    std::unique_ptr<IngestStatContext> context(static_cast<IngestStatContext*>(data->ClientData));
 
     if (data->ResultCode == EOS_EResult::EOS_Success) {
         // Stat ingested successfully - no need to log
