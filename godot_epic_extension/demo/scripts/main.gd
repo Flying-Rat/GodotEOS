@@ -84,7 +84,6 @@ var godot_epic: GodotEpic = null
 @onready var ingest_leaderboard_stat_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/LeaderboardsTab/VBoxContainer/IngestLeaderboardStatButton
 
 # System Tab UI References
-@onready var system_tab: Control = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/SystemTab
 @onready var clear_output_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/ClearOutputButton
 
 # Auto-test variables
