@@ -170,7 +170,7 @@ func _ready():
 func _process(_delta):
 	# Tick the EOS platform to handle callbacks and updates
 	if godot_epic and godot_epic.is_platform_initialized():
-		godot_epic.tick()
+		godot_epic.tick(_delta)
 
 	# Handle auto-test timing
 	if auto_test_enabled and auto_test_step >= 0 and auto_test_current_delay > 0:

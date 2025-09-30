@@ -31,8 +31,6 @@ private:
 	bool is_logged_in;
 	String current_username;
 
-	double time_passed;
-
 	// EOS logging callback
 	static void EOS_CALL logging_callback(const EOS_LogMessage* message);
 
@@ -49,7 +47,7 @@ public:
 	// Platform management
 	bool initialize_platform(const Dictionary& options);
 	void shutdown_platform();
-	void tick();
+	void tick(double delta);
 
 	// Authentication methods
 	void login_with_epic_account(const String& email, const String& password);

@@ -22,7 +22,7 @@ void GodotEpic::_bind_methods() {
 	ClassDB::bind_static_method("GodotEpic", D_METHOD("get_singleton"), &GodotEpic::get_singleton);
 	ClassDB::bind_method(D_METHOD("initialize_platform", "options"), &GodotEpic::initialize_platform);
 	ClassDB::bind_method(D_METHOD("shutdown_platform"), &GodotEpic::shutdown_platform);
-	ClassDB::bind_method(D_METHOD("tick"), &GodotEpic::tick);
+	ClassDB::bind_method(D_METHOD("tick", "delta"), &GodotEpic::tick);
 	ClassDB::bind_method(D_METHOD("is_platform_initialized"), &GodotEpic::is_platform_initialized);
 
 	// Authentication methods
@@ -106,7 +106,6 @@ void GodotEpic::_bind_methods() {
 
 GodotEpic::GodotEpic() {
 	// Initialize any variables here.
-	time_passed = 0.0;
 	instance = this;
 
 	// Initialize authentication state
@@ -199,10 +198,10 @@ void GodotEpic::shutdown_platform() {
 	manager->ShutdownAll();
 }
 
-void GodotEpic::tick() {
-	// Tick all subsystems
+void GodotEpic::tick(double delta) {
 	SubsystemManager* manager = SubsystemManager::GetInstance();
-	manager->TickAll(time_passed);
+	const double clamped_delta = delta < 0.0 ? 0.0 : delta;
+	manager->TickAll(static_cast<float>(clamped_delta));
 }
 
 bool GodotEpic::is_platform_initialized() const {

@@ -77,10 +77,10 @@ func set_debug_mode(enabled: bool):
 	_debug_mode = enabled
 	print("EpicOS: Debug mode ", "enabled" if enabled else "disabled")
 
-func tick():
+func tick(delta: float = 0.0):
 	"""Tick the EOS platform - should be called every frame"""
 	if _godot_epic and _initialized:
-		_godot_epic.tick()
+		_godot_epic.tick(delta)
 
 func is_platform_initialized() -> bool:
 	"""Check if the EOS platform is initialized"""
@@ -262,7 +262,8 @@ func test_subsystem_manager():
 # PROCESS HANDLING - Integrates with GDExtension ticking
 # =============================================================================
 
+
 func _process(_delta: float) -> void:
 	"""Handle EOS platform ticking every frame"""
 	# Call the GDExtension tick method to process EOS callbacks
-	tick()
+	tick(_delta)
