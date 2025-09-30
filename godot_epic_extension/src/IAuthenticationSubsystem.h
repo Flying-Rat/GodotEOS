@@ -6,6 +6,7 @@
 #include "../eos_sdk/Include/eos_auth.h"
 #include <godot_cpp/variant/string.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
+#include <godot_cpp/variant/callable.hpp>
 
 namespace godot {
 
@@ -77,6 +78,18 @@ public:
      * @return The login callback callable.
      */
     virtual Callable GetLoginCallback() const = 0;
+
+    /**
+     * @brief Set a callback for logout completion events.
+     * @param callback Callable to invoke when logout completes.
+     */
+    virtual void SetLogoutCallback(const Callable& callback) = 0;
+
+    /**
+     * @brief Get the current logout callback.
+     * @return The logout callback callable.
+     */
+    virtual Callable GetLogoutCallback() const = 0;
 };
 
 } // namespace godot

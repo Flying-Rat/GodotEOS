@@ -1,6 +1,7 @@
 #include "godotepic.h"
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/error_macros.hpp>
+#include <godot_cpp/variant/utility_functions.hpp>
 #include "SubsystemManager.h"
 #include "IAuthenticationSubsystem.h"
 #include "IAchievementsSubsystem.h"
@@ -70,6 +71,7 @@ void GodotEpic::_bind_methods() {
 
 	// Authentication callback
 	ClassDB::bind_method(D_METHOD("on_authentication_completed", "success", "user_info"), &GodotEpic::on_authentication_completed);
+	ClassDB::bind_method(D_METHOD("on_logout_completed", "success"), &GodotEpic::on_logout_completed);
 
 	// Achievements callback
 	ClassDB::bind_method(D_METHOD("on_achievement_definitions_completed", "success", "definitions"), &GodotEpic::on_achievement_definitions_completed);
@@ -120,6 +122,16 @@ GodotEpic::~GodotEpic() {
 	if (instance == this) {
 		instance = nullptr;
 	}
+}
+
+void GodotEpic::on_logout_completed(bool success) {
+	if (success) {
+		UtilityFunctions::print("GodotEpic: Logout completed successfully");
+	} else {
+		ERR_PRINT("GodotEpic: Logout failed");
+	}
+
+	emit_signal("logout_completed", success);
 }
 
 GodotEpic* GodotEpic::get_singleton() {
@@ -751,9 +763,11 @@ bool GodotEpic::_validate_init_options(const EpicInitOptions& options) {
 void GodotEpic::setup_authentication_callback() {
 	auto auth = Get<IAuthenticationSubsystem>();
 	if (auth) {
-		// Create a callable that binds to our instance method
-		Callable callback = Callable(this, "on_authentication_completed");
-		auth->SetLoginCallback(callback);
+		Callable login_callback = Callable(this, "on_authentication_completed");
+		auth->SetLoginCallback(login_callback);
+
+		Callable logout_callback = Callable(this, "on_logout_completed");
+		auth->SetLogoutCallback(logout_callback);
 	} else {
 		ERR_PRINT("Failed to set up authentication callback - AuthenticationSubsystem not available");
 	}

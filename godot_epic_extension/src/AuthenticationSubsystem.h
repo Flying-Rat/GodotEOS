@@ -31,6 +31,8 @@ public:
     virtual int GetLoginStatus() const override;
     virtual void SetLoginCallback(const Callable& callback) override;
     virtual Callable GetLoginCallback() const override;
+    virtual void SetLogoutCallback(const Callable& callback) override;
+    virtual Callable GetLogoutCallback() const override;
     
     // Additional getter for raw EOS handle
     virtual EOS_ProductUserId GetProductUserId() const override;
@@ -51,6 +53,15 @@ private:
 
     // Callbacks
     Callable login_callback;
+    Callable logout_callback;
+
+    bool logout_in_progress;
+    bool auth_logout_attempted;
+    bool connect_logout_attempted;
+    bool auth_logout_pending;
+    bool connect_logout_pending;
+    EOS_EResult auth_logout_result;
+    EOS_EResult connect_logout_result;
 
     // Notification IDs
     EOS_NotificationId auth_login_status_changed_id;
@@ -76,6 +87,9 @@ private:
     static void EOS_CALL on_connect_logout_complete(const EOS_Connect_LogoutCallbackInfo* data);
     static void EOS_CALL on_auth_login_status_changed(const EOS_Auth_LoginStatusChangedCallbackInfo* data);
     static void EOS_CALL on_connect_login_status_changed(const EOS_Connect_LoginStatusChangedCallbackInfo* data);
+
+    void finalize_logout_if_ready();
+    void reset_logout_state();
 };
 
 } // namespace godot

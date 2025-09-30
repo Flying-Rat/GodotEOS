@@ -29,6 +29,13 @@ AuthenticationSubsystem::AuthenticationSubsystem()
     , epic_account_id(nullptr)
     , is_logged_in(false)
     , login_status(EOS_ELoginStatus::EOS_LS_NotLoggedIn)
+	, logout_in_progress(false)
+	, auth_logout_attempted(false)
+	, connect_logout_attempted(false)
+	, auth_logout_pending(false)
+	, connect_logout_pending(false)
+	, auth_logout_result(EOS_EResult::EOS_Success)
+	, connect_logout_result(EOS_EResult::EOS_Success)
     , auth_login_status_changed_id(EOS_INVALID_NOTIFICATIONID)
     , connect_login_status_changed_id(EOS_INVALID_NOTIFICATIONID)
 {
@@ -83,6 +90,8 @@ void AuthenticationSubsystem::Shutdown() {
     display_name = "";
     login_status = EOS_ELoginStatus::EOS_LS_NotLoggedIn;
 
+	reset_logout_state();
+
     UtilityFunctions::print("AuthenticationSubsystem: Shutdown complete");
 }
 
@@ -121,38 +130,62 @@ bool AuthenticationSubsystem::Login(const String& login_type, const Dictionary& 
 }
 
 bool AuthenticationSubsystem::Logout() {
-    if (!is_logged_in) {
-        return true;
-    }
+	if (!auth_handle && !connect_handle) {
+		UtilityFunctions::printerr("AuthenticationSubsystem: Logout requested but subsystem not initialized");
+		return false;
+	}
 
-    UtilityFunctions::print("AuthenticationSubsystem: Logging out...");
+	if (logout_in_progress) {
+		UtilityFunctions::printerr("AuthenticationSubsystem: Logout already in progress");
+		return false;
+	}
 
-    // Logout from Connect first
-    if (connect_handle && EOS_ProductUserId_IsValid(local_user_id)) {
-        EOS_Connect_LogoutOptions logout_options = {};
-        logout_options.ApiVersion = EOS_CONNECT_LOGOUT_API_LATEST;
-        logout_options.LocalUserId = local_user_id;
+	const bool has_active_session = is_logged_in || EOS_ProductUserId_IsValid(local_user_id) || EOS_EpicAccountId_IsValid(epic_account_id);
+	if (!has_active_session) {
+		UtilityFunctions::print("AuthenticationSubsystem: Logout requested with no active session");
+		logout_in_progress = true;
+		finalize_logout_if_ready();
+		return true;
+	}
 
-        EOS_Connect_Logout(connect_handle, &logout_options, this, on_connect_logout_complete);
-    }
+	UtilityFunctions::print("AuthenticationSubsystem: Logging out...");
 
-    // Logout from Auth
-    if (auth_handle && EOS_EpicAccountId_IsValid(epic_account_id)) {
-        EOS_Auth_LogoutOptions logout_options = {};
-        logout_options.ApiVersion = EOS_AUTH_LOGOUT_API_LATEST;
-        logout_options.LocalUserId = epic_account_id;
+	logout_in_progress = true;
+	auth_logout_attempted = false;
+	connect_logout_attempted = false;
+	auth_logout_pending = false;
+	connect_logout_pending = false;
+	auth_logout_result = EOS_EResult::EOS_Success;
+	connect_logout_result = EOS_EResult::EOS_Success;
 
-        EOS_Auth_Logout(auth_handle, &logout_options, this, on_auth_logout_complete);
-    }
+	if (connect_handle && EOS_ProductUserId_IsValid(local_user_id)) {
+		EOS_Connect_LogoutOptions logout_options = {};
+		logout_options.ApiVersion = EOS_CONNECT_LOGOUT_API_LATEST;
+		logout_options.LocalUserId = local_user_id;
 
-    is_logged_in = false;
-    local_user_id = nullptr;
-    epic_account_id = nullptr;
-    display_name = "";
-    login_status = EOS_ELoginStatus::EOS_LS_NotLoggedIn;
+		EOS_Connect_Logout(connect_handle, &logout_options, this, on_connect_logout_complete);
+		connect_logout_attempted = true;
+		connect_logout_pending = true;
+	}
 
-    UtilityFunctions::print("AuthenticationSubsystem: Logout initiated");
-    return true;
+	if (auth_handle && EOS_EpicAccountId_IsValid(epic_account_id)) {
+		EOS_Auth_LogoutOptions logout_options = {};
+		logout_options.ApiVersion = EOS_AUTH_LOGOUT_API_LATEST;
+		logout_options.LocalUserId = epic_account_id;
+
+		EOS_Auth_Logout(auth_handle, &logout_options, this, on_auth_logout_complete);
+		auth_logout_attempted = true;
+		auth_logout_pending = true;
+	}
+
+	if (!auth_logout_attempted && !connect_logout_attempted) {
+		UtilityFunctions::print("AuthenticationSubsystem: No active interfaces required logout. Completing immediately.");
+	}
+
+	finalize_logout_if_ready();
+
+	UtilityFunctions::print("AuthenticationSubsystem: Logout initiated");
+	return true;
 }
 
 bool AuthenticationSubsystem::IsLoggedIn() const {
@@ -181,6 +214,14 @@ void AuthenticationSubsystem::SetLoginCallback(const Callable& callback) {
 
 Callable AuthenticationSubsystem::GetLoginCallback() const {
     return login_callback;
+}
+
+void AuthenticationSubsystem::SetLogoutCallback(const Callable& callback) {
+	logout_callback = callback;
+}
+
+Callable AuthenticationSubsystem::GetLogoutCallback() const {
+	return logout_callback;
 }
 
 EOS_EpicAccountId AuthenticationSubsystem::GetEpicAccountId() const {
@@ -224,6 +265,62 @@ void AuthenticationSubsystem::cleanup_notifications() {
     }
 
     UtilityFunctions::print("AuthenticationSubsystem: Status change notifications unregistered");
+}
+
+void AuthenticationSubsystem::reset_logout_state() {
+	logout_in_progress = false;
+	auth_logout_attempted = false;
+	connect_logout_attempted = false;
+	auth_logout_pending = false;
+	connect_logout_pending = false;
+	auth_logout_result = EOS_EResult::EOS_Success;
+	connect_logout_result = EOS_EResult::EOS_Success;
+}
+
+void AuthenticationSubsystem::finalize_logout_if_ready() {
+	if (!logout_in_progress) {
+		return;
+	}
+
+	if (auth_logout_pending || connect_logout_pending) {
+		return;
+	}
+
+	bool success = true;
+
+	if (auth_logout_attempted && auth_logout_result != EOS_EResult::EOS_Success) {
+		success = false;
+	}
+
+	if (connect_logout_attempted && connect_logout_result != EOS_EResult::EOS_Success) {
+		success = false;
+	}
+
+	if (success) {
+		UtilityFunctions::print("AuthenticationSubsystem: Logout completed successfully");
+		is_logged_in = false;
+		login_status = EOS_ELoginStatus::EOS_LS_NotLoggedIn;
+		local_user_id = nullptr;
+		epic_account_id = nullptr;
+		display_name = "";
+	} else {
+		String error_details;
+		if (auth_logout_attempted) {
+			error_details += " auth=" + String::num_int64(static_cast<int64_t>(auth_logout_result));
+		}
+		if (connect_logout_attempted) {
+			error_details += " connect=" + String::num_int64(static_cast<int64_t>(connect_logout_result));
+		}
+		UtilityFunctions::printerr("AuthenticationSubsystem: Logout failed" + error_details);
+	}
+
+	reset_logout_state();
+
+	if (logout_callback.is_valid()) {
+		logout_callback.call(success);
+	} else {
+		UtilityFunctions::printerr("AuthenticationSubsystem: Logout callback is not valid - cannot emit completion signal");
+	}
 }
 
 bool AuthenticationSubsystem::perform_epic_account_login(const Dictionary& credentials) {
@@ -597,13 +694,18 @@ void EOS_CALL AuthenticationSubsystem::on_auth_logout_complete(const EOS_Auth_Lo
 		return;
 	}
 
+	instance->auth_logout_attempted = true;
+	instance->auth_logout_result = data->ResultCode;
+	instance->auth_logout_pending = false;
+
 	if (data->ResultCode == EOS_EResult::EOS_Success) {
-		// Auth logout successful
-		UtilityFunctions::print("AuthenticationSubsystem: Auth logout successful");
+		UtilityFunctions::print("AuthenticationSubsystem: Auth logout callback completed");
 	} else {
 		String error_msg = "Auth logout failed: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
 		UtilityFunctions::printerr(error_msg);
 	}
+
+	instance->finalize_logout_if_ready();
 }
 
 void EOS_CALL AuthenticationSubsystem::on_connect_logout_complete(const EOS_Connect_LogoutCallbackInfo* data) {
@@ -612,13 +714,18 @@ void EOS_CALL AuthenticationSubsystem::on_connect_logout_complete(const EOS_Conn
 		return;
 	}
 
+	instance->connect_logout_attempted = true;
+	instance->connect_logout_result = data->ResultCode;
+	instance->connect_logout_pending = false;
+
 	if (data->ResultCode == EOS_EResult::EOS_Success) {
-		// Connect logout successful
-		UtilityFunctions::print("AuthenticationSubsystem: Connect logout successful");
+		UtilityFunctions::print("AuthenticationSubsystem: Connect logout callback completed");
 	} else {
 		String error_msg = "Connect logout failed: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
 		UtilityFunctions::printerr(error_msg);
 	}
+
+	instance->finalize_logout_if_ready();
 }
 
 void EOS_CALL AuthenticationSubsystem::on_auth_login_status_changed(const EOS_Auth_LoginStatusChangedCallbackInfo* data) {

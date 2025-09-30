@@ -107,6 +107,7 @@ private:
 	void setup_friends_callbacks();
 
 	void on_authentication_completed(bool success, const Dictionary& user_info);
+	void on_logout_completed(bool success);
 	void on_achievement_definitions_completed(bool success, const Array& definitions);
 	void on_player_achievements_completed(bool success, const Array& achievements);
 	void on_achievements_unlocked_completed(bool success, const Array& unlocked_achievement_ids);
