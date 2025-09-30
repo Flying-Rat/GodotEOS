@@ -1,4 +1,5 @@
 #include "SubsystemManager.h"
+#include "IPlatformSubsystem.h"
 
 namespace godot {
 
@@ -107,6 +108,23 @@ void SubsystemManager::ShutdownAll() {
 
     initialized = false;
     UtilityFunctions::print("SubsystemManager: All subsystems shut down");
+}
+
+bool SubsystemManager::IsHealthy() const {
+    if (!initialized) {
+        return false;
+    }
+
+    // Check if platform subsystem is healthy
+    auto platform_subsystem = GetSubsystem<IPlatformSubsystem>();
+    return platform_subsystem && platform_subsystem->IsOnline();
+}
+
+void SubsystemManager::ResetForReinitialization() {
+    if (initialized && !IsHealthy()) {
+        UtilityFunctions::print("SubsystemManager: Resetting for reinitialization - shutting down unhealthy subsystems");
+        ShutdownAll();
+    }
 }
 
 } // namespace godot

@@ -112,9 +112,6 @@ GodotEpic::GodotEpic() {
 	instance = this;
 
 	// Initialize authentication state
-	product_user_id = nullptr;
-	is_logged_in = false;
-	current_username = "";
 }
 
 GodotEpic::~GodotEpic() {
@@ -163,7 +160,7 @@ void GodotEpic::cleanup_singleton() {
 }
 
 bool GodotEpic::initialize_platform(const Dictionary& options) {
-	UtilityFunctions::printerr("Starting EOS Platform initialization");
+	UtilityFunctions::print("Starting EOS Platform initialization");
 
 	// Convert dictionary to init options
 	EpicInitOptions init_options = _dict_to_init_options(options);
@@ -173,54 +170,16 @@ bool GodotEpic::initialize_platform(const Dictionary& options) {
 		UtilityFunctions::printerr("EOS Platform initialization failed: Invalid options");
 		return false;
 	}
-
 	// Setup logging
 	EOS_EResult LogResult = EOS_Logging_SetCallback(logging_callback);
 	if (LogResult == EOS_EResult::EOS_Success) {
 		EOS_Logging_SetLogLevel(EOS_ELogCategory::EOS_LC_ALL_CATEGORIES, EOS_ELogLevel::EOS_LOG_Verbose);
 	}
 
-	// Register subsystems with SubsystemManager
-	SubsystemManager* manager = SubsystemManager::GetInstance();
-
-	// Register PlatformSubsystem first (needed by other subsystems)
-	manager->RegisterSubsystem<IPlatformSubsystem, PlatformSubsystem>("PlatformSubsystem");
-
-	// Register other subsystems
-	manager->RegisterSubsystem<IAuthenticationSubsystem, AuthenticationSubsystem>("AuthenticationSubsystem");
-	manager->RegisterSubsystem<IAchievementsSubsystem, AchievementsSubsystem>("AchievementsSubsystem");
-	manager->RegisterSubsystem<ILeaderboardsSubsystem, LeaderboardsSubsystem>("LeaderboardsSubsystem");
-	manager->RegisterSubsystem<IFriendsSubsystem, FriendsSubsystem>("FriendsSubsystem");
-
-	// Initialize PlatformSubsystem with EpicInitOptions
-	auto platform_subsystem = manager->GetSubsystem<IPlatformSubsystem>();
-	if (!platform_subsystem) {
-		UtilityFunctions::printerr("Failed to get PlatformSubsystem");
+	// Initialize subsystems
+	if (!initialize_subsystems(init_options)) {
 		return false;
 	}
-
-	if (!platform_subsystem->InitializePlatform(init_options)) {
-		UtilityFunctions::printerr("PlatformSubsystem initialization failed");
-		return false;
-	}
-
-	// Initialize all subsystems
-	if (!manager->InitializeAll()) {
-		UtilityFunctions::printerr("Failed to initialize subsystems");
-		return false;
-	}
-
-	// Set up authentication callback
-	setup_authentication_callback();
-
-	// Set up achievements callbacks
-	setup_achievements_callbacks();
-
-	// Set up leaderboards callbacks
-	setup_leaderboards_callbacks();
-
-	// Set up friends callbacks
-	setup_friends_callbacks();
 
 	return true;
 }
@@ -807,6 +766,57 @@ bool GodotEpic::_validate_init_options(const EpicInitOptions& options) {
 	return valid;
 }
 
+bool GodotEpic::initialize_subsystems(const EpicInitOptions& init_options) {
+	// Check for reinitialization
+	SubsystemManager* manager = SubsystemManager::GetInstance();
+	if (manager->IsHealthy()) {
+		UtilityFunctions::print("EOS Platform already initialized and healthy - skipping reinitialization");
+		return true;
+	}
+
+	// Register subsystems with SubsystemManager
+	// Register PlatformSubsystem first (needed by other subsystems)
+	manager->RegisterSubsystem<IPlatformSubsystem, PlatformSubsystem>("PlatformSubsystem");
+
+	// Register other subsystems
+	manager->RegisterSubsystem<IAuthenticationSubsystem, AuthenticationSubsystem>("AuthenticationSubsystem");
+	manager->RegisterSubsystem<IAchievementsSubsystem, AchievementsSubsystem>("AchievementsSubsystem");
+	manager->RegisterSubsystem<ILeaderboardsSubsystem, LeaderboardsSubsystem>("LeaderboardsSubsystem");
+	manager->RegisterSubsystem<IFriendsSubsystem, FriendsSubsystem>("FriendsSubsystem");
+
+	// Initialize PlatformSubsystem with EpicInitOptions
+	auto platform_subsystem = manager->GetSubsystem<IPlatformSubsystem>();
+	if (!platform_subsystem) {
+		UtilityFunctions::printerr("Failed to get PlatformSubsystem");
+		return false;
+	}
+
+	if (!platform_subsystem->InitializePlatform(init_options)) {
+		UtilityFunctions::printerr("PlatformSubsystem initialization failed");
+		return false;
+	}
+
+	// Initialize all subsystems
+	if (!manager->InitializeAll()) {
+		UtilityFunctions::printerr("Failed to initialize subsystems");
+		return false;
+	}
+
+	// Set up authentication callback
+	setup_authentication_callback();
+
+	// Set up achievements callbacks
+	setup_achievements_callbacks();
+
+	// Set up leaderboards callbacks
+	setup_leaderboards_callbacks();
+
+	// Set up friends callbacks
+	setup_friends_callbacks();
+
+	return true;
+}
+
 void GodotEpic::setup_authentication_callback() {
 	auto auth = Get<IAuthenticationSubsystem>();
 	if (auth) {
@@ -882,14 +892,8 @@ void GodotEpic::on_authentication_completed(bool success, const Dictionary& user
 		UtilityFunctions::printerr("GodotEpic: Login successful for user: " + display_name);
 		UtilityFunctions::printerr("GodotEpic: Epic Account ID: " + epic_account_id);
 		UtilityFunctions::printerr("GodotEpic: Product User ID: " + product_user_id);
-
-		// Update legacy state for backward compatibility
-		is_logged_in = true;
-		current_username = display_name;
 	} else {
 		UtilityFunctions::printerr("GodotEpic: Login failed");
-		is_logged_in = false;
-		current_username = "";
 	}
 
 	// Emit the login_completed signal

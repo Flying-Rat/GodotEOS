@@ -102,6 +102,28 @@ public:
     }
 
     /**
+     * @brief Get a subsystem instance by its interface type (const version).
+     * @tparam T The subsystem interface type to retrieve.
+     * @return Pointer to the subsystem instance, or nullptr if not registered.
+     * 
+     * Returns a typed pointer to the requested subsystem. Returns nullptr
+     * if the subsystem is not registered or not of the requested type.
+     * 
+     * Example: GetSubsystem<IPlatform>() returns IPlatform*
+     */
+    template<typename T>
+    const T* GetSubsystem() const {
+        static_assert(std::is_base_of_v<ISubsystem, T>, "T must inherit from ISubsystem");
+
+        auto type_index = std::type_index(typeid(T));
+        auto it = subsystems.find(type_index);
+        if (it != subsystems.end()) {
+            return static_cast<const T*>(it->second.get());
+        }
+        return nullptr;
+    }
+
+    /**
      * @brief Initialize all registered subsystems.
      * @return true if all subsystems initialized successfully, false otherwise.
      * 
@@ -139,6 +161,20 @@ public:
      * @return Number of subsystems currently registered.
      */
     size_t GetSubsystemCount() const { return subsystems.size(); }
+
+    /**
+     * @brief Check if the subsystem manager is healthy (initialized and platform is online).
+     * @return true if initialized and platform subsystem is healthy, false otherwise.
+     */
+    bool IsHealthy() const;
+
+    /**
+     * @brief Reset the subsystem manager for reinitialization if unhealthy.
+     * 
+     * If the manager is initialized but unhealthy, shuts down all subsystems
+     * to prepare for reinitialization. Does nothing if not initialized or healthy.
+     */
+    void ResetForReinitialization();
 };
 
 // Global convenience function for subsystem access

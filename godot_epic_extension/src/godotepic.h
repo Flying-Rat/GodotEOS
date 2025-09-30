@@ -26,11 +26,6 @@ class GodotEpic : public Object {
 private:
 	static GodotEpic* instance;
 
-	// Authentication state
-	EOS_ProductUserId product_user_id;
-	bool is_logged_in;
-	String current_username;
-
 	// EOS logging callback
 	static void EOS_CALL logging_callback(const EOS_LogMessage* message);
 
@@ -102,7 +97,8 @@ private:
 	// Helper methods
 	EpicInitOptions _dict_to_init_options(const Dictionary& options_dict);
 	bool _validate_init_options(const EpicInitOptions& options);
-
+	bool initialize_subsystems(const EpicInitOptions& init_options);
+	
 	void setup_authentication_callback();
 	void setup_achievements_callbacks();
 	void setup_leaderboards_callbacks();
