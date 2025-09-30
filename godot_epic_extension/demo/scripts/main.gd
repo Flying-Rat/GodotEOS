@@ -699,9 +699,14 @@ func _on_logout_completed(success: bool):
 		add_output_line("[color=red]❌ Logout failed![/color]")
 
 
-func _on_friends_updated(friends_list: Array):
-	add_output_line("[color=blue]🔄 Friends list updated![/color]")
-	_display_friends_list(friends_list)
+func _on_friends_updated(success: bool, friends_list: Array):
+	if success:
+		add_output_line("[color=blue]🔄 Friends list updated![/color]")
+		_display_friends_list(friends_list)
+	else:
+		add_output_line("[color=red]❌ Failed to update friends list![/color]")
+		if friends_list.size() == 0:
+			add_output_line("📝 No friends data available")
 
 
 func _display_friends_list(friends: Array):

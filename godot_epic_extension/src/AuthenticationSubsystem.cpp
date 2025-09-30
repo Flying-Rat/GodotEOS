@@ -596,7 +596,7 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 			Dictionary user_info;
 			user_info["display_name"] = instance->display_name;
 			EOS_EpicAccountId epic_id = instance->GetEpicAccountId();
-			user_info["epic_account_id"] = epic_id ? String::utf8(FAccountHelpers::EpicAccountIDToString(epic_id)) : "";
+			user_info["epic_account_id"] = epic_id ? FAccountHelpers::EpicAccountIDToString(epic_id) : "";
 			user_info["product_user_id"] = "";  // Empty since Connect failed
 
 			if (instance->login_callback.is_valid()) {
@@ -690,12 +690,11 @@ void EOS_CALL AuthenticationSubsystem::connect_login_callback(const EOS_Connect_
 		Dictionary user_info;
 		user_info["display_name"] = authIterface->GetDisplayName();
 		EOS_EpicAccountId epic_id = authIterface->GetEpicAccountId();
-		user_info["epic_account_id"] = epic_id ? String::utf8(FAccountHelpers::EpicAccountIDToString(epic_id)) : "";
+		user_info["epic_account_id"] = epic_id ? FAccountHelpers::EpicAccountIDToString(epic_id) : "";
 		EOS_ProductUserId product_user_id = authIterface->GetProductUserId();
 		String product_user_id_str = "";
 		if (EOS_ProductUserId_IsValid(product_user_id)) {
-			const char* id_string = FAccountHelpers::ProductUserIDToString(product_user_id);
-			product_user_id_str = id_string ? String::utf8(id_string) : "";
+			product_user_id_str = FAccountHelpers::ProductUserIDToString(product_user_id);
 		}
 		user_info["product_user_id"] = product_user_id_str;
 
@@ -744,7 +743,7 @@ void EOS_CALL AuthenticationSubsystem::connect_login_callback(const EOS_Connect_
 		Dictionary user_info;
 		user_info["display_name"] = authIterface->GetDisplayName();
 		EOS_EpicAccountId epic_id_failure = authIterface->GetEpicAccountId();
-		user_info["epic_account_id"] = epic_id_failure ? String::utf8(FAccountHelpers::EpicAccountIDToString(epic_id_failure)) : "";
+		user_info["epic_account_id"] = epic_id_failure ? FAccountHelpers::EpicAccountIDToString(epic_id_failure) : "";
 		user_info["product_user_id"] = "";  // Empty since Connect failed
 
 		if (login_callback.is_valid()) {

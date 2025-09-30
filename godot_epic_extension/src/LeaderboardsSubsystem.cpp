@@ -319,7 +319,7 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_ranks_complete(const E
                 record_dict["score"] = (int)record->Score;
                 
                 // Convert user ID to string
-                record_dict["user_id"] = String(FAccountHelpers::ProductUserIDToString(record->UserId));
+                record_dict["user_id"] = FAccountHelpers::ProductUserIDToString(record->UserId);
                 
                 // Get display name if available
                 record_dict["display_name"] = String(record->UserDisplayName ? record->UserDisplayName : "");
@@ -376,7 +376,7 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_user_scores_complete(c
 
             if (result == EOS_EResult::EOS_Success && user_score) {
                 // Convert user ID to string
-                String user_id = String(FAccountHelpers::ProductUserIDToString(user_score->UserId));
+                String user_id = FAccountHelpers::ProductUserIDToString(user_score->UserId);
 
                 Dictionary score_dict;
                 score_dict["score"] = (int)user_score->Score;

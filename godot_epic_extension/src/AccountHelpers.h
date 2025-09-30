@@ -3,6 +3,7 @@
 #pragma once
 
 #include <eos_sdk.h>
+#include <godot_cpp/variant/string.hpp>
 #include "StringUtils.h"
 
 /**
@@ -34,8 +35,8 @@ public:
 	*
 	* @return String representing account id. Returns string representation of error in case of bad account id.
 	*/
-	static char const* EpicAccountIDToString(EOS_EpicAccountId InAccountId);
-	static char const* ProductUserIDToString(EOS_ProductUserId InAccountId);
+	static godot::String EpicAccountIDToString(EOS_EpicAccountId InAccountId);
+	static godot::String ProductUserIDToString(EOS_ProductUserId InAccountId);
 
 	/**
 	* Utility to build Epic Account ID from string
@@ -63,7 +64,8 @@ struct TValidateAccount<EOS_ProductUserId>
 
 	static std::wstring ToString(const EOS_ProductUserId ProductUserId)
 	{
-		return FStringUtils::Widen(FAccountHelpers::ProductUserIDToString(ProductUserId));
+		godot::String str = FAccountHelpers::ProductUserIDToString(ProductUserId);
+		return FStringUtils::Widen(str.utf8().get_data());
 	}
 };
 
@@ -77,7 +79,8 @@ struct TValidateAccount<EOS_EpicAccountId>
 
 	static std::wstring ToString(const EOS_EpicAccountId AccountId)
 	{
-		return FStringUtils::Widen(FAccountHelpers::EpicAccountIDToString(AccountId));
+		godot::String str = FAccountHelpers::EpicAccountIDToString(AccountId);
+		return FStringUtils::Widen(str.utf8().get_data());
 	}
 };
 

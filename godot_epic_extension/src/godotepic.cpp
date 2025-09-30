@@ -94,7 +94,7 @@ void GodotEpic::_bind_methods() {
 	// Signals
 	ADD_SIGNAL(MethodInfo("login_completed", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::DICTIONARY, "user_info")));
 	ADD_SIGNAL(MethodInfo("logout_completed", PropertyInfo(Variant::BOOL, "success")));
-	ADD_SIGNAL(MethodInfo("friends_updated", PropertyInfo(Variant::ARRAY, "friends_list")));
+	ADD_SIGNAL(MethodInfo("friends_updated", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::ARRAY, "friends_list")));
 	ADD_SIGNAL(MethodInfo("friend_info_updated", PropertyInfo(Variant::DICTIONARY, "friend_info")));
 	ADD_SIGNAL(MethodInfo("achievement_definitions_updated", PropertyInfo(Variant::ARRAY, "definitions")));
 	ADD_SIGNAL(MethodInfo("player_achievements_updated", PropertyInfo(Variant::ARRAY, "achievements")));
@@ -319,16 +319,14 @@ String GodotEpic::get_epic_account_id() const {
 	EOS_EpicAccountId epic_id = Get<IAuthenticationSubsystem>()->GetEpicAccountId();
 	if (!epic_id) return "";
 
-	const char* epic_id_str = FAccountHelpers::EpicAccountIDToString(epic_id);
-	return epic_id_str ? String::utf8(epic_id_str) : "";
+	return FAccountHelpers::EpicAccountIDToString(epic_id);
 }
 
 String GodotEpic::get_product_user_id() const {
 	EOS_ProductUserId product_user_id = Get<IAuthenticationSubsystem>()->GetProductUserId();
 	if (!EOS_ProductUserId_IsValid(product_user_id)) return "";
 
-	const char* id_string = FAccountHelpers::ProductUserIDToString(product_user_id);
-	return id_string ? String::utf8(id_string) : "";
+	return FAccountHelpers::ProductUserIDToString(product_user_id);
 }
 
 // Friends methods
@@ -337,14 +335,14 @@ void GodotEpic::query_friends() {
 	if (!friends) {
 		UtilityFunctions::push_warning("FriendsSubsystem not available");
 		Array empty_friends;
-		emit_signal("friends_updated", empty_friends);
+		emit_signal("friends_updated", false, empty_friends);
 		return;
 	}
 
 	if (!friends->QueryFriends()) {
 		UtilityFunctions::printerr("FriendsSubsystem query friends failed");
 		Array empty_friends;
-		emit_signal("friends_updated", empty_friends);
+		emit_signal("friends_updated", false, empty_friends);
 	}
 }
 
@@ -410,7 +408,7 @@ void GodotEpic::query_achievement_definitions() {
 }
 
 void GodotEpic::query_player_achievements() {
-	UtilityFunctions::printerr("Starting player achievements query");
+	UtilityFunctions::print("GodotEpic: Starting player achievements query");
 
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
@@ -434,7 +432,7 @@ void GodotEpic::unlock_achievement(const String& achievement_id) {
 }
 
 void GodotEpic::unlock_achievements(const Array& achievement_ids) {
-	UtilityFunctions::printerr("Starting achievement unlock for " + String::num_int64(achievement_ids.size()) + " achievements");
+	UtilityFunctions::print("GodotEpic: Starting achievement unlock for " + String::num_int64(achievement_ids.size()) + " achievements");
 
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
@@ -473,7 +471,7 @@ Dictionary GodotEpic::get_player_achievement(const String& achievement_id) {
 
 // Achievement Stats methods
 void GodotEpic::ingest_achievement_stat(const String& stat_name, int amount) {
-	UtilityFunctions::printerr("Starting stat ingestion: " + stat_name + " = " + String::num_int64(amount));
+	UtilityFunctions::print("GodotEpic: Starting stat ingestion: " + stat_name + " = " + String::num_int64(amount));
 
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
@@ -491,7 +489,7 @@ void GodotEpic::ingest_achievement_stat(const String& stat_name, int amount) {
 }
 
 void GodotEpic::query_achievement_stats() {
-	UtilityFunctions::printerr("Starting achievement stats query");
+	UtilityFunctions::print("GodotEpic: Starting achievement stats query");
 
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
@@ -555,7 +553,7 @@ void EOS_CALL GodotEpic::logging_callback(const EOS_LogMessage* message) {
 
 // Leaderboards methods
 void GodotEpic::query_leaderboard_definitions() {
-	UtilityFunctions::printerr("Starting leaderboard definitions query");
+	UtilityFunctions::print("GodotEpic: Starting leaderboard definitions query");
 
 	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	if (!leaderboards) {
@@ -573,7 +571,7 @@ void GodotEpic::query_leaderboard_definitions() {
 }
 
 void GodotEpic::query_leaderboard_ranks(const String& leaderboard_id, int limit) {
-	UtilityFunctions::printerr("Starting leaderboard ranks query for: " + leaderboard_id + " (limit: " + String::num_int64(limit) + ")");
+	UtilityFunctions::print("GodotEpic: Starting leaderboard ranks query for: " + leaderboard_id + " (limit: " + String::num_int64(limit) + ")");
 
 	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	if (!leaderboards) {
@@ -591,7 +589,7 @@ void GodotEpic::query_leaderboard_ranks(const String& leaderboard_id, int limit)
 }
 
 void GodotEpic::query_leaderboard_user_scores(const String& leaderboard_id, const Array& user_ids) {
-	UtilityFunctions::printerr("Starting leaderboard user scores query for: " + leaderboard_id + " (" + String::num_int64(user_ids.size()) + " users)");
+	UtilityFunctions::print("GodotEpic: Starting leaderboard user scores query for: " + leaderboard_id + " (" + String::num_int64(user_ids.size()) + " users)");
 
 	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	if (!leaderboards) {
@@ -609,7 +607,7 @@ void GodotEpic::query_leaderboard_user_scores(const String& leaderboard_id, cons
 }
 
 void GodotEpic::ingest_stat(const String& stat_name, int value) {
-	UtilityFunctions::printerr("Starting stat ingestion: " + stat_name + " = " + String::num_int64(value));
+	UtilityFunctions::print("GodotEpic: Starting stat ingestion: " + stat_name + " = " + String::num_int64(value));
 
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
@@ -627,7 +625,7 @@ void GodotEpic::ingest_stat(const String& stat_name, int value) {
 }
 
 void GodotEpic::ingest_stats(const Dictionary& stats) {
-	UtilityFunctions::printerr("Starting bulk stat ingestion for " + String::num_int64(stats.size()) + " stats");
+	UtilityFunctions::print("GodotEpic: Starting bulk stat ingestion for " + String::num_int64(stats.size()) + " stats");
 
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
@@ -995,7 +993,7 @@ void GodotEpic::on_friends_query_completed(bool success, const Array& friends_li
 	}
 
 	// Emit the friends_updated signal
-	emit_signal("friends_updated", friends_list);
+	emit_signal("friends_updated", success, friends_list);
 }
 
 void GodotEpic::on_friend_info_query_completed(bool success, const Dictionary& friend_info) {

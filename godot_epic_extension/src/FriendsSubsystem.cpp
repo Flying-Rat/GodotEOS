@@ -282,8 +282,8 @@ Dictionary FriendsSubsystem::create_friend_info_dict(EOS_EpicAccountId friend_id
     if (!platform || !platform->GetPlatformHandle()) return friend_info;
 
     // Convert friend ID to string
-    const char* friend_id_cstr = FAccountHelpers::EpicAccountIDToString(friend_id);
-    friend_info["id"] = String::utf8(friend_id_cstr);
+    String friend_id_str = FAccountHelpers::EpicAccountIDToString(friend_id);
+    friend_info["id"] = friend_id_str;
 
     // Try to get cached user info for display name
     EOS_HUserInfo user_info_handle = EOS_Platform_GetUserInfoInterface(platform->GetPlatformHandle());
@@ -380,8 +380,7 @@ void EOS_CALL FriendsSubsystem::on_friend_info_query_complete(const EOS_UserInfo
         UtilityFunctions::print("FriendsSubsystem: Friend info query successful");
 
         // Convert user ID back to string and get friend info
-        const char* user_id_str = FAccountHelpers::EpicAccountIDToString(data->TargetUserId);
-        String friend_id = String::utf8(user_id_str);
+        String friend_id = FAccountHelpers::EpicAccountIDToString(data->TargetUserId);
 
         Dictionary friend_info = subsystem->GetFriendInfo(friend_id);
 
