@@ -7,8 +7,17 @@
 #include "../eos_sdk/Include/eos_achievements.h"
 #include "../eos_sdk/Include/eos_stats.h"
 #include <godot_cpp/core/error_macros.hpp>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace godot {
+
+struct UnlockAchievementsContext {
+    AchievementsSubsystem* subsystem = nullptr;
+    std::vector<std::string> achievement_ids;
+    std::vector<const char*> achievement_id_ptrs;
+};
 
 AchievementsSubsystem::AchievementsSubsystem()
     : achievements_handle(nullptr)
@@ -161,23 +170,26 @@ bool AchievementsSubsystem::UnlockAchievements(const Array& achievement_ids) {
         return false;
     }
 
-    // Convert Godot Array to C array
-    std::vector<const char*> achievement_id_ptrs;
-    std::vector<String> achievement_id_strings;
+    std::unique_ptr<UnlockAchievementsContext> context = std::make_unique<UnlockAchievementsContext>();
+    context->subsystem = this;
+    context->achievement_ids.reserve(achievement_ids.size());
+    context->achievement_id_ptrs.reserve(achievement_ids.size());
 
     for (int i = 0; i < achievement_ids.size(); i++) {
         String achievement_id = achievement_ids[i];
-        achievement_id_strings.push_back(achievement_id);
-        achievement_id_ptrs.push_back(achievement_id_strings[i].utf8().get_data());
+        CharString id_utf8 = achievement_id.utf8();
+        context->achievement_ids.emplace_back(id_utf8.get_data());
+        context->achievement_id_ptrs.push_back(context->achievement_ids.back().c_str());
     }
 
     EOS_Achievements_UnlockAchievementsOptions options = {};
     options.ApiVersion = EOS_ACHIEVEMENTS_UNLOCKACHIEVEMENTS_API_LATEST;
     options.UserId = product_user_id;
-    options.AchievementIds = achievement_id_ptrs.data();
-    options.AchievementsCount = achievement_ids.size();
+    options.AchievementIds = context->achievement_id_ptrs.data();
+    options.AchievementsCount = context->achievement_id_ptrs.size();
 
-    EOS_Achievements_UnlockAchievements(achievements_handle, &options, this, on_unlock_achievements_complete);
+    EOS_Achievements_UnlockAchievements(achievements_handle, &options, context.get(), on_unlock_achievements_complete);
+    context.release();
     UtilityFunctions::print("AchievementsSubsystem: Starting achievement unlock operation");
     return true;
 }
@@ -528,8 +540,19 @@ void EOS_CALL AchievementsSubsystem::on_query_player_achievements_complete(const
 }
 
 void EOS_CALL AchievementsSubsystem::on_unlock_achievements_complete(const EOS_Achievements_OnUnlockAchievementsCompleteCallbackInfo* data) {
-    AchievementsSubsystem* self = static_cast<AchievementsSubsystem*>(data->ClientData);
-    if (!data || !self) return;
+    if (!data) {
+        return;
+    }
+
+    std::unique_ptr<UnlockAchievementsContext> context(static_cast<UnlockAchievementsContext*>(data->ClientData));
+    if (!context) {
+        return;
+    }
+
+    AchievementsSubsystem* self = context->subsystem;
+    if (!self) {
+        return;
+    }
 
     if (data->ResultCode == EOS_EResult::EOS_Success) {
         // Call the callback if set

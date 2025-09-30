@@ -7,8 +7,23 @@
 #include "../eos_sdk/Include/eos_sdk.h"
 #include "../eos_sdk/Include/eos_leaderboards.h"
 #include <godot_cpp/core/error_macros.hpp>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace godot {
+
+struct LeaderboardRanksQueryContext {
+    LeaderboardsSubsystem* subsystem = nullptr;
+    std::string leaderboard_id;
+};
+
+struct LeaderboardUserScoresQueryContext {
+    LeaderboardsSubsystem* subsystem = nullptr;
+    std::string stat_name;
+    EOS_Leaderboards_UserScoresQueryStatInfo stat_info{};
+    std::vector<EOS_ProductUserId> user_ids;
+};
 
 LeaderboardsSubsystem::LeaderboardsSubsystem()
     : leaderboards_handle(nullptr)
@@ -97,14 +112,19 @@ bool LeaderboardsSubsystem::QueryLeaderboardRanks(const String& leaderboard_id, 
         return false;
     }
 
+    std::unique_ptr<LeaderboardRanksQueryContext> context = std::make_unique<LeaderboardRanksQueryContext>();
+    context->subsystem = this;
+    context->leaderboard_id = leaderboard_id.utf8().get_data();
+
     auto auth = Get<IAuthenticationSubsystem>();
 
-    EOS_Leaderboards_QueryLeaderboardRanksOptions QueryRanksOptions = { 0 };
-	QueryRanksOptions.ApiVersion = EOS_LEADERBOARDS_QUERYLEADERBOARDRANKS_API_LATEST;
-	QueryRanksOptions.LeaderboardId = leaderboard_id.utf8().get_data();
-	QueryRanksOptions.LocalUserId = auth->GetProductUserId();
+    EOS_Leaderboards_QueryLeaderboardRanksOptions query_ranks_options = {};
+    query_ranks_options.ApiVersion = EOS_LEADERBOARDS_QUERYLEADERBOARDRANKS_API_LATEST;
+    query_ranks_options.LeaderboardId = context->leaderboard_id.c_str();
+    query_ranks_options.LocalUserId = auth->GetProductUserId();
 
-    EOS_Leaderboards_QueryLeaderboardRanks(leaderboards_handle, &QueryRanksOptions, this, on_query_leaderboard_ranks_complete);
+    EOS_Leaderboards_QueryLeaderboardRanks(leaderboards_handle, &query_ranks_options, context.get(), on_query_leaderboard_ranks_complete);
+    context.release();
     return true;
 }
 
@@ -144,40 +164,39 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
     int aggregation_int = leaderboard_def["aggregation"];
     EOS_ELeaderboardAggregation aggregation = static_cast<EOS_ELeaderboardAggregation>(aggregation_int);
 
-    // Convert Godot Array to C array
-    std::vector<EOS_ProductUserId> product_user_ids;
-    std::vector<String> user_id_strings;
+    std::unique_ptr<LeaderboardUserScoresQueryContext> context = std::make_unique<LeaderboardUserScoresQueryContext>();
+    context->subsystem = this;
+    context->user_ids.reserve(user_ids.size());
 
     for (int i = 0; i < user_ids.size(); i++) {
         String user_id_str = user_ids[i];
-        user_id_strings.push_back(user_id_str);
-
         EOS_ProductUserId puid = FAccountHelpers::ProductUserIDFromString(user_id_str.utf8().get_data());
         if (!TValidateAccount<EOS_ProductUserId>::IsValid(puid)) {
             UtilityFunctions::printerr("LeaderboardsSubsystem: Invalid Product User ID: " + user_id_str);
             return false;
         }
-        product_user_ids.push_back(puid);
+        context->user_ids.push_back(puid);
     }
 
     auto auth = Get<IAuthenticationSubsystem>();
 
-    EOS_Leaderboards_UserScoresQueryStatInfo stat_info = {};
-    stat_info.ApiVersion = EOS_LEADERBOARDS_USERSCORESQUERYSTATINFO_API_LATEST;
-    stat_info.StatName = stat_name.utf8().get_data();
-    stat_info.Aggregation = aggregation;
+    context->stat_name = stat_name.utf8().get_data();
+    context->stat_info.ApiVersion = EOS_LEADERBOARDS_USERSCORESQUERYSTATINFO_API_LATEST;
+    context->stat_info.StatName = context->stat_name.c_str();
+    context->stat_info.Aggregation = aggregation;
 
     EOS_Leaderboards_QueryLeaderboardUserScoresOptions options = {};
     options.ApiVersion = EOS_LEADERBOARDS_QUERYLEADERBOARDUSERSCORES_API_LATEST;
-    options.UserIds = product_user_ids.data();
-    options.UserIdsCount = product_user_ids.size();
-    options.StatInfo = &stat_info;
+    options.UserIds = context->user_ids.data();
+    options.UserIdsCount = static_cast<uint32_t>(context->user_ids.size());
+    options.StatInfo = &context->stat_info;
     options.StatInfoCount = 1;
     options.StartTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
     options.EndTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
     options.LocalUserId = auth->GetProductUserId();
 
-    EOS_Leaderboards_QueryLeaderboardUserScores(leaderboards_handle, &options, this, on_query_leaderboard_user_scores_complete);
+    EOS_Leaderboards_QueryLeaderboardUserScores(leaderboards_handle, &options, context.get(), on_query_leaderboard_user_scores_complete);
+    context.release();
     return true;
 }
 
@@ -263,8 +282,19 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_definitions_complete(c
 }
 
 void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_ranks_complete(const EOS_Leaderboards_OnQueryLeaderboardRanksCompleteCallbackInfo* data) {
-    LeaderboardsSubsystem* self = static_cast<LeaderboardsSubsystem*>(data->ClientData);
-    if (!data || !self) return;
+    if (!data) {
+        return;
+    }
+
+    std::unique_ptr<LeaderboardRanksQueryContext> context(static_cast<LeaderboardRanksQueryContext*>(data->ClientData));
+    if (!context) {
+        return;
+    }
+
+    LeaderboardsSubsystem* self = context->subsystem;
+    if (!self) {
+        return;
+    }
 
     if (data->ResultCode == EOS_EResult::EOS_Success) {
         self->leaderboard_ranks.clear();
@@ -316,8 +346,19 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_ranks_complete(const E
 }
 
 void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_user_scores_complete(const EOS_Leaderboards_OnQueryLeaderboardUserScoresCompleteCallbackInfo* data) {
-    LeaderboardsSubsystem* self = static_cast<LeaderboardsSubsystem*>(data->ClientData);
-    if (!data || !self) return;
+    if (!data) {
+        return;
+    }
+
+    std::unique_ptr<LeaderboardUserScoresQueryContext> context(static_cast<LeaderboardUserScoresQueryContext*>(data->ClientData));
+    if (!context) {
+        return;
+    }
+
+    LeaderboardsSubsystem* self = context->subsystem;
+    if (!self) {
+        return;
+    }
 
     if (data->ResultCode == EOS_EResult::EOS_Success) {
         self->leaderboard_user_scores.clear();

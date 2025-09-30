@@ -145,8 +145,7 @@ bool GodotEpic::initialize_platform(const Dictionary& options) {
 	// Setup logging
 	EOS_EResult LogResult = EOS_Logging_SetCallback(logging_callback);
 	if (LogResult == EOS_EResult::EOS_Success) {
-		EOS_Logging_SetLogLevel(EOS_ELogCategory::EOS_LC_ALL_CATEGORIES,
-							   EOS_ELogLevel::EOS_LOG_Verbose);
+		EOS_Logging_SetLogLevel(EOS_ELogCategory::EOS_LC_ALL_CATEGORIES, EOS_ELogLevel::EOS_LOG_Verbose);
 	}
 
 	// Register subsystems with SubsystemManager
