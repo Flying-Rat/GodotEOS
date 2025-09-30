@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ISubsystem.h"
+#include "../Utils/ISubsystem.h"
 #include "../eos_sdk/Include/eos_sdk.h"
 #include "../eos_sdk/Include/eos_base.h"
 #include "../eos_sdk/Include/eos_auth.h"

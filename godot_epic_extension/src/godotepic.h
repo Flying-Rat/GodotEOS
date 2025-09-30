@@ -13,9 +13,9 @@
 #include <eos_connect.h>
 #include <eos_friends.h>
 #include <eos_achievements.h>
-#include "EpicInitOptions.h"
-#include "SubsystemManager.h"
-#include "IFriendsSubsystem.h"
+#include "Utils/EpicInitOptions.h"
+#include "Utils/SubsystemManager.h"
+#include "Friends/IFriendsSubsystem.h"
 
 namespace godot {
 

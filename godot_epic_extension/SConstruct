@@ -25,6 +25,13 @@ elif env["platform"] == "linux":
     env.Append(LIBS=["EOSSDK-Linux-Shipping"])
 
 sources = Glob("src/*.cpp")
+sources += Glob("src/Utils/*.cpp")
+sources += Glob("src/Platform/*.cpp")
+sources += Glob("src/Authentication/*.cpp")
+sources += Glob("src/Achievements/*.cpp")
+sources += Glob("src/Friends/*.cpp")
+sources += Glob("src/Leaderboards/*.cpp")
+sources += Glob("src/UserInfo/*.cpp")
 
 if env["target"] in ["editor", "template_debug"]:
     try:

@@ -2,19 +2,19 @@
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/error_macros.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
-#include "SubsystemManager.h"
-#include "IAuthenticationSubsystem.h"
-#include "IAchievementsSubsystem.h"
-#include "ILeaderboardsSubsystem.h"
-#include "IFriendsSubsystem.h"
-#include "IUserInfoSubsystem.h"
-#include "PlatformSubsystem.h"
-#include "AuthenticationSubsystem.h"
-#include "AchievementsSubsystem.h"
-#include "LeaderboardsSubsystem.h"
-#include "FriendsSubsystem.h"
-#include "UserInfoSubsystem.h"
-#include "AccountHelpers.h"
+#include "Utils/SubsystemManager.h"
+#include "Authentication/IAuthenticationSubsystem.h"
+#include "Achievements/IAchievementsSubsystem.h"
+#include "Leaderboards/ILeaderboardsSubsystem.h"
+#include "Friends/IFriendsSubsystem.h"
+#include "UserInfo/IUserInfoSubsystem.h"
+#include "Platform/PlatformSubsystem.h"
+#include "Authentication/AuthenticationSubsystem.h"
+#include "Achievements/AchievementsSubsystem.h"
+#include "Leaderboards/LeaderboardsSubsystem.h"
+#include "Friends/FriendsSubsystem.h"
+#include "UserInfo/UserInfoSubsystem.h"
+#include "Utils/AccountHelpers.h"
 
 using namespace godot;
 

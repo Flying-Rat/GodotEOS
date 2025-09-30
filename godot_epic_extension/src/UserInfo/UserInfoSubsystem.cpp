@@ -1,6 +1,6 @@
 #include "UserInfoSubsystem.h"
-#include "SubsystemManager.h"
-#include "IPlatformSubsystem.h"
+#include "../Utils/SubsystemManager.h"
+#include "../Platform/IPlatformSubsystem.h"
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/core/error_macros.hpp>
 

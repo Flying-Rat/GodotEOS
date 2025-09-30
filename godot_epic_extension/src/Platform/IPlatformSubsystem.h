@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ISubsystem.h"
-#include "EpicInitOptions.h"
+#include "../Utils/ISubsystem.h"
+#include "../Utils/EpicInitOptions.h"
 #include "../eos_sdk/Include/eos_types.h"
 #include <godot_cpp/variant/string.hpp>
 

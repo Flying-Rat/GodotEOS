@@ -1,7 +1,7 @@
 #include "AuthenticationSubsystem.h"
-#include "SubsystemManager.h"
-#include "IPlatformSubsystem.h"
-#include "IUserInfoSubsystem.h"
+#include "../Utils/SubsystemManager.h"
+#include "../Platform/IPlatformSubsystem.h"
+#include "../UserInfo/IUserInfoSubsystem.h"
 #include "../eos_sdk/Include/eos_sdk.h"
 #include "../eos_sdk/Include/eos_base.h"
 #include "../eos_sdk/Include/eos_auth.h"
@@ -10,7 +10,7 @@
 #include <godot_cpp/core/error_macros.hpp>
 #include <godot_cpp/classes/os.hpp>
 #include <cassert>
-#include "AccountHelpers.h"
+#include "../Utils/AccountHelpers.h"
 
 /**
  * User context passed to EOS_Connect_Login, so we know what AccountId is logging in

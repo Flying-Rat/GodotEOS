@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ISubsystem.h"
+#include "../Utils/ISubsystem.h"
 #include <godot_cpp/variant/string.hpp>
 #include <godot_cpp/variant/array.hpp>
 #include <godot_cpp/variant/dictionary.hpp>

@@ -1,9 +1,9 @@
 #include "FriendsSubsystem.h"
-#include "SubsystemManager.h"
-#include "IPlatformSubsystem.h"
-#include "IAuthenticationSubsystem.h"
-#include "IUserInfoSubsystem.h"
-#include "AccountHelpers.h"
+#include "../Utils/SubsystemManager.h"
+#include "../Platform/IPlatformSubsystem.h"
+#include "../Authentication/IAuthenticationSubsystem.h"
+#include "../UserInfo/IUserInfoSubsystem.h"
+#include "../Utils/AccountHelpers.h"
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/core/error_macros.hpp>
 #include "../eos_sdk/Include/eos_friends.h"
