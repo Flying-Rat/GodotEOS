@@ -960,10 +960,18 @@ func _display_leaderboard_ranks(ranks: Array):
 		var rank = ranks[i]
 		var rank_number = rank.get("rank", i + 1)
 		var user_id = rank.get("user_id", "Unknown User")
+		var display_name = rank.get("display_name", "")
 		var score = rank.get("score", 0)
 
-		add_output_line("  #" + str(rank_number) + " - Score: " + str(score))
-		add_output_line("     User ID: " + str(user_id))
+		# Show rank and score
+		add_output_line("  " + char(35) + str(rank_number) + " - Score: " + str(score))
+		
+		# Show display name if available, otherwise show user ID
+		if not display_name.is_empty():
+			add_output_line("     User: [color=cyan]" + display_name + "[/color]")
+			add_output_line("     User ID: " + str(user_id))
+		else:
+			add_output_line("     User ID: " + str(user_id))
 		add_output_line("")
 
 func _display_leaderboard_user_scores(user_scores: Dictionary):

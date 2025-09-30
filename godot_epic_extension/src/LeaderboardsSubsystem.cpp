@@ -320,9 +320,8 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_ranks_complete(const E
                 
                 // Convert user ID to string
                 record_dict["user_id"] = FAccountHelpers::ProductUserIDToString(record->UserId);
-                
                 // Get display name if available
-                record_dict["display_name"] = String(record->UserDisplayName ? record->UserDisplayName : "");
+                record_dict["display_name"] = record->UserDisplayName && strlen(record->UserDisplayName) > 0 ? String::utf8(record->UserDisplayName) : "";
 
                 self->leaderboard_ranks.push_back(record_dict);
                 EOS_Leaderboards_LeaderboardRecord_Release(record);
