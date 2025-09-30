@@ -191,12 +191,6 @@ void GodotEpic::shutdown_platform() {
 	SubsystemManager* manager = SubsystemManager::GetInstance();
 	manager->ShutdownAll();
 
-	// Clear any internal state to prevent memory leaks
-	epic_account_id = nullptr;
-	product_user_id = nullptr;
-	is_logged_in = false;
-	current_username = "";
-
 	UtilityFunctions::print("GodotEpic: Platform shutdown complete");
 }void GodotEpic::tick(double delta) {
 	SubsystemManager* manager = SubsystemManager::GetInstance();
