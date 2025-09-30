@@ -68,14 +68,15 @@ void SubsystemManager::ShutdownAll() {
     UtilityFunctions::print("SubsystemManager: Shutting down subsystems...");
 
     // Shutdown subsystems in dependency order - dependent subsystems first
-    // Order: AuthenticationSubsystem, AchievementsSubsystem, LeaderboardsSubsystem, FriendsSubsystem, then PlatformSubsystem last
+    // Order: FriendsSubsystem, LeaderboardsSubsystem, AchievementsSubsystem, AuthenticationSubsystem, UserInfoSubsystem, then PlatformSubsystem last
 
     // List of subsystem names in shutdown order
     std::vector<std::string> shutdown_order = {
-        "AuthenticationSubsystem",
-        "AchievementsSubsystem",
-        "LeaderboardsSubsystem",
         "FriendsSubsystem",
+        "LeaderboardsSubsystem",
+        "AchievementsSubsystem",
+        "AuthenticationSubsystem",
+        "UserInfoSubsystem",
         "PlatformSubsystem"
     };
 
