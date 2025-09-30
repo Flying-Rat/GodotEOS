@@ -47,7 +47,7 @@ void PlatformSubsystem::Shutdown() {
 
 bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
     if (initialized && platform_handle) {
-        ERR_PRINT("EOS Platform already initialized");
+        UtilityFunctions::printerr("EOS Platform already initialized");
         return true;
     }
 
@@ -67,11 +67,11 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
 
     // Sanity checks before calling EOS_Initialize
     if (!InitOptions.ProductName || strlen(InitOptions.ProductName) == 0) {
-        ERR_PRINT("InitOptions.ProductName is empty or null");
+        UtilityFunctions::printerr("InitOptions.ProductName is empty or null");
         return false;
     }
     if (!InitOptions.ProductVersion || strlen(InitOptions.ProductVersion) == 0) {
-        ERR_PRINT("InitOptions.ProductVersion is empty or null");
+        UtilityFunctions::printerr("InitOptions.ProductVersion is empty or null");
         return false;
     }
 
@@ -79,7 +79,7 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
     if (InitResult != EOS_EResult::EOS_Success) {
         const char* result_str = EOS_EResult_ToString(InitResult);
         String error_msg = "Failed to initialize EOS SDK: " + String(result_str) + " (" + String::num_int64(static_cast<int64_t>(InitResult)) + ")";
-        ERR_PRINT(error_msg);
+        UtilityFunctions::printerr(error_msg);
         return false;
     }
 
@@ -108,10 +108,10 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
     platform_handle = EOS_Platform_Create(&PlatformOptions);
     if (!platform_handle) {
         // Try to get a more specific error from the last result if available
-        ERR_PRINT("Failed to create EOS Platform (platform_handle == nullptr)");
+        UtilityFunctions::printerr("Failed to create EOS Platform (platform_handle == nullptr)");
         // EOS_Platform_Create returns nullptr on failure; there's no direct EOS_EResult, but common causes are invalid platform options.
         // Log a friendly troubleshooting hint.
-        ERR_PRINT("Possible causes: invalid ProductId/SandboxId/DeploymentId, or missing/invalid client credentials.");
+        UtilityFunctions::printerr("Possible causes: invalid ProductId/SandboxId/DeploymentId, or missing/invalid client credentials.");
         EOS_Shutdown();
         return false;
     }

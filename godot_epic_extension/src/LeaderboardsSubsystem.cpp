@@ -76,7 +76,7 @@ void LeaderboardsSubsystem::Shutdown() {
 
 bool LeaderboardsSubsystem::QueryLeaderboardDefinitions() {
     if (!leaderboards_handle) {
-        UtilityFunctions::printerr("LeaderboardsSubsystem: Not initialized");
+        UtilityFunctions::push_warning("LeaderboardsSubsystem: Not initialized");
         return false;
     }
 
@@ -104,7 +104,7 @@ bool LeaderboardsSubsystem::QueryLeaderboardRanks(const String& leaderboard_id, 
     }
 
     if (leaderboard_id.is_empty()) {
-        UtilityFunctions::printerr("LeaderboardsSubsystem: Invalid leaderboard ID");
+        UtilityFunctions::push_warning("LeaderboardsSubsystem: Invalid leaderboard ID");
         return false;
     }
 
@@ -135,7 +135,7 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
     }
 
     if (leaderboard_id.is_empty() || user_ids.size() == 0) {
-        UtilityFunctions::printerr("LeaderboardsSubsystem: Invalid leaderboard ID or user IDs");
+        UtilityFunctions::push_warning("LeaderboardsSubsystem: Invalid leaderboard ID or user IDs");
         return false;
     }
 
@@ -156,7 +156,7 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
     }
 
     if (!found) {
-        UtilityFunctions::printerr("LeaderboardsSubsystem: Leaderboard definition not found for ID: " + leaderboard_id);
+        UtilityFunctions::push_warning("LeaderboardsSubsystem: Leaderboard definition not found for ID: " + leaderboard_id);
         return false;
     }
 
@@ -172,7 +172,7 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
         String user_id_str = user_ids[i];
         EOS_ProductUserId puid = FAccountHelpers::ProductUserIDFromString(user_id_str.utf8().get_data());
         if (!TValidateAccount<EOS_ProductUserId>::IsValid(puid)) {
-            UtilityFunctions::printerr("LeaderboardsSubsystem: Invalid Product User ID: " + user_id_str);
+            UtilityFunctions::push_warning("LeaderboardsSubsystem: Invalid Product User ID: " + user_id_str);
             return false;
         }
         context->user_ids.push_back(puid);
@@ -227,7 +227,7 @@ void LeaderboardsSubsystem::SetLeaderboardUserScoresCallback(const Callable& cal
 bool LeaderboardsSubsystem::validate_user_authentication() const {
     auto auth = Get<IAuthenticationSubsystem>();
     if (!auth || !auth->IsLoggedIn()) {
-        UtilityFunctions::printerr("LeaderboardsSubsystem: User not authenticated");
+        UtilityFunctions::push_warning("LeaderboardsSubsystem: User not authenticated");
         return false;
     }
     return true;

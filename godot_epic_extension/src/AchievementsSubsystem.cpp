@@ -87,14 +87,14 @@ void AchievementsSubsystem::Shutdown() {
 
 bool AchievementsSubsystem::QueryAchievementDefinitions() {
     if (!achievements_handle) {
-        UtilityFunctions::printerr("AchievementsSubsystem: Not initialized");
+        UtilityFunctions::push_warning("AchievementsSubsystem: Not initialized");
         return false;
     }
 
     // Need Product User ID from AuthenticationSubsystem
     auto auth = Get<IAuthenticationSubsystem>();
     if (!auth || !auth->IsLoggedIn()) {
-        UtilityFunctions::printerr("AchievementsSubsystem: User not authenticated");
+        UtilityFunctions::push_warning("AchievementsSubsystem: User not authenticated");
         return false;
     }
 
@@ -114,14 +114,14 @@ bool AchievementsSubsystem::QueryAchievementDefinitions() {
 
 bool AchievementsSubsystem::QueryPlayerAchievements() {
     if (!achievements_handle) {
-        UtilityFunctions::printerr("AchievementsSubsystem: Not initialized");
+        UtilityFunctions::push_warning("AchievementsSubsystem: Not initialized");
         return false;
     }
 
     // Need Product User ID from AuthenticationSubsystem
     auto auth = Get<IAuthenticationSubsystem>();
     if (!auth || !auth->IsLoggedIn()) {
-        UtilityFunctions::printerr("AchievementsSubsystem: User not authenticated");
+        UtilityFunctions::push_warning("AchievementsSubsystem: User not authenticated");
         return false;
     }
 
@@ -148,25 +148,25 @@ bool AchievementsSubsystem::UnlockAchievement(const String& achievement_id) {
 
 bool AchievementsSubsystem::UnlockAchievements(const Array& achievement_ids) {
     if (!achievements_handle) {
-        UtilityFunctions::printerr("AchievementsSubsystem: Not initialized");
+        UtilityFunctions::push_warning("AchievementsSubsystem: Not initialized");
         return false;
     }
 
     if (achievement_ids.size() == 0) {
-        UtilityFunctions::printerr("AchievementsSubsystem: No achievement IDs provided");
+        UtilityFunctions::push_warning("AchievementsSubsystem: No achievement IDs provided");
         return false;
     }
 
     // Need Product User ID from AuthenticationSubsystem
     auto auth = Get<IAuthenticationSubsystem>();
     if (!auth || !auth->IsLoggedIn()) {
-        UtilityFunctions::printerr("AchievementsSubsystem: User not authenticated");
+        UtilityFunctions::push_warning("AchievementsSubsystem: User not authenticated");
         return false;
     }
 
     EOS_ProductUserId product_user_id = auth->GetProductUserId();
     if (!EOS_ProductUserId_IsValid(product_user_id)) {
-        UtilityFunctions::printerr("AchievementsSubsystem: Invalid Product User ID");
+        UtilityFunctions::push_warning("AchievementsSubsystem: Invalid Product User ID");
         return false;
     }
 
@@ -290,30 +290,30 @@ void AchievementsSubsystem::SetAchievementsUnlockedCallback(const Callable& call
 
 bool AchievementsSubsystem::IngestStat(const String& stat_name, int amount) {
     if (!stats_handle) {
-        UtilityFunctions::printerr("AchievementsSubsystem: Not initialized");
+        UtilityFunctions::push_warning("AchievementsSubsystem: Not initialized");
         return false;
     }
 
     // Need Product User ID from AuthenticationSubsystem
     auto auth = Get<IAuthenticationSubsystem>();
     if (!auth || !auth->IsLoggedIn()) {
-        UtilityFunctions::printerr("AchievementsSubsystem: User not authenticated");
+        UtilityFunctions::push_warning("AchievementsSubsystem: User not authenticated");
         return false;
     }
 
     EOS_ProductUserId product_user_id = auth->GetProductUserId();
     if (!EOS_ProductUserId_IsValid(product_user_id)) {
-        UtilityFunctions::printerr("AchievementsSubsystem: Invalid Product User ID");
+        UtilityFunctions::push_warning("AchievementsSubsystem: Invalid Product User ID");
         return false;
     }
 
     if (stat_name.is_empty()) {
-        UtilityFunctions::printerr("AchievementsSubsystem: Stat name is empty");
+        UtilityFunctions::push_warning("AchievementsSubsystem: Stat name is empty");
         return false;
     }
 
     if (amount <= 0) {
-        UtilityFunctions::printerr("AchievementsSubsystem: Amount must be positive");
+        UtilityFunctions::push_warning("AchievementsSubsystem: Amount must be positive");
         return false;
     }
 

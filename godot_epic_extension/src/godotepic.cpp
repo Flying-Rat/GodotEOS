@@ -128,7 +128,7 @@ void GodotEpic::on_logout_completed(bool success) {
 	if (success) {
 		UtilityFunctions::print("GodotEpic: Logout completed successfully");
 	} else {
-		ERR_PRINT("GodotEpic: Logout failed");
+		UtilityFunctions::printerr("GodotEpic: Logout failed");
 	}
 
 	emit_signal("logout_completed", success);
@@ -142,14 +142,14 @@ GodotEpic* GodotEpic::get_singleton() {
 }
 
 bool GodotEpic::initialize_platform(const Dictionary& options) {
-	ERR_PRINT("Starting EOS Platform initialization");
+	UtilityFunctions::printerr("Starting EOS Platform initialization");
 
 	// Convert dictionary to init options
 	EpicInitOptions init_options = _dict_to_init_options(options);
 
 	// Validate options
 	if (!_validate_init_options(init_options)) {
-		ERR_PRINT("EOS Platform initialization failed: Invalid options");
+		UtilityFunctions::printerr("EOS Platform initialization failed: Invalid options");
 		return false;
 	}
 
@@ -174,18 +174,18 @@ bool GodotEpic::initialize_platform(const Dictionary& options) {
 	// Initialize PlatformSubsystem with EpicInitOptions
 	auto platform_subsystem = manager->GetSubsystem<IPlatformSubsystem>();
 	if (!platform_subsystem) {
-		ERR_PRINT("Failed to get PlatformSubsystem");
+		UtilityFunctions::printerr("Failed to get PlatformSubsystem");
 		return false;
 	}
 
 	if (!platform_subsystem->InitializePlatform(init_options)) {
-		ERR_PRINT("PlatformSubsystem initialization failed");
+		UtilityFunctions::printerr("PlatformSubsystem initialization failed");
 		return false;
 	}
 
 	// Initialize all subsystems
 	if (!manager->InitializeAll()) {
-		ERR_PRINT("Failed to initialize subsystems");
+		UtilityFunctions::printerr("Failed to initialize subsystems");
 		return false;
 	}
 
@@ -228,11 +228,11 @@ EOS_HPlatform GodotEpic::get_platform_handle() const {
 
 // Authentication methods
 void GodotEpic::login_with_epic_account(const String& email, const String& password) {
-	ERR_PRINT("Starting Epic account login");
+	UtilityFunctions::print("Starting Epic account login");
 
 	auto auth = Get<IAuthenticationSubsystem>();
 	if (!auth) {
-		ERR_PRINT("AuthenticationSubsystem not available");
+		UtilityFunctions::push_warning("AuthenticationSubsystem not available");
 		Dictionary empty_user_info;
 		emit_signal("login_completed", false, empty_user_info);
 		return;
@@ -243,18 +243,18 @@ void GodotEpic::login_with_epic_account(const String& email, const String& passw
 	credentials["password"] = password;
 
 	if (!auth->Login("epic_account", credentials)) {
-		ERR_PRINT("AuthenticationSubsystem login failed");
+		UtilityFunctions::printerr("AuthenticationSubsystem login failed");
 		Dictionary empty_user_info;
 		emit_signal("login_completed", false, empty_user_info);
 	}
 }
 
 void GodotEpic::login_with_dev(const String& display_name) {
-	ERR_PRINT("Starting dev login");
+	UtilityFunctions::print("Starting dev login");
 
 	auto auth = Get<IAuthenticationSubsystem>();
 	if (!auth) {
-		ERR_PRINT("AuthenticationSubsystem not available");
+		UtilityFunctions::push_warning("AuthenticationSubsystem not available");
 		Dictionary empty_user_info;
 		emit_signal("login_completed", false, empty_user_info);
 		return;
@@ -265,42 +265,42 @@ void GodotEpic::login_with_dev(const String& display_name) {
 	credentials["token"] = display_name.is_empty() ? "TestUser" : display_name;
 
 	if (!auth->Login("dev", credentials)) {
-		ERR_PRINT("AuthenticationSubsystem dev login failed");
+		UtilityFunctions::printerr("AuthenticationSubsystem dev login failed");
 		Dictionary empty_user_info;
 		emit_signal("login_completed", false, empty_user_info);
 	}
 }
 
 void GodotEpic::login_with_device_id(const String& display_name) {
-	ERR_PRINT("Starting device ID login");
+	UtilityFunctions::print("Starting device ID login");
 
 	auto auth = Get<IAuthenticationSubsystem>();
 	if (!auth) {
-		ERR_PRINT("AuthenticationSubsystem not available");
+		UtilityFunctions::push_warning("AuthenticationSubsystem not available");
 		Dictionary empty_user_info;
 		emit_signal("login_completed", false, empty_user_info);
 		return;
 	}
 
 	if (!auth->Login("device_id", Dictionary())) {
-		ERR_PRINT("AuthenticationSubsystem device ID login failed");
+		UtilityFunctions::printerr("AuthenticationSubsystem device ID login failed");
 		Dictionary empty_user_info;
 		emit_signal("login_completed", false, empty_user_info);
 	}
 }
 
 void GodotEpic::logout() {
-	ERR_PRINT("Starting logout");
+	UtilityFunctions::print("Starting logout");
 
 	auto auth = Get<IAuthenticationSubsystem>();
 	if (!auth) {
-		ERR_PRINT("AuthenticationSubsystem not available");
+		UtilityFunctions::push_warning("AuthenticationSubsystem not available");
 		emit_signal("logout_completed", false);
 		return;
 	}
 
 	if (!auth->Logout()) {
-		ERR_PRINT("AuthenticationSubsystem logout failed");
+		UtilityFunctions::printerr("AuthenticationSubsystem logout failed");
 		emit_signal("logout_completed", false);
 	}
 }
@@ -335,14 +335,14 @@ String GodotEpic::get_product_user_id() const {
 void GodotEpic::query_friends() {
 	auto friends = Get<IFriendsSubsystem>();
 	if (!friends) {
-		ERR_PRINT("FriendsSubsystem not available");
+		UtilityFunctions::push_warning("FriendsSubsystem not available");
 		Array empty_friends;
 		emit_signal("friends_updated", empty_friends);
 		return;
 	}
 
 	if (!friends->QueryFriends()) {
-		ERR_PRINT("FriendsSubsystem query friends failed");
+		UtilityFunctions::printerr("FriendsSubsystem query friends failed");
 		Array empty_friends;
 		emit_signal("friends_updated", empty_friends);
 	}
@@ -361,7 +361,7 @@ Dictionary GodotEpic::get_friend_info(const String& friend_id) {
 void GodotEpic::query_friend_info(const String& friend_id) {
 	auto friends = Get<IFriendsSubsystem>();
 	if (!friends) {
-		ERR_PRINT("FriendsSubsystem not available");
+		UtilityFunctions::push_warning("FriendsSubsystem not available");
 		Dictionary empty_info;
 		empty_info["id"] = friend_id;
 		empty_info["error"] = "Subsystem not available";
@@ -370,7 +370,7 @@ void GodotEpic::query_friend_info(const String& friend_id) {
 	}
 
 	if (!friends->QueryFriendInfo(friend_id)) {
-		ERR_PRINT("FriendsSubsystem query friend info failed");
+		UtilityFunctions::printerr("FriendsSubsystem query friend info failed");
 		Dictionary empty_info;
 		empty_info["id"] = friend_id;
 		empty_info["error"] = "Query failed";
@@ -381,47 +381,47 @@ void GodotEpic::query_friend_info(const String& friend_id) {
 void GodotEpic::query_all_friends_info() {
 	auto friends = Get<IFriendsSubsystem>();
 	if (!friends) {
-		ERR_PRINT("FriendsSubsystem not available");
+		UtilityFunctions::push_warning("FriendsSubsystem not available");
 		return;
 	}
 
 	if (!friends->QueryAllFriendsInfo()) {
-		ERR_PRINT("FriendsSubsystem query all friends info failed");
+		UtilityFunctions::printerr("FriendsSubsystem query all friends info failed");
 	}
 }
 
 // Achievements methods
 void GodotEpic::query_achievement_definitions() {
-	ERR_PRINT("Starting achievement definitions query");
+	UtilityFunctions::print("Starting achievement definitions query");
 
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
-		ERR_PRINT("AchievementsSubsystem not available");
+		UtilityFunctions::push_warning("AchievementsSubsystem not available");
 		Array empty_definitions;
 		emit_signal("achievement_definitions_updated", empty_definitions);
 		return;
 	}
 
 	if (!achievements->QueryAchievementDefinitions()) {
-		ERR_PRINT("AchievementsSubsystem query definitions failed");
+		UtilityFunctions::printerr("AchievementsSubsystem query definitions failed");
 		Array empty_definitions;
 		emit_signal("achievement_definitions_updated", empty_definitions);
 	}
 }
 
 void GodotEpic::query_player_achievements() {
-	ERR_PRINT("Starting player achievements query");
+	UtilityFunctions::printerr("Starting player achievements query");
 
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
-		ERR_PRINT("AchievementsSubsystem not available");
+		UtilityFunctions::printerr("AchievementsSubsystem not available");
 		Array empty_achievements;
 		emit_signal("player_achievements_updated", empty_achievements);
 		return;
 	}
 
 	if (!achievements->QueryPlayerAchievements()) {
-		ERR_PRINT("AchievementsSubsystem query player achievements failed");
+		UtilityFunctions::printerr("AchievementsSubsystem query player achievements failed");
 		Array empty_achievements;
 		emit_signal("player_achievements_updated", empty_achievements);
 	}
@@ -434,18 +434,18 @@ void GodotEpic::unlock_achievement(const String& achievement_id) {
 }
 
 void GodotEpic::unlock_achievements(const Array& achievement_ids) {
-	ERR_PRINT("Starting achievement unlock for " + String::num_int64(achievement_ids.size()) + " achievements");
+	UtilityFunctions::printerr("Starting achievement unlock for " + String::num_int64(achievement_ids.size()) + " achievements");
 
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
-		ERR_PRINT("AchievementsSubsystem not available");
+		UtilityFunctions::printerr("AchievementsSubsystem not available");
 		Array empty_unlocked;
 		emit_signal("achievements_unlocked", empty_unlocked);
 		return;
 	}
 
 	if (!achievements->UnlockAchievements(achievement_ids)) {
-		ERR_PRINT("AchievementsSubsystem unlock achievements failed");
+		UtilityFunctions::printerr("AchievementsSubsystem unlock achievements failed");
 		Array empty_unlocked;
 		emit_signal("achievements_unlocked", empty_unlocked);
 	}
@@ -473,36 +473,36 @@ Dictionary GodotEpic::get_player_achievement(const String& achievement_id) {
 
 // Achievement Stats methods
 void GodotEpic::ingest_achievement_stat(const String& stat_name, int amount) {
-	ERR_PRINT("Starting stat ingestion: " + stat_name + " = " + String::num_int64(amount));
+	UtilityFunctions::printerr("Starting stat ingestion: " + stat_name + " = " + String::num_int64(amount));
 
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
-		ERR_PRINT("AchievementsSubsystem not available");
+		UtilityFunctions::printerr("AchievementsSubsystem not available");
 		Array empty_stats;
 		emit_signal("achievement_stats_updated", false, empty_stats);
 		return;
 	}
 
 	if (!achievements->IngestStat(stat_name, amount)) {
-		ERR_PRINT("AchievementsSubsystem ingest stat failed");
+		UtilityFunctions::printerr("AchievementsSubsystem ingest stat failed");
 		Array empty_stats;
 		emit_signal("achievement_stats_updated", false, empty_stats);
 	}
 }
 
 void GodotEpic::query_achievement_stats() {
-	ERR_PRINT("Starting achievement stats query");
+	UtilityFunctions::printerr("Starting achievement stats query");
 
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
-		ERR_PRINT("AchievementsSubsystem not available");
+		UtilityFunctions::printerr("AchievementsSubsystem not available");
 		Array empty_stats;
 		emit_signal("achievement_stats_updated", false, empty_stats);
 		return;
 	}
 
 	if (!achievements->QueryStats()) {
-		ERR_PRINT("AchievementsSubsystem query stats failed");
+		UtilityFunctions::printerr("AchievementsSubsystem query stats failed");
 		Array empty_stats;
 		emit_signal("achievement_stats_updated", false, empty_stats);
 	}
@@ -532,7 +532,7 @@ void EOS_CALL GodotEpic::logging_callback(const EOS_LogMessage* message) {
 		case EOS_ELogLevel::EOS_LOG_Error:
 			{
 				String log_msg = String("[") + category + "] " + log_text;
-				ERR_PRINT(log_msg);
+				UtilityFunctions::printerr(log_msg);
 			}
 			break;
 		case EOS_ELogLevel::EOS_LOG_Warning:
@@ -547,7 +547,7 @@ void EOS_CALL GodotEpic::logging_callback(const EOS_LogMessage* message) {
 		default:
 			{
 				String log_msg = String("[") + category + "] " + log_text;
-				ERR_PRINT(log_msg);
+				UtilityFunctions::printerr(log_msg);
 			}
 			break;
 	}
@@ -555,83 +555,83 @@ void EOS_CALL GodotEpic::logging_callback(const EOS_LogMessage* message) {
 
 // Leaderboards methods
 void GodotEpic::query_leaderboard_definitions() {
-	ERR_PRINT("Starting leaderboard definitions query");
+	UtilityFunctions::printerr("Starting leaderboard definitions query");
 
 	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	if (!leaderboards) {
-		ERR_PRINT("LeaderboardsSubsystem not available");
+		UtilityFunctions::printerr("LeaderboardsSubsystem not available");
 		Array empty_definitions;
 		emit_signal("leaderboard_definitions_updated", empty_definitions);
 		return;
 	}
 
 	if (!leaderboards->QueryLeaderboardDefinitions()) {
-		ERR_PRINT("LeaderboardsSubsystem query definitions failed");
+		UtilityFunctions::printerr("LeaderboardsSubsystem query definitions failed");
 		Array empty_definitions;
 		emit_signal("leaderboard_definitions_updated", empty_definitions);
 	}
 }
 
 void GodotEpic::query_leaderboard_ranks(const String& leaderboard_id, int limit) {
-	ERR_PRINT("Starting leaderboard ranks query for: " + leaderboard_id + " (limit: " + String::num_int64(limit) + ")");
+	UtilityFunctions::printerr("Starting leaderboard ranks query for: " + leaderboard_id + " (limit: " + String::num_int64(limit) + ")");
 
 	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	if (!leaderboards) {
-		ERR_PRINT("LeaderboardsSubsystem not available");
+		UtilityFunctions::printerr("LeaderboardsSubsystem not available");
 		Array empty_ranks;
 		emit_signal("leaderboard_ranks_updated", empty_ranks);
 		return;
 	}
 
 	if (!leaderboards->QueryLeaderboardRanks(leaderboard_id, limit)) {
-		ERR_PRINT("LeaderboardsSubsystem query ranks failed");
+		UtilityFunctions::printerr("LeaderboardsSubsystem query ranks failed");
 		Array empty_ranks;
 		emit_signal("leaderboard_ranks_updated", empty_ranks);
 	}
 }
 
 void GodotEpic::query_leaderboard_user_scores(const String& leaderboard_id, const Array& user_ids) {
-	ERR_PRINT("Starting leaderboard user scores query for: " + leaderboard_id + " (" + String::num_int64(user_ids.size()) + " users)");
+	UtilityFunctions::printerr("Starting leaderboard user scores query for: " + leaderboard_id + " (" + String::num_int64(user_ids.size()) + " users)");
 
 	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	if (!leaderboards) {
-		ERR_PRINT("LeaderboardsSubsystem not available");
+		UtilityFunctions::printerr("LeaderboardsSubsystem not available");
 		Dictionary empty_scores;
 		emit_signal("leaderboard_user_scores_updated", empty_scores);
 		return;
 	}
 
 	if (!leaderboards->QueryLeaderboardUserScores(leaderboard_id, user_ids)) {
-		ERR_PRINT("LeaderboardsSubsystem query user scores failed");
+		UtilityFunctions::printerr("LeaderboardsSubsystem query user scores failed");
 		Dictionary empty_scores;
 		emit_signal("leaderboard_user_scores_updated", empty_scores);
 	}
 }
 
 void GodotEpic::ingest_stat(const String& stat_name, int value) {
-	ERR_PRINT("Starting stat ingestion: " + stat_name + " = " + String::num_int64(value));
+	UtilityFunctions::printerr("Starting stat ingestion: " + stat_name + " = " + String::num_int64(value));
 
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
-		ERR_PRINT("AchievementsSubsystem not available");
+		UtilityFunctions::printerr("AchievementsSubsystem not available");
 		Array empty_stats;
 		emit_signal("stats_ingested", empty_stats);
 		return;
 	}
 
 	if (!achievements->IngestStat(stat_name, value)) {
-		ERR_PRINT("AchievementsSubsystem ingest stat failed");
+		UtilityFunctions::printerr("AchievementsSubsystem ingest stat failed");
 		Array empty_stats;
 		emit_signal("stats_ingested", empty_stats);
 	}
 }
 
 void GodotEpic::ingest_stats(const Dictionary& stats) {
-	ERR_PRINT("Starting bulk stat ingestion for " + String::num_int64(stats.size()) + " stats");
+	UtilityFunctions::printerr("Starting bulk stat ingestion for " + String::num_int64(stats.size()) + " stats");
 
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
-		ERR_PRINT("AchievementsSubsystem not available");
+		UtilityFunctions::printerr("AchievementsSubsystem not available");
 		Array empty_stats;
 		emit_signal("stats_ingested", empty_stats);
 		return;
@@ -644,7 +644,7 @@ void GodotEpic::ingest_stats(const Dictionary& stats) {
 		Variant stat_value = stats[stat_name];
 		if (stat_value.get_type() == Variant::INT) {
 			if (!achievements->IngestStat(stat_name, (int)stat_value)) {
-				ERR_PRINT("AchievementsSubsystem ingest stat failed for: " + stat_name);
+				UtilityFunctions::printerr("AchievementsSubsystem ingest stat failed for: " + stat_name);
 			}
 		}
 	}
@@ -733,23 +733,23 @@ bool GodotEpic::_validate_init_options(const EpicInitOptions& options) {
 	bool valid = true;
 
 	if (options.product_id.is_empty()) {
-		ERR_PRINT("Missing required initialization option: product_id");
+		UtilityFunctions::printerr("Missing required initialization option: product_id");
 		valid = false;
 	}
 	if (options.sandbox_id.is_empty()) {
-		ERR_PRINT("Missing required initialization option: sandbox_id");
+		UtilityFunctions::printerr("Missing required initialization option: sandbox_id");
 		valid = false;
 	}
 	if (options.deployment_id.is_empty()) {
-		ERR_PRINT("Missing required initialization option: deployment_id");
+		UtilityFunctions::printerr("Missing required initialization option: deployment_id");
 		valid = false;
 	}
 	if (options.client_id.is_empty()) {
-		ERR_PRINT("Missing required initialization option: client_id");
+		UtilityFunctions::printerr("Missing required initialization option: client_id");
 		valid = false;
 	}
 	if (options.client_secret.is_empty()) {
-		ERR_PRINT("Missing required initialization option: client_secret");
+		UtilityFunctions::printerr("Missing required initialization option: client_secret");
 		valid = false;
 	}
 
@@ -769,7 +769,7 @@ void GodotEpic::setup_authentication_callback() {
 		Callable logout_callback = Callable(this, "on_logout_completed");
 		auth->SetLogoutCallback(logout_callback);
 	} else {
-		ERR_PRINT("Failed to set up authentication callback - AuthenticationSubsystem not available");
+		UtilityFunctions::printerr("Failed to set up authentication callback - AuthenticationSubsystem not available");
 	}
 }
 
@@ -789,7 +789,7 @@ void GodotEpic::setup_achievements_callbacks() {
 		Callable stats_callback(this, "on_achievement_stats_completed");
 		achievements->SetStatsCallback(stats_callback);
 	} else {
-		ERR_PRINT("Failed to set up achievements callbacks - AchievementsSubsystem not available");
+		UtilityFunctions::printerr("Failed to set up achievements callbacks - AchievementsSubsystem not available");
 	}
 }
 
@@ -806,7 +806,7 @@ void GodotEpic::setup_leaderboards_callbacks() {
 		Callable user_scores_callback(this, "on_leaderboard_user_scores_completed");
 		leaderboards->SetLeaderboardUserScoresCallback(user_scores_callback);
 	} else {
-		ERR_PRINT("Failed to set up leaderboards callbacks - LeaderboardsSubsystem not available");
+		UtilityFunctions::printerr("Failed to set up leaderboards callbacks - LeaderboardsSubsystem not available");
 	}
 }
 
@@ -820,27 +820,27 @@ void GodotEpic::setup_friends_callbacks() {
 		Callable friend_info_callback(this, "on_friend_info_query_completed");
 		friends->SetFriendInfoQueryCallback(friend_info_callback);
 	} else {
-		ERR_PRINT("Failed to set up friends callbacks - FriendsSubsystem not available");
+		UtilityFunctions::printerr("Failed to set up friends callbacks - FriendsSubsystem not available");
 	}
 }
 
 void GodotEpic::on_authentication_completed(bool success, const Dictionary& user_info) {
-	ERR_PRINT("GodotEpic: Authentication completed - success: " + String(success ? "true" : "false"));
+	UtilityFunctions::printerr("GodotEpic: Authentication completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
 		String display_name = user_info.get("display_name", "Unknown User");
 		String epic_account_id = user_info.get("epic_account_id", "");
 		String product_user_id = user_info.get("product_user_id", "");
 
-		ERR_PRINT("GodotEpic: Login successful for user: " + display_name);
-		ERR_PRINT("GodotEpic: Epic Account ID: " + epic_account_id);
-		ERR_PRINT("GodotEpic: Product User ID: " + product_user_id);
+		UtilityFunctions::printerr("GodotEpic: Login successful for user: " + display_name);
+		UtilityFunctions::printerr("GodotEpic: Epic Account ID: " + epic_account_id);
+		UtilityFunctions::printerr("GodotEpic: Product User ID: " + product_user_id);
 
 		// Update legacy state for backward compatibility
 		is_logged_in = true;
 		current_username = display_name;
 	} else {
-		ERR_PRINT("GodotEpic: Login failed");
+		UtilityFunctions::printerr("GodotEpic: Login failed");
 		is_logged_in = false;
 		current_username = "";
 	}
@@ -850,12 +850,12 @@ void GodotEpic::on_authentication_completed(bool success, const Dictionary& user
 }
 
 void GodotEpic::on_achievement_definitions_completed(bool success, const Array& definitions) {
-	ERR_PRINT("GodotEpic: Achievement definitions query completed - success: " + String(success ? "true" : "false"));
+	UtilityFunctions::printerr("GodotEpic: Achievement definitions query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		ERR_PRINT("GodotEpic: Achievement definitions updated (" + String::num_int64(definitions.size()) + " definitions)");
+		UtilityFunctions::printerr("GodotEpic: Achievement definitions updated (" + String::num_int64(definitions.size()) + " definitions)");
 	} else {
-		ERR_PRINT("GodotEpic: Achievement definitions query failed");
+		UtilityFunctions::printerr("GodotEpic: Achievement definitions query failed");
 	}
 
 	// Emit the achievement_definitions_updated signal
@@ -863,12 +863,12 @@ void GodotEpic::on_achievement_definitions_completed(bool success, const Array& 
 }
 
 void GodotEpic::on_player_achievements_completed(bool success, const Array& achievements) {
-	ERR_PRINT("GodotEpic: Player achievements query completed - success: " + String(success ? "true" : "false"));
+	UtilityFunctions::printerr("GodotEpic: Player achievements query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		ERR_PRINT("GodotEpic: Player achievements updated (" + String::num_int64(achievements.size()) + " achievements)");
+		UtilityFunctions::printerr("GodotEpic: Player achievements updated (" + String::num_int64(achievements.size()) + " achievements)");
 	} else {
-		ERR_PRINT("GodotEpic: Player achievements query failed");
+		UtilityFunctions::printerr("GodotEpic: Player achievements query failed");
 	}
 
 	// Emit the player_achievements_updated signal
@@ -876,12 +876,12 @@ void GodotEpic::on_player_achievements_completed(bool success, const Array& achi
 }
 
 void GodotEpic::on_achievements_unlocked_completed(bool success, const Array& unlocked_achievement_ids) {
-	ERR_PRINT("GodotEpic: Achievements unlock completed - success: " + String(success ? "true" : "false"));
+	UtilityFunctions::printerr("GodotEpic: Achievements unlock completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		ERR_PRINT("GodotEpic: Achievements unlocked successfully");
+		UtilityFunctions::printerr("GodotEpic: Achievements unlocked successfully");
 	} else {
-		ERR_PRINT("GodotEpic: Achievements unlock failed");
+		UtilityFunctions::printerr("GodotEpic: Achievements unlock failed");
 	}
 
 	// Emit the achievements_unlocked signal
@@ -889,12 +889,12 @@ void GodotEpic::on_achievements_unlocked_completed(bool success, const Array& un
 }
 
 void GodotEpic::on_achievement_stats_completed(bool success, const Array& stats) {
-	ERR_PRINT("GodotEpic: Achievement stats query completed - success: " + String(success ? "true" : "false"));
+	UtilityFunctions::printerr("GodotEpic: Achievement stats query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		ERR_PRINT("GodotEpic: Achievement stats updated (" + String::num_int64(stats.size()) + " stats)");
+		UtilityFunctions::printerr("GodotEpic: Achievement stats updated (" + String::num_int64(stats.size()) + " stats)");
 	} else {
-		ERR_PRINT("GodotEpic: Achievement stats query failed");
+		UtilityFunctions::printerr("GodotEpic: Achievement stats query failed");
 	}
 
 	// Emit the achievement_stats_updated signal
@@ -902,12 +902,12 @@ void GodotEpic::on_achievement_stats_completed(bool success, const Array& stats)
 }
 
 void GodotEpic::on_leaderboard_definitions_completed(bool success, const Array& definitions) {
-	ERR_PRINT("GodotEpic: Leaderboard definitions query completed - success: " + String(success ? "true" : "false"));
+	UtilityFunctions::printerr("GodotEpic: Leaderboard definitions query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		ERR_PRINT("GodotEpic: Leaderboard definitions updated (" + String::num_int64(definitions.size()) + " definitions)");
+		UtilityFunctions::printerr("GodotEpic: Leaderboard definitions updated (" + String::num_int64(definitions.size()) + " definitions)");
 	} else {
-		ERR_PRINT("GodotEpic: Leaderboard definitions query failed");
+		UtilityFunctions::printerr("GodotEpic: Leaderboard definitions query failed");
 	}
 
 	// Emit the leaderboard_definitions_updated signal
@@ -915,12 +915,12 @@ void GodotEpic::on_leaderboard_definitions_completed(bool success, const Array& 
 }
 
 void GodotEpic::on_leaderboard_ranks_completed(bool success, const Array& ranks) {
-	ERR_PRINT("GodotEpic: Leaderboard ranks query completed - success: " + String(success ? "true" : "false"));
+	UtilityFunctions::printerr("GodotEpic: Leaderboard ranks query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		ERR_PRINT("GodotEpic: Leaderboard ranks updated (" + String::num_int64(ranks.size()) + " ranks)");
+		UtilityFunctions::printerr("GodotEpic: Leaderboard ranks updated (" + String::num_int64(ranks.size()) + " ranks)");
 	} else {
-		ERR_PRINT("GodotEpic: Leaderboard ranks query failed");
+		UtilityFunctions::printerr("GodotEpic: Leaderboard ranks query failed");
 	}
 
 	// Emit the leaderboard_ranks_updated signal
@@ -928,12 +928,12 @@ void GodotEpic::on_leaderboard_ranks_completed(bool success, const Array& ranks)
 }
 
 void GodotEpic::on_leaderboard_user_scores_completed(bool success, const Dictionary& user_scores) {
-	ERR_PRINT("GodotEpic: Leaderboard user scores query completed - success: " + String(success ? "true" : "false"));
+	UtilityFunctions::printerr("GodotEpic: Leaderboard user scores query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		ERR_PRINT("GodotEpic: Leaderboard user scores updated (" + String::num_int64(user_scores.size()) + " user scores)");
+		UtilityFunctions::printerr("GodotEpic: Leaderboard user scores updated (" + String::num_int64(user_scores.size()) + " user scores)");
 	} else {
-		ERR_PRINT("GodotEpic: Leaderboard user scores query failed");
+		UtilityFunctions::printerr("GodotEpic: Leaderboard user scores query failed");
 	}
 
 	// Emit the leaderboard_user_scores_updated signal
@@ -941,12 +941,12 @@ void GodotEpic::on_leaderboard_user_scores_completed(bool success, const Diction
 }
 
 void GodotEpic::on_friends_query_completed(bool success, const Array& friends_list) {
-	ERR_PRINT("GodotEpic: Friends query completed - success: " + String(success ? "true" : "false"));
+	UtilityFunctions::printerr("GodotEpic: Friends query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		ERR_PRINT("GodotEpic: Friends list updated (" + String::num_int64(friends_list.size()) + " friends)");
+		UtilityFunctions::printerr("GodotEpic: Friends list updated (" + String::num_int64(friends_list.size()) + " friends)");
 	} else {
-		ERR_PRINT("GodotEpic: Friends query failed");
+		UtilityFunctions::printerr("GodotEpic: Friends query failed");
 	}
 
 	// Emit the friends_updated signal
@@ -954,13 +954,13 @@ void GodotEpic::on_friends_query_completed(bool success, const Array& friends_li
 }
 
 void GodotEpic::on_friend_info_query_completed(bool success, const Dictionary& friend_info) {
-	ERR_PRINT("GodotEpic: Friend info query completed - success: " + String(success ? "true" : "false"));
+	UtilityFunctions::printerr("GodotEpic: Friend info query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
 		String friend_id = friend_info.get("id", "unknown");
-		ERR_PRINT("GodotEpic: Friend info updated for: " + friend_id);
+		UtilityFunctions::printerr("GodotEpic: Friend info updated for: " + friend_id);
 	} else {
-		ERR_PRINT("GodotEpic: Friend info query failed");
+		UtilityFunctions::printerr("GodotEpic: Friend info query failed");
 	}
 
 	// Emit the friend_info_updated signal

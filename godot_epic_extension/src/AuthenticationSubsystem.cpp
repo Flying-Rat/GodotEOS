@@ -97,7 +97,7 @@ void AuthenticationSubsystem::Shutdown() {
 
 bool AuthenticationSubsystem::Login(const String& login_type, const Dictionary& credentials) {
     if (!auth_handle || !connect_handle) {
-        UtilityFunctions::printerr("AuthenticationSubsystem: Not initialized");
+        UtilityFunctions::push_warning("AuthenticationSubsystem: Not initialized");
         return false;
     }
 
@@ -131,12 +131,12 @@ bool AuthenticationSubsystem::Login(const String& login_type, const Dictionary& 
 
 bool AuthenticationSubsystem::Logout() {
 	if (!auth_handle && !connect_handle) {
-		UtilityFunctions::printerr("AuthenticationSubsystem: Logout requested but subsystem not initialized");
+		UtilityFunctions::push_warning("AuthenticationSubsystem: Logout requested but subsystem not initialized");
 		return false;
 	}
 
 	if (logout_in_progress) {
-		UtilityFunctions::printerr("AuthenticationSubsystem: Logout already in progress");
+		UtilityFunctions::push_warning("AuthenticationSubsystem: Logout already in progress");
 		return false;
 	}
 
@@ -328,7 +328,7 @@ bool AuthenticationSubsystem::perform_epic_account_login(const Dictionary& crede
     String password = credentials.get("password", "");
 
     if (email.is_empty() || password.is_empty()) {
-        UtilityFunctions::printerr("AuthenticationSubsystem: Email and password required for Epic account login");
+        UtilityFunctions::push_warning("AuthenticationSubsystem: Email and password required for Epic account login");
         return false;
     }
 
@@ -369,7 +369,7 @@ bool AuthenticationSubsystem::perform_device_id_login() {
 
 bool AuthenticationSubsystem::perform_exchange_code_login(const String& exchange_code) {
     if (exchange_code.is_empty()) {
-        UtilityFunctions::printerr("AuthenticationSubsystem: Exchange code required");
+        UtilityFunctions::push_warning("AuthenticationSubsystem: Exchange code required");
         return false;
     }
 
@@ -426,7 +426,7 @@ bool AuthenticationSubsystem::perform_developer_login(const Dictionary& credenti
     String token = credentials.get("token", "");
 
     if (id.is_empty()) {
-        UtilityFunctions::printerr("AuthenticationSubsystem: ID required for developer login");
+        UtilityFunctions::push_warning("AuthenticationSubsystem: ID required for developer login");
         return false;
     }
 
@@ -463,7 +463,7 @@ void EOS_CALL AuthenticationSubsystem::logging_callback(const EOS_LogMessage* me
 		case EOS_ELogLevel::EOS_LOG_Error:
 			{
 				String log_msg = String("[") + category + "] " + log_text;
-				ERR_PRINT(log_msg);
+				UtilityFunctions::printerr(log_msg);
 			}
 			break;
 		case EOS_ELogLevel::EOS_LOG_Warning:
@@ -478,7 +478,7 @@ void EOS_CALL AuthenticationSubsystem::logging_callback(const EOS_LogMessage* me
 		default:
 			{
 				String log_msg = String("[") + category + "] " + log_text;
-				ERR_PRINT(log_msg);
+				UtilityFunctions::printerr(log_msg);
 			}
 			break;
 	}
@@ -589,12 +589,12 @@ void EOS_CALL AuthenticationSubsystem::auth_logout_callback(const EOS_Auth_Logou
 		instance->is_logged_in = false;
 		instance->display_name = "";
 
-		ERR_PRINT("Logout successful");
+		UtilityFunctions::print("Logout successful");
 
 		// Note: Logout completion is handled by the caller
 	} else {
 		String error_msg = "Logout failed: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
-		ERR_PRINT(error_msg);
+		UtilityFunctions::printerr(error_msg);
 
 		// Note: Logout completion is handled by the caller
 	}
@@ -672,7 +672,7 @@ void EOS_CALL AuthenticationSubsystem::connect_login_callback(const EOS_Connect_
 				error_msg += String::num_int64(static_cast<int64_t>(data->ResultCode));
 				break;
 		}
-		ERR_PRINT(error_msg);
+		UtilityFunctions::printerr(error_msg);
 
 		// Connect failed, but Auth succeeded - still emit login signal but without product_user_id
 		Dictionary user_info;
