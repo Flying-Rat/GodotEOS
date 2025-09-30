@@ -1,6 +1,7 @@
 #include "AuthenticationSubsystem.h"
 #include "SubsystemManager.h"
 #include "IPlatformSubsystem.h"
+#include "IUserInfoSubsystem.h"
 #include "../eos_sdk/Include/eos_sdk.h"
 #include "../eos_sdk/Include/eos_base.h"
 #include "../eos_sdk/Include/eos_auth.h"
@@ -547,39 +548,17 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 		instance->epic_account_id = UserId.AccountId;
 		instance->is_logged_in = true;
 		
-		// Query user info to get the real display name
-		auto platform = Get<IPlatformSubsystem>();
-		if (platform && platform->GetPlatformHandle()) {
-			EOS_HUserInfo user_info_handle = EOS_Platform_GetUserInfoInterface(platform->GetPlatformHandle());
-			if (user_info_handle) {
-				EOS_UserInfo_CopyUserInfoOptions copy_options = {};
-				copy_options.ApiVersion = EOS_USERINFO_COPYUSERINFO_API_LATEST;
-				copy_options.LocalUserId = UserId.AccountId;
-				copy_options.TargetUserId = UserId.AccountId; // Query our own info
-				
-				EOS_UserInfo* user_info = nullptr;
-				EOS_EResult copy_result = EOS_UserInfo_CopyUserInfo(user_info_handle, &copy_options, &user_info);
-				
-				if (copy_result == EOS_EResult::EOS_Success && user_info) {
-					if (user_info->DisplayName && strlen(user_info->DisplayName) > 0) {
-						instance->display_name = String::utf8(user_info->DisplayName);
-					} else if (user_info->Nickname && strlen(user_info->Nickname) > 0) {
-						instance->display_name = String::utf8(user_info->Nickname);
-					} else {
-						instance->display_name = "Epic User"; // Fallback
-					}
-					EOS_UserInfo_Release(user_info);
-					UtilityFunctions::print("AuthenticationSubsystem: Retrieved display name: " + instance->display_name);
-				} else {
-					// User info not cached yet, use default
-					instance->display_name = "Epic User";
-					UtilityFunctions::print("AuthenticationSubsystem: User info not yet cached, using default display name");
-				}
-			} else {
-				instance->display_name = "Epic User";
+		// Query user info to get the real display name using UserInfo subsystem
+		auto userinfo = Get<IUserInfoSubsystem>();
+		if (userinfo) {
+			// Try to get cached user info first (might be available immediately after login)
+			instance->display_name = userinfo->GetUserDisplayName(UserId.AccountId, UserId.AccountId);
+
+			if (instance->display_name.is_empty()) {
+				// Not cached yet, query it explicitly
+				UtilityFunctions::print("AuthenticationSubsystem: Querying user info for display name...");
+				userinfo->QueryUserInfo(UserId.AccountId, UserId.AccountId);
 			}
-		} else {
-			instance->display_name = "Epic User";
 		}
 
 		EOS_Auth_Token* UserAuthToken = nullptr;
@@ -638,8 +617,8 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 			} else {
 				UtilityFunctions::printerr("AuthenticationSubsystem: login_callback is not valid");
 			}
-		}	}
-	else{
+		}	
+	} else {
 		// Handle specific error cases with helpful messages
 		String error_msg = "AuthenticationSubsystem: auth_login_callback - Login failed with error: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
 

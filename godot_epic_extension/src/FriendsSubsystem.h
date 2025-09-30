@@ -2,7 +2,6 @@
 
 #include "IFriendsSubsystem.h"
 #include "../eos_sdk/Include/eos_friends_types.h"
-#include "../eos_sdk/Include/eos_userinfo_types.h"
 #include <godot_cpp/variant/array.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/callable.hpp>
@@ -43,9 +42,8 @@ private:
     Callable friends_query_callback;
     Callable friend_info_query_callback;
 
-    // Static callback functions
+    // Static callback for friends query
     static void EOS_CALL on_friends_query_complete(const EOS_Friends_QueryFriendsCallbackInfo* data);
-    static void EOS_CALL on_friend_info_query_complete(const EOS_UserInfo_QueryUserInfoCallbackInfo* data);
 
     // Helper methods
     void update_friends_list();

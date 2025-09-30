@@ -13,7 +13,6 @@
 #include <eos_connect.h>
 #include <eos_friends.h>
 #include <eos_achievements.h>
-#include <eos_userinfo.h>
 #include "EpicInitOptions.h"
 #include "SubsystemManager.h"
 #include "IFriendsSubsystem.h"

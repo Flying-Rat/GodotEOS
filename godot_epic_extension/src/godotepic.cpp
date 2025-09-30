@@ -7,11 +7,13 @@
 #include "IAchievementsSubsystem.h"
 #include "ILeaderboardsSubsystem.h"
 #include "IFriendsSubsystem.h"
+#include "IUserInfoSubsystem.h"
 #include "PlatformSubsystem.h"
 #include "AuthenticationSubsystem.h"
 #include "AchievementsSubsystem.h"
 #include "LeaderboardsSubsystem.h"
 #include "FriendsSubsystem.h"
+#include "UserInfoSubsystem.h"
 #include "AccountHelpers.h"
 
 using namespace godot;
@@ -769,6 +771,9 @@ bool GodotEpic::initialize_subsystems(const EpicInitOptions& init_options) {
 	// Register subsystems with SubsystemManager
 	// Register PlatformSubsystem first (needed by other subsystems)
 	manager->RegisterSubsystem<IPlatformSubsystem, PlatformSubsystem>("PlatformSubsystem");
+
+	// Register UserInfoSubsystem early (needed by Authentication and Friends)
+	manager->RegisterSubsystem<IUserInfoSubsystem, UserInfoSubsystem>("UserInfoSubsystem");
 
 	// Register other subsystems
 	manager->RegisterSubsystem<IAuthenticationSubsystem, AuthenticationSubsystem>("AuthenticationSubsystem");

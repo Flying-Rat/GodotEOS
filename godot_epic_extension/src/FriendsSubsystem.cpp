@@ -1,13 +1,12 @@
 #include "FriendsSubsystem.h"
-#include "PlatformSubsystem.h"
-#include "AuthenticationSubsystem.h"
-#include "AccountHelpers.h"
 #include "SubsystemManager.h"
-#include <godot_cpp/core/class_db.hpp>
+#include "IPlatformSubsystem.h"
+#include "IAuthenticationSubsystem.h"
+#include "IUserInfoSubsystem.h"
+#include "AccountHelpers.h"
+#include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/core/error_macros.hpp>
-#include <eos_sdk.h>
-#include <eos_friends.h>
-#include <eos_userinfo.h>
+#include "../eos_sdk/Include/eos_friends.h"
 
 using namespace godot;
 
@@ -98,42 +97,35 @@ Dictionary FriendsSubsystem::GetFriendInfo(const String& friend_id) const {
         return friend_info;
     }
 
-    // Try to get cached user info
-    EOS_HUserInfo user_info_handle = EOS_Platform_GetUserInfoInterface(platform->GetPlatformHandle());
-    if (user_info_handle) {
-        EOS_UserInfo_CopyUserInfoOptions copy_options = {};
-        copy_options.ApiVersion = EOS_USERINFO_COPYUSERINFO_API_LATEST;
-        copy_options.LocalUserId = auth->GetEpicAccountId();
-        copy_options.TargetUserId = target_user_id;
-
-        EOS_UserInfo* user_info = nullptr;
-        EOS_EResult copy_result = EOS_UserInfo_CopyUserInfo(user_info_handle, &copy_options, &user_info);
-
-        if (copy_result == EOS_EResult::EOS_Success && user_info) {
+    // Use UserInfoSubsystem to get cached user info
+    auto userinfo = Get<IUserInfoSubsystem>();
+    if (userinfo) {
+        // Get display name using convenience method
+        String display_name = userinfo->GetUserDisplayName(auth->GetEpicAccountId(), target_user_id);
+        
+        if (!display_name.is_empty()) {
             friend_info["id"] = friend_id;
-            if (user_info->DisplayName) {
-                friend_info["display_name"] = String::utf8(user_info->DisplayName);
-            } else {
-                friend_info["display_name"] = "Unknown User";
+            friend_info["display_name"] = display_name;
+            
+            // Get additional user info if needed
+            Dictionary user_info = userinfo->GetCachedUserInfo(auth->GetEpicAccountId(), target_user_id);
+            if (user_info.has("country")) {
+                friend_info["country"] = user_info["country"];
             }
-            if (user_info->Country) {
-                friend_info["country"] = String::utf8(user_info->Country);
+            if (user_info.has("preferred_language")) {
+                friend_info["preferred_language"] = user_info["preferred_language"];
             }
-            if (user_info->PreferredLanguage) {
-                friend_info["preferred_language"] = String::utf8(user_info->PreferredLanguage);
+            if (user_info.has("nickname")) {
+                friend_info["nickname"] = user_info["nickname"];
             }
-            if (user_info->Nickname) {
-                friend_info["nickname"] = String::utf8(user_info->Nickname);
-            }
-            EOS_UserInfo_Release(user_info);
         } else {
             // User info not cached
             friend_info["id"] = friend_id;
-            friend_info["display_name"] = "Not loaded";
+            friend_info["display_name"] = "";
             friend_info["status"] = "Call QueryFriendInfo() first";
         }
     } else {
-        UtilityFunctions::printerr("FriendsSubsystem: Failed to get UserInfo interface");
+        UtilityFunctions::printerr("FriendsSubsystem: UserInfoSubsystem not available");
     }
 
     return friend_info;
@@ -148,9 +140,9 @@ bool FriendsSubsystem::QueryFriendInfo(const String& friend_id) {
         return false;
     }
 
-    auto platform = Get<IPlatformSubsystem>();
-    if (!platform || !platform->GetPlatformHandle()) {
-        UtilityFunctions::push_warning("FriendsSubsystem: Platform not initialized");
+    auto userinfo = Get<IUserInfoSubsystem>();
+    if (!userinfo) {
+        UtilityFunctions::printerr("FriendsSubsystem: UserInfoSubsystem not available");
         return false;
     }
 
@@ -161,18 +153,11 @@ bool FriendsSubsystem::QueryFriendInfo(const String& friend_id) {
         return false;
     }
 
-    EOS_HUserInfo user_info_handle = EOS_Platform_GetUserInfoInterface(platform->GetPlatformHandle());
-    if (!user_info_handle) {
-        UtilityFunctions::printerr("FriendsSubsystem: Failed to get UserInfo interface");
+    // Use UserInfoSubsystem to query user info
+    if (!userinfo->QueryUserInfo(auth->GetEpicAccountId(), target_user_id)) {
+        UtilityFunctions::printerr("FriendsSubsystem: Failed to initiate user info query");
         return false;
     }
-
-    EOS_UserInfo_QueryUserInfoOptions query_options = {};
-    query_options.ApiVersion = EOS_USERINFO_QUERYUSERINFO_API_LATEST;
-    query_options.LocalUserId = auth->GetEpicAccountId();
-    query_options.TargetUserId = target_user_id;
-
-    EOS_UserInfo_QueryUserInfo(user_info_handle, &query_options, this, on_friend_info_query_complete);
     return true;
 }
 
@@ -185,15 +170,9 @@ bool FriendsSubsystem::QueryAllFriendsInfo() {
         return false;
     }
 
-    auto platform = Get<IPlatformSubsystem>();
-    if (!platform || !platform->GetPlatformHandle()) {
-        UtilityFunctions::push_warning("FriendsSubsystem: Platform not initialized");
-        return false;
-    }
-
-    EOS_HUserInfo user_info_handle = EOS_Platform_GetUserInfoInterface(platform->GetPlatformHandle());
-    if (!user_info_handle) {
-        UtilityFunctions::printerr("FriendsSubsystem: Failed to get UserInfo interface");
+    auto userinfo = Get<IUserInfoSubsystem>();
+    if (!userinfo) {
+        UtilityFunctions::printerr("FriendsSubsystem: UserInfoSubsystem not available");
         return false;
     }
 
@@ -201,24 +180,23 @@ bool FriendsSubsystem::QueryAllFriendsInfo() {
     Array current_friends_list = GetFriendsList();
     EOS_EpicAccountId local_user_id = auth->GetEpicAccountId();
 
-    // Query user info for each friend
+    // Query user info for each friend using UserInfoSubsystem
+    int query_count = 0;
     for (int i = 0; i < current_friends_list.size(); i++) {
         Dictionary friend_info = current_friends_list[i];
         String friend_id = friend_info["id"];
 
         EOS_EpicAccountId target_user_id = FAccountHelpers::EpicAccountIDFromString(friend_id.utf8().get_data());
         if (target_user_id) {
-            EOS_UserInfo_QueryUserInfoOptions query_options = {};
-            query_options.ApiVersion = EOS_USERINFO_QUERYUSERINFO_API_LATEST;
-            query_options.LocalUserId = local_user_id;
-            query_options.TargetUserId = target_user_id;
-
-            EOS_UserInfo_QueryUserInfo(user_info_handle, &query_options, this, on_friend_info_query_complete);
+            // Query for caching
+            if (userinfo->QueryUserInfo(local_user_id, target_user_id)) {
+                query_count++;
+            }
         }
     }
 
-    UtilityFunctions::print("FriendsSubsystem: Querying user info for " + String::num_int64(current_friends_list.size()) + " friends");
-    return true;
+    UtilityFunctions::print("FriendsSubsystem: Querying user info for " + String::num_int64(query_count) + " friends");
+    return query_count > 0;
 }
 
 void FriendsSubsystem::SetFriendsQueryCallback(const Callable& callback) {
@@ -285,29 +263,13 @@ Dictionary FriendsSubsystem::create_friend_info_dict(EOS_EpicAccountId friend_id
     String friend_id_str = FAccountHelpers::EpicAccountIDToString(friend_id);
     friend_info["id"] = friend_id_str;
 
-    // Try to get cached user info for display name
-    EOS_HUserInfo user_info_handle = EOS_Platform_GetUserInfoInterface(platform->GetPlatformHandle());
-    if (user_info_handle) {
-        EOS_UserInfo_CopyUserInfoOptions copy_options = {};
-        copy_options.ApiVersion = EOS_USERINFO_COPYUSERINFO_API_LATEST;
-        copy_options.LocalUserId = auth->GetEpicAccountId();
-        copy_options.TargetUserId = friend_id;
-        EOS_UserInfo* user_info = nullptr;
-        EOS_EResult copy_result = EOS_UserInfo_CopyUserInfo(user_info_handle, &copy_options, &user_info);
-
-        if (copy_result == EOS_EResult::EOS_Success && user_info) {
-            if (user_info->DisplayName) {
-                friend_info["display_name"] = String::utf8(user_info->DisplayName);
-            } else {
-                friend_info["display_name"] = "Unknown User";
-            }
-            EOS_UserInfo_Release(user_info);
-        } else {
-            // User info not cached, set placeholder
-            friend_info["display_name"] = "Loading...";
+    // Use UserInfoSubsystem to get display name
+    auto userinfo = Get<IUserInfoSubsystem>();
+    if (userinfo) {
+        String display_name = userinfo->GetUserDisplayName(auth->GetEpicAccountId(), friend_id);
+        if (!display_name.is_empty()) {
+            friend_info["display_name"] = display_name;
         }
-    } else {
-        friend_info["display_name"] = "Unknown User";
     }
 
     // Get friend status
@@ -365,39 +327,6 @@ void EOS_CALL FriendsSubsystem::on_friends_query_complete(const EOS_Friends_Quer
         // Emit callback with failure
         if (subsystem->friends_query_callback.is_valid()) {
             subsystem->friends_query_callback.call(false, Array());
-        }
-    }
-}
-
-void EOS_CALL FriendsSubsystem::on_friend_info_query_complete(const EOS_UserInfo_QueryUserInfoCallbackInfo* data) {
-    if (!data || !data->ClientData) {
-        return;
-    }
-
-    FriendsSubsystem* subsystem = static_cast<FriendsSubsystem*>(data->ClientData);
-
-    if (data->ResultCode == EOS_EResult::EOS_Success) {
-        UtilityFunctions::print("FriendsSubsystem: Friend info query successful");
-
-        // Convert user ID back to string and get friend info
-        String friend_id = FAccountHelpers::EpicAccountIDToString(data->TargetUserId);
-
-        Dictionary friend_info = subsystem->GetFriendInfo(friend_id);
-
-        // Emit callback if set
-        if (subsystem->friend_info_query_callback.is_valid()) {
-            subsystem->friend_info_query_callback.call(true, friend_info);
-        }
-    } else {
-        String error_msg = "FriendsSubsystem: Friend info query failed: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
-        UtilityFunctions::printerr(error_msg);
-
-        // Emit callback with failure
-        if (subsystem->friend_info_query_callback.is_valid()) {
-            Dictionary empty_info;
-            empty_info["id"] = FAccountHelpers::EpicAccountIDToString(data->TargetUserId);
-            empty_info["error"] = "Query failed";
-            subsystem->friend_info_query_callback.call(false, empty_info);
         }
     }
 }
