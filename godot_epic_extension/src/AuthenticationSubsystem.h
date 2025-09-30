@@ -6,6 +6,7 @@
 #include "../eos_sdk/Include/eos_auth.h"
 #include "../eos_sdk/Include/eos_connect.h"
 #include "../eos_sdk/Include/eos_logging.h"
+#include "../eos_sdk/Include/eos_userinfo.h"
 #include <godot_cpp/variant/string.hpp>
 #include <godot_cpp/variant/callable.hpp>
 
