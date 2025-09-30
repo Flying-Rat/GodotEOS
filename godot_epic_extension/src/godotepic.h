@@ -43,6 +43,7 @@ public:
 
 	// Singleton access
 	static GodotEpic* get_singleton();
+	static void cleanup_singleton();
 
 	// Platform management
 	bool initialize_platform(const Dictionary& options);

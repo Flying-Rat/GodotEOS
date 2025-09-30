@@ -1054,6 +1054,11 @@ func _on_auto_test_timer_timeout():
 # Called when the node is about to be removed from the scene
 func _exit_tree():
 	# Clean shutdown of EOS platform
+	print("Main: Starting cleanup...")
 	if godot_epic:
+		print("Main: Shutting down EOS platform...")
 		godot_epic.shutdown_platform()
-		print("EOS Platform shut down.")
+		print("Main: EOS Platform shut down.")
+	else:
+		print("Main: No GodotEpic instance to clean up")
+	print("Main: Cleanup complete")

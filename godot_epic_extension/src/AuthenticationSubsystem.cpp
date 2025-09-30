@@ -81,8 +81,25 @@ void AuthenticationSubsystem::Tick(float delta_time) {
 }
 
 void AuthenticationSubsystem::Shutdown() {
-    Logout();
+    if (!auth_handle && !connect_handle) {
+        UtilityFunctions::print("AuthenticationSubsystem: Already shut down, skipping");
+        return;
+    }
+
+    UtilityFunctions::print("AuthenticationSubsystem: Starting shutdown...");
+
+    // First, clean up notifications while handles are still valid
     cleanup_notifications();
+
+    // Only logout if we have an active session and platform is still valid
+    auto platform_subsystem = Get<IPlatformSubsystem>();
+    if (platform_subsystem && platform_subsystem->GetPlatformHandle() &&
+        (is_logged_in || EOS_ProductUserId_IsValid(local_user_id) || EOS_EpicAccountId_IsValid(epic_account_id))) {
+        UtilityFunctions::print("AuthenticationSubsystem: Active session detected, logging out...");
+        Logout();
+    } else {
+        UtilityFunctions::print("AuthenticationSubsystem: Skipping logout - platform unavailable or no active session");
+    }
 
     is_logged_in = false;
     local_user_id = nullptr;
@@ -90,7 +107,11 @@ void AuthenticationSubsystem::Shutdown() {
     display_name = "";
     login_status = EOS_ELoginStatus::EOS_LS_NotLoggedIn;
 
-	reset_logout_state();
+    reset_logout_state();
+
+    // Clear interface handles to prevent use after shutdown
+    auth_handle = nullptr;
+    connect_handle = nullptr;
 
     UtilityFunctions::print("AuthenticationSubsystem: Shutdown complete");
 }
@@ -254,17 +275,30 @@ void AuthenticationSubsystem::setup_notifications() {
 }
 
 void AuthenticationSubsystem::cleanup_notifications() {
+    UtilityFunctions::print("AuthenticationSubsystem: Cleaning up notifications...");
+
+    // Check if platform is still valid before trying to remove notifications
+    auto platform_subsystem = Get<IPlatformSubsystem>();
+    if (!platform_subsystem || !platform_subsystem->GetPlatformHandle()) {
+        UtilityFunctions::print("AuthenticationSubsystem: Platform already shut down, skipping notification cleanup");
+        auth_login_status_changed_id = EOS_INVALID_NOTIFICATIONID;
+        connect_login_status_changed_id = EOS_INVALID_NOTIFICATIONID;
+        return;
+    }
+
     if (auth_handle && auth_login_status_changed_id != EOS_INVALID_NOTIFICATIONID) {
         EOS_Auth_RemoveNotifyLoginStatusChanged(auth_handle, auth_login_status_changed_id);
         auth_login_status_changed_id = EOS_INVALID_NOTIFICATIONID;
+        UtilityFunctions::print("AuthenticationSubsystem: Auth login status notification removed");
     }
 
     if (connect_handle && connect_login_status_changed_id != EOS_INVALID_NOTIFICATIONID) {
         EOS_Connect_RemoveNotifyLoginStatusChanged(connect_handle, connect_login_status_changed_id);
         connect_login_status_changed_id = EOS_INVALID_NOTIFICATIONID;
+        UtilityFunctions::print("AuthenticationSubsystem: Connect login status notification removed");
     }
 
-    UtilityFunctions::print("AuthenticationSubsystem: Status change notifications unregistered");
+    UtilityFunctions::print("AuthenticationSubsystem: Notification cleanup complete");
 }
 
 void AuthenticationSubsystem::reset_logout_state() {

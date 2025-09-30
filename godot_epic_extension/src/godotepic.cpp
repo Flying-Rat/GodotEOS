@@ -118,11 +118,20 @@ GodotEpic::GodotEpic() {
 }
 
 GodotEpic::~GodotEpic() {
+	UtilityFunctions::print("GodotEpic: Destructor called");
+
 	// Ensure platform is shutdown on destruction
-	shutdown_platform();
+	try {
+		shutdown_platform();
+	} catch (...) {
+		UtilityFunctions::printerr("GodotEpic: Exception during shutdown in destructor");
+	}
+
 	if (instance == this) {
 		instance = nullptr;
 	}
+
+	UtilityFunctions::print("GodotEpic: Destructor completed");
 }
 
 void GodotEpic::on_logout_completed(bool success) {
@@ -140,6 +149,17 @@ GodotEpic* GodotEpic::get_singleton() {
 		instance = memnew(GodotEpic);
 	}
 	return instance;
+}
+
+void GodotEpic::cleanup_singleton() {
+	if (instance) {
+		UtilityFunctions::print("GodotEpic: Cleaning up singleton instance");
+		// Shutdown platform first to ensure clean resource cleanup
+		instance->shutdown_platform();
+		// Delete the instance
+		memdelete(instance);
+		// The destructor will set instance = nullptr
+	}
 }
 
 bool GodotEpic::initialize_platform(const Dictionary& options) {
@@ -206,12 +226,20 @@ bool GodotEpic::initialize_platform(const Dictionary& options) {
 }
 
 void GodotEpic::shutdown_platform() {
-	// Shutdown all subsystems
+	UtilityFunctions::print("GodotEpic: Starting platform shutdown...");
+
+	// Shutdown all subsystems - they will handle their own cleanup including logout
 	SubsystemManager* manager = SubsystemManager::GetInstance();
 	manager->ShutdownAll();
-}
 
-void GodotEpic::tick(double delta) {
+	// Clear any internal state to prevent memory leaks
+	epic_account_id = nullptr;
+	product_user_id = nullptr;
+	is_logged_in = false;
+	current_username = "";
+
+	UtilityFunctions::print("GodotEpic: Platform shutdown complete");
+}void GodotEpic::tick(double delta) {
 	SubsystemManager* manager = SubsystemManager::GetInstance();
 	const double clamped_delta = delta < 0.0 ? 0.0 : delta;
 	manager->TickAll(static_cast<float>(clamped_delta));

@@ -20,6 +20,9 @@ void uninitialize_godotepic_module(ModuleInitializationLevel p_level) {
 	if (p_level != MODULE_INITIALIZATION_LEVEL_CORE) {
 		return;
 	}
+
+	// Clean up the GodotEpic singleton if it exists
+	GodotEpic::cleanup_singleton();
 }
 
 extern "C" {

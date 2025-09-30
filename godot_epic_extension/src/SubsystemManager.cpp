@@ -66,11 +66,43 @@ void SubsystemManager::ShutdownAll() {
 
     UtilityFunctions::print("SubsystemManager: Shutting down subsystems...");
 
-    // Shutdown subsystems in reverse order (though order doesn't really matter for shutdown)
+    // Shutdown subsystems in dependency order - dependent subsystems first
+    // Order: AuthenticationSubsystem, AchievementsSubsystem, LeaderboardsSubsystem, FriendsSubsystem, then PlatformSubsystem last
+
+    // List of subsystem names in shutdown order
+    std::vector<std::string> shutdown_order = {
+        "AuthenticationSubsystem",
+        "AchievementsSubsystem",
+        "LeaderboardsSubsystem",
+        "FriendsSubsystem",
+        "PlatformSubsystem"
+    };
+
+    // Shutdown in specified order
+    for (const std::string& name : shutdown_order) {
+        for (auto& [type_index, subsystem] : subsystems) {
+            if (subsystem_names[type_index] == name) {
+                UtilityFunctions::print("SubsystemManager: Shutting down subsystem: ", name.c_str());
+                subsystem->Shutdown();
+                break;
+            }
+        }
+    }
+
+    // Shutdown any remaining subsystems (in case we missed any)
     for (auto& [type_index, subsystem] : subsystems) {
         const std::string& name = subsystem_names[type_index];
-        UtilityFunctions::print("SubsystemManager: Shutting down subsystem: ", name.c_str());
-        subsystem->Shutdown();
+        bool already_shutdown = false;
+        for (const std::string& shutdown_name : shutdown_order) {
+            if (name == shutdown_name) {
+                already_shutdown = true;
+                break;
+            }
+        }
+        if (!already_shutdown) {
+            UtilityFunctions::print("SubsystemManager: Shutting down remaining subsystem: ", name.c_str());
+            subsystem->Shutdown();
+        }
     }
 
     initialized = false;
