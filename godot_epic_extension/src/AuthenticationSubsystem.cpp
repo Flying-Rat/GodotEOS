@@ -572,7 +572,39 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 			}
 		}	}
 	else{
-		UtilityFunctions::printerr("AuthenticationSubsystem: auth_login_callback - Login failed with error: " + String::num_int64(static_cast<int64_t>(data->ResultCode)));
+		// Handle specific error cases with helpful messages
+		String error_msg = "AuthenticationSubsystem: auth_login_callback - Login failed with error: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
+
+		switch (data->ResultCode) {
+			case EOS_EResult::EOS_InvalidCredentials:
+				error_msg += " - Invalid email or password. Please check your Epic Games account credentials.";
+				break;
+			case EOS_EResult::EOS_InvalidParameters:
+				error_msg += " - Invalid parameters. Check email format and ensure password is not empty.";
+				break;
+			case EOS_EResult::EOS_Auth_MFARequired:
+				error_msg += " - Multi-Factor Authentication (MFA) is required for this account. Use Account Portal login instead of email/password.";
+				break;
+			case EOS_EResult::EOS_NoConnection:
+				error_msg += " - No internet connection available.";
+				break;
+			case EOS_EResult::EOS_TooManyRequests:
+				error_msg += " - Too many login attempts. Please wait before trying again.";
+				break;
+			default:
+				error_msg += " - Please check your Epic Games account credentials and internet connection.";
+				break;
+		}
+
+		UtilityFunctions::printerr(error_msg);
+
+		// Emit failure signal
+		if (instance->login_callback.is_valid()) {
+			Dictionary user_info;
+			user_info["error_code"] = static_cast<int64_t>(data->ResultCode);
+			user_info["error_message"] = error_msg;
+			instance->login_callback.call(false, user_info);
+		}
 	}
 }
 
@@ -615,7 +647,7 @@ void EOS_CALL AuthenticationSubsystem::connect_login_callback(const EOS_Connect_
 
 	// Get the login callback from the interface
 	Callable login_callback = authIterface->GetLoginCallback();
-	
+
 	if (data->ResultCode == EOS_EResult::EOS_Success) {
 		// Set Product User ID directly from handle
 		authIterface->SetProductUserId(data->LocalUserId);

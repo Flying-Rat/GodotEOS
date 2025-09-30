@@ -51,6 +51,7 @@ public:
 
 	// Authentication methods
 	void login_with_epic_account(const String& email, const String& password);
+	void login_with_account_portal();
 	void login_with_device_id(const String& display_name);
 	void login_with_dev(const String& display_name);
 	void logout();
@@ -100,7 +101,7 @@ private:
 	// Helper methods
 	EpicInitOptions _dict_to_init_options(const Dictionary& options_dict);
 	bool _validate_init_options(const EpicInitOptions& options);
-	
+
 	void setup_authentication_callback();
 	void setup_achievements_callbacks();
 	void setup_leaderboards_callbacks();

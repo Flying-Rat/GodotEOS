@@ -71,6 +71,10 @@ size_flags_horizontal = 3
 layout_mode = 2
 text = "1 - Login with Epic Account"
 
+[node name="LoginAccountPortalButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab/VBoxContainer"]
+layout_mode = 2
+text = "Alt+1 - Login with Account Portal (MFA)"
+
 [node name="LoginDevice1Button" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab/VBoxContainer"]
 layout_mode = 2
 text = "2 - Login with Dev ID (TestUser123)"
@@ -82,6 +86,25 @@ text = "Alt+2 - Login with Dev ID (Player1)"
 [node name="LogoutButton" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab/VBoxContainer"]
 layout_mode = 2
 text = "3 - Logout"
+
+[node name="HSeparator4" type="HSeparator" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab/VBoxContainer"]
+layout_mode = 2
+
+[node name="CredentialsLabel" type="Label" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab/VBoxContainer"]
+layout_mode = 2
+theme_type_variation = &"TooltipLabel"
+text = "Epic Account Credentials"
+
+[node name="UsernameField" type="LineEdit" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Email or username"
+
+[node name="PasswordField" type="LineEdit" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Password"
+secret = true
 
 [node name="FriendsTab" type="ScrollContainer" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer"]
 visible = false

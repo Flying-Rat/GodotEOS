@@ -28,6 +28,7 @@ void GodotEpic::_bind_methods() {
 
 	// Authentication methods
 	ClassDB::bind_method(D_METHOD("login_with_epic_account", "email", "password"), &GodotEpic::login_with_epic_account);
+	ClassDB::bind_method(D_METHOD("login_with_account_portal"), &GodotEpic::login_with_account_portal);
 	ClassDB::bind_method(D_METHOD("login_with_device_id", "display_name"), &GodotEpic::login_with_device_id);
 	ClassDB::bind_method(D_METHOD("login_with_dev", "display_name"), &GodotEpic::login_with_dev);
 	ClassDB::bind_method(D_METHOD("logout"), &GodotEpic::logout);
@@ -88,7 +89,7 @@ void GodotEpic::_bind_methods() {
 
 	// Friends callbacks
 	ClassDB::bind_method(D_METHOD("on_friends_query_completed", "success", "friends_list"), &GodotEpic::on_friends_query_completed);
-	ClassDB::bind_method(D_METHOD("on_friend_info_query_completed", "success", "friend_info"), &GodotEpic::on_friend_info_query_completed);	
+	ClassDB::bind_method(D_METHOD("on_friend_info_query_completed", "success", "friend_info"), &GodotEpic::on_friend_info_query_completed);
 
 	// Signals
 	ADD_SIGNAL(MethodInfo("login_completed", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::DICTIONARY, "user_info")));
@@ -249,6 +250,24 @@ void GodotEpic::login_with_epic_account(const String& email, const String& passw
 	}
 }
 
+void GodotEpic::login_with_account_portal() {
+	UtilityFunctions::print("Starting Account Portal login");
+
+	auto auth = Get<IAuthenticationSubsystem>();
+	if (!auth) {
+		UtilityFunctions::printerr("GodotEpic::login_with_account_portal - AuthenticationSubsystem not available");
+		on_authentication_completed(false, Dictionary());
+		return;
+	}
+
+	Dictionary credentials; // Empty for account portal login
+
+	if (!auth->Login("account_portal", credentials)) {
+		UtilityFunctions::printerr("GodotEpic::login_with_account_portal - Login call failed");
+		on_authentication_completed(false, Dictionary());
+	}
+}
+
 void GodotEpic::login_with_dev(const String& display_name) {
 	UtilityFunctions::print("Starting dev login");
 
@@ -318,7 +337,7 @@ String GodotEpic::get_current_username() const {
 String GodotEpic::get_epic_account_id() const {
 	EOS_EpicAccountId epic_id = Get<IAuthenticationSubsystem>()->GetEpicAccountId();
 	if (!epic_id) return "";
-	
+
 	const char* epic_id_str = FAccountHelpers::EpicAccountIDToString(epic_id);
 	return epic_id_str ? String::utf8(epic_id_str) : "";
 }
@@ -326,7 +345,7 @@ String GodotEpic::get_epic_account_id() const {
 String GodotEpic::get_product_user_id() const {
 	EOS_ProductUserId product_user_id = Get<IAuthenticationSubsystem>()->GetProductUserId();
 	if (!EOS_ProductUserId_IsValid(product_user_id)) return "";
-	
+
 	const char* id_string = FAccountHelpers::ProductUserIDToString(product_user_id);
 	return id_string ? String::utf8(id_string) : "";
 }

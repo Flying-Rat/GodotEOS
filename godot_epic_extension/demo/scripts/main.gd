@@ -8,6 +8,7 @@ extends Node2D
 #
 # 📱 AUTHENTICATION TAB - Login/logout functionality
 #   • Epic Account Login (requires Epic Games credentials)
+#   • Account Portal Login (for accounts with MFA enabled)
 #   • Device ID Login (Dev/TestUser123 and Dev/Player1)
 #   • Logout
 #
@@ -47,7 +48,10 @@ var godot_epic: GodotEpic = null
 
 # Authentication Tab UI References
 @onready var auth_tab: Control = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab
+@onready var username_field: LineEdit = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab/VBoxContainer/UsernameField
+@onready var password_field: LineEdit = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab/VBoxContainer/PasswordField
 @onready var login_epic_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab/VBoxContainer/LoginEpicButton
+@onready var login_account_portal_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab/VBoxContainer/LoginAccountPortalButton
 @onready var login_device1_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab/VBoxContainer/LoginDevice1Button
 @onready var login_device2_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab/VBoxContainer/LoginDevice2Button
 @onready var logout_button: Button = $CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AuthenticationTab/VBoxContainer/LogoutButton
@@ -184,9 +188,13 @@ func _process(_delta):
 # Tab-based button connection functions
 func _connect_authentication_buttons():
 	login_epic_button.pressed.connect(_on_login_epic_pressed)
+	login_account_portal_button.pressed.connect(_on_login_account_portal_pressed)
 	login_device1_button.pressed.connect(_on_login_device1_pressed)
 	login_device2_button.pressed.connect(_on_login_device2_pressed)
 	logout_button.pressed.connect(_on_logout_pressed)
+	username_field.text_changed.connect(_on_login_credentials_changed)
+	password_field.text_changed.connect(_on_login_credentials_changed)
+	password_field.text_submitted.connect(_on_password_submitted)
 
 func _connect_friends_buttons():
 	query_friends_button.pressed.connect(_on_query_friends_pressed)
@@ -228,6 +236,7 @@ func update_button_states():
 	var is_logged_in = godot_epic and godot_epic.is_user_logged_in()
 	var has_product_user_id = godot_epic and not godot_epic.get_product_user_id().is_empty()
 
+	_update_epic_login_button(is_logged_in)
 	# Update Authentication tab buttons
 	logout_button.disabled = not is_logged_in
 
@@ -242,6 +251,26 @@ func update_button_states():
 
 	# Update Leaderboards tab buttons (require Product User ID for cross-platform features)
 	_update_leaderboards_tab_buttons(is_logged_in, has_product_user_id)
+
+func _update_epic_login_button(is_logged_in: bool):
+	if not is_instance_valid(login_epic_button):
+		return
+
+	if is_logged_in:
+		login_epic_button.disabled = true
+		login_account_portal_button.disabled = true
+	else:
+		var username_ready = is_instance_valid(username_field) and not username_field.text.strip_edges().is_empty()
+		var password_ready = is_instance_valid(password_field) and not password_field.text.is_empty()
+		login_epic_button.disabled = not (username_ready and password_ready)
+		login_account_portal_button.disabled = false  # Account Portal doesn't need credentials
+
+func _on_login_credentials_changed(_new_text: String = ""):
+	var is_logged_in = godot_epic and godot_epic.is_user_logged_in()
+	_update_epic_login_button(is_logged_in)
+
+func _on_password_submitted(_new_text: String):
+	_on_login_epic_pressed()
 
 func _update_friends_tab_buttons(is_logged_in: bool):
 	query_friends_button.disabled = not is_logged_in
@@ -282,8 +311,47 @@ func _update_leaderboards_tab_buttons(is_logged_in: bool, has_product_user_id: b
 # ============================================================================
 
 func _on_login_epic_pressed():
-	add_output_line("[color=cyan]🔐 Starting Epic Account login...[/color]")
-	godot_epic.login_with_epic_account("", "")
+	if not godot_epic:
+		add_output_line("[color=red]❌ EOS Platform not ready yet.[/color]")
+		return
+
+	var username := ""
+	var password := ""
+
+	if is_instance_valid(username_field):
+		username = username_field.text.strip_edges()
+	if is_instance_valid(password_field):
+		password = password_field.text
+
+	if username.is_empty() or password.is_empty():
+		add_output_line("[color=orange]⚠️ Please enter both username and password for Epic Account login.[/color]")
+		add_output_line("[i]Tip: If your account has MFA enabled, use Account Portal login instead.[/i]")
+		status_label.text = "⚠️ Enter Epic credentials"
+		_update_epic_login_button(false)
+		return
+
+	add_output_line("[color=cyan]🔐 Starting Epic Account login for [b]" + username + "[/b]...[/color]")
+	status_label.text = "⏳ Logging in..."
+	login_epic_button.disabled = true
+	if is_instance_valid(password_field):
+		password_field.release_focus()
+	if is_instance_valid(username_field):
+		username_field.release_focus()
+
+	godot_epic.login_with_epic_account(username, password)
+
+func _on_login_account_portal_pressed():
+	if not godot_epic:
+		add_output_line("[color=red]❌ EOS Platform not ready yet.[/color]")
+		return
+
+	add_output_line("[color=cyan]🔐 Starting Account Portal login...[/color]")
+	add_output_line("[i]This will open your default browser or Epic Games Launcher for authentication.[/i]")
+	status_label.text = "⏳ Opening browser..."
+	login_account_portal_button.disabled = true
+	login_epic_button.disabled = true
+
+	godot_epic.login_with_account_portal()
 
 func _on_login_device1_pressed():
 	add_output_line("[color=cyan]🔐 Starting Dev login (TestUser123)...[/color]")
@@ -507,6 +575,10 @@ func _on_clear_output_pressed():
 
 func _input(event):
 	if event is InputEventKey and event.pressed:
+		# Check for Alt+1 combination for Account Portal login
+		if event.keycode == KEY_1 and event.alt_pressed:
+			_on_login_account_portal_pressed()
+			return
 		# Check for Alt+2 combination for second device login
 		if event.keycode == KEY_2 and event.alt_pressed:
 			_on_login_device2_pressed()
@@ -582,14 +654,39 @@ func _on_login_completed(success: bool, user_info: Dictionary):
 
 		add_output_line("")
 		add_output_line("[color=green]🎉 You can now use available features![/color]")
+
+		if is_instance_valid(password_field):
+			password_field.text = ""
+		_on_login_credentials_changed()
 		update_button_states()
 	else:
 		status_label.text = "❌ Login Failed"
-		add_output_line("[color=red]❌ Login failed! Check the error message above for details.[/color]")
-		add_output_line("[color=yellow]Common issues:[/color]")
-		add_output_line("• [color=yellow]Error 10: For Device ID, run EOS Dev Auth Tool on localhost:7777[/color]")
-		add_output_line("• [color=yellow]Error 10: Check email/password format for Epic Account login[/color]")
-		add_output_line("• [color=yellow]Error 32: Check deployment_id in EOS Developer Portal[/color]")
+
+		# Check for specific error codes
+		var error_code = user_info.get("error_code", 0)
+		var error_message = user_info.get("error_message", "")
+
+		add_output_line("[color=red]❌ Login failed![/color]")
+
+		if error_code == 1060:  # EOS_Auth_MFARequired
+			add_output_line("[color=yellow]🔐 Multi-Factor Authentication (MFA) is required for this account.[/color]")
+			add_output_line("[color=cyan]💡 Solution: Use the 'Login with Account Portal' button instead.[/color]")
+			add_output_line("[color=cyan]   This will open your browser or Epic Games Launcher for secure authentication.[/color]")
+		elif error_code == 2:  # EOS_InvalidCredentials
+			add_output_line("[color=yellow]❌ Invalid email or password.[/color]")
+			add_output_line("[color=cyan]💡 Please check your Epic Games account credentials.[/color]")
+		elif error_code == 10:  # EOS_InvalidParameters
+			add_output_line("[color=yellow]⚠️ Invalid parameters.[/color]")
+			add_output_line("[color=cyan]💡 Check email format and ensure password is not empty.[/color]")
+		else:
+			add_output_line("[color=yellow]Common issues:[/color]")
+			add_output_line("• [color=yellow]For Device ID: Run EOS Dev Auth Tool on localhost:7777[/color]")
+			add_output_line("• [color=yellow]For Epic Account: Check email/password or try Account Portal[/color]")
+			add_output_line("• [color=yellow]For MFA accounts: Use Account Portal login[/color]")
+
+		if not error_message.is_empty():
+			add_output_line("[i]Technical details: " + error_message + "[/i]")
+
 		update_button_states()
 
 
