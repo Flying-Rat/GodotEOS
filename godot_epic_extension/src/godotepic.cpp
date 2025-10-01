@@ -318,14 +318,26 @@ String GodotEpic::get_current_username() const {
 }
 
 String GodotEpic::get_epic_account_id() const {
-	EOS_EpicAccountId epic_id = Get<IAuthenticationSubsystem>()->GetEpicAccountId();
+	auto auth = Get<IAuthenticationSubsystem>();
+	if (!auth) {
+		UtilityFunctions::push_warning("AuthenticationSubsystem not available");
+		return "";
+	}
+
+	EOS_EpicAccountId epic_id = auth->GetEpicAccountId();
 	if (!epic_id) return "";
 
 	return FAccountHelpers::EpicAccountIDToString(epic_id);
 }
 
 String GodotEpic::get_product_user_id() const {
-	EOS_ProductUserId product_user_id = Get<IAuthenticationSubsystem>()->GetProductUserId();
+	auto auth = Get<IAuthenticationSubsystem>();
+	if (!auth) {
+		UtilityFunctions::push_warning("AuthenticationSubsystem not available");
+		return "";
+	}
+
+	EOS_ProductUserId product_user_id = auth->GetProductUserId();
 	if (!EOS_ProductUserId_IsValid(product_user_id)) return "";
 
 	return FAccountHelpers::ProductUserIDToString(product_user_id);
