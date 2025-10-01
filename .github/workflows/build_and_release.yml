@@ -8,6 +8,9 @@ on:
     types: [created]
   workflow_dispatch:
 
+env:
+  EOS_SDK_URL: 'https://onlineservices.epicgames.com/api/sdk/download?archive_id=774&archive_type=sdk'
+
 jobs:
   build-linux-x86_64:
     runs-on: ubuntu-latest
@@ -23,14 +26,19 @@ jobs:
           key: ${{ runner.os }}-godotcpp-${{ hashFiles('godot_epic_extension/godot-cpp/src/**', 'godot_epic_extension/godot-cpp/SConstruct', 'godot_epic_extension/godot-cpp/Makefile') }}
           restore-keys: |
             ${{ runner.os }}-godotcpp-
+      - name: Download EOS SDK
+        run: |
+          curl -L -o eos_sdk.zip "${{ env.EOS_SDK_URL }}"
+          unzip -q eos_sdk.zip -d eos_sdk
+          ls -la eos_sdk || true
       - name: Install SCons
         run: sudo apt-get install -y scons
       - name: Build Linux x86_64 Debug
         working-directory: godot_epic_extension
-        run: scons platform=linux arch=x86_64 target=template_debug
+        run: scons platform=linux arch=x86_64 target=template_debug EOS_SDK_PATH=../eos_sdk
       - name: Build Linux x86_64 Release
         working-directory: godot_epic_extension
-        run: scons platform=linux arch=x86_64 target=template_release
+        run: scons platform=linux arch=x86_64 target=template_release EOS_SDK_PATH=../eos_sdk
       - name: Upload Linux x86_64 Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -53,9 +61,14 @@ jobs:
             ${{ runner.os }}-godotcpp-
       - name: Install SCons
         run: brew install scons
+      - name: Download EOS SDK
+        run: |
+          curl -L -o eos_sdk.zip "${{ env.EOS_SDK_URL }}"
+          unzip -q eos_sdk.zip -d eos_sdk
+          ls -la eos_sdk || true
       - name: Build Mac
         working-directory: godot_epic_extension
-        run: scons platform=macos target=template_release
+        run: scons platform=macos target=template_release EOS_SDK_PATH=../eos_sdk
       - name: Upload Mac Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -78,10 +91,17 @@ jobs:
             ${{ runner.os }}-godotcpp-
       - name: Install SCons
         run: pip install scons
+      - name: Download EOS SDK
+        shell: pwsh
+        run: |
+          $url = '${{ env.EOS_SDK_URL }}'
+          Invoke-WebRequest -Uri $url -OutFile 'eos_sdk.zip'
+          Expand-Archive -Path 'eos_sdk.zip' -DestinationPath 'eos_sdk'
+          Get-ChildItem -Recurse eos_sdk || Write-Output 'eos_sdk not found'
       - name: Build Windows x86_64
         shell: pwsh
         working-directory: godot_epic_extension
-        run: scons platform=windows arch=x86_64 target=template_release
+        run: scons platform=windows arch=x86_64 target=template_release EOS_SDK_PATH=../eos_sdk
       - name: Upload Windows Artifacts
         uses: actions/upload-artifact@v4
         with:
