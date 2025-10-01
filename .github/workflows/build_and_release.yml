@@ -44,6 +44,14 @@ jobs:
             fi
           fi
           ls -R eos_sdk || true
+      - name: Log EOS SDK structure (Linux)
+        run: |
+          echo "Current working directory: $(pwd)"
+          echo "Contents of eos_sdk (depth 2):"
+          find eos_sdk -maxdepth 2 -type d -print
+          echo "Key files found:" && find eos_sdk -maxdepth 3 -type f \( -name 'eos_sdk.h' -o -name 'libEOSSDK-Linux-Shipping.so' -o -name 'EOSSDK-Win64-Shipping.dll' \) -print
+          ls -l eos_sdk/Include | head -n 40 || true
+          ls -l eos_sdk/Bin || true
       - name: Install SCons
         run: sudo apt-get install -y scons
       - name: Build Linux x86_64 Debug
@@ -92,6 +100,14 @@ jobs:
             fi
           fi
           ls -R eos_sdk || true
+      - name: Log EOS SDK structure (macOS)
+        run: |
+          echo "Current working directory: $(pwd)"
+          echo "Contents of eos_sdk (depth 2):"
+          find eos_sdk -maxdepth 2 -type d -print
+          echo "Key files found:" && find eos_sdk -maxdepth 3 -type f \( -name 'eos_sdk.h' -o -name 'libEOSSDK-Mac-Shipping.dylib' -o -name 'EOSSDK-Win64-Shipping.dll' \) -print
+          ls -l eos_sdk/Include | head -n 40 || true
+          ls -l eos_sdk/Bin || true
       - name: Build Mac
         working-directory: godot_epic_extension
         run: scons platform=macos target=template_release EOS_SDK_PATH=../eos_sdk
@@ -142,6 +158,18 @@ jobs:
           }
           Remove-Item 'eos_sdk_extract' -Recurse -Force
           Get-ChildItem -Recurse eos_sdk || Write-Output 'eos_sdk not found'
+      - name: Log EOS SDK structure (Windows)
+        shell: pwsh
+        run: |
+          Write-Host "Current working directory: $(Get-Location)"
+          Write-Host "Directory tree (depth 2):"
+          Get-ChildItem -Path eos_sdk -Depth 2 | ForEach-Object { $_.FullName }
+          Write-Host "Key files present:"; @( 'Include/eos_sdk.h', 'Bin/EOSSDK-Win64-Shipping.dll', 'Bin/libEOSSDK-Linux-Shipping.so', 'Bin/libEOSSDK-Mac-Shipping.dylib' ) | ForEach-Object {
+            $path = Join-Path eos_sdk $_
+            if (Test-Path $path) { Write-Host "  ✓ $path" } else { Write-Host "  ✗ $path" }
+          }
+          Get-ChildItem -Path eos_sdk/Include | Select-Object -First 40 | Format-Table -AutoSize
+          Get-ChildItem -Path eos_sdk/Bin | Format-Table -AutoSize
       - name: Build Windows x86_64
         shell: pwsh
         working-directory: godot_epic_extension

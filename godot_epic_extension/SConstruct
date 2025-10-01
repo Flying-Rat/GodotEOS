@@ -2,7 +2,18 @@
 import os
 import sys
 
+from SCons.Script import ARGUMENTS, Default, Glob, SConscript, Variables
+
+eos_sdk_override = ARGUMENTS.pop("EOS_SDK_PATH", None)
+
 env = SConscript("godot-cpp/SConstruct")
+
+if eos_sdk_override:
+    env["EOS_SDK_PATH"] = eos_sdk_override
+
+vars = Variables()
+vars.Add("EOS_SDK_PATH", "Directory containing the EOS SDK", env.get("EOS_SDK_PATH", "eos_sdk"))
+vars.Update(env)
 
 # For reference:
 # - CCFLAGS are compilation flags shared between C and C++
@@ -13,7 +24,7 @@ env = SConscript("godot-cpp/SConstruct")
 # - LINKFLAGS are for linking flags
 
 # EOS SDK configuration
-eos_sdk = "eos_sdk"
+eos_sdk = os.path.normpath(env["EOS_SDK_PATH"])
 env.Append(CPPPATH=["src/", eos_sdk + "/Include"])
 
 
