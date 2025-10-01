@@ -31,13 +31,18 @@ jobs:
           curl -L -o eos_sdk.zip "${{ env.EOS_SDK_URL }}"
           rm -rf eos_sdk
           unzip -q eos_sdk.zip
-          SDK_ROOT=$(find . -maxdepth 1 -type d -name 'EOS-SDK-*' | head -n 1)
-          if [ -z "$SDK_ROOT" ]; then
-            echo "Failed to find EOS SDK root directory" >&2
-            exit 1
+          if [ -d "SDK" ]; then
+            mv SDK eos_sdk
+          else
+            SDK_ROOT=$(find . -maxdepth 1 -type d -name 'EOS-SDK-*' | head -n 1)
+            if [ -n "$SDK_ROOT" ] && [ -d "$SDK_ROOT/SDK" ]; then
+              mv "$SDK_ROOT/SDK" eos_sdk
+              rm -rf "$SDK_ROOT"
+            else
+              echo "Failed to find EOS SDK root directory" >&2
+              exit 1
+            fi
           fi
-          mv "$SDK_ROOT/SDK" eos_sdk
-          rm -rf "$SDK_ROOT"
           ls -R eos_sdk || true
       - name: Install SCons
         run: sudo apt-get install -y scons
@@ -74,13 +79,18 @@ jobs:
           curl -L -o eos_sdk.zip "${{ env.EOS_SDK_URL }}"
           rm -rf eos_sdk
           unzip -q eos_sdk.zip
-          SDK_ROOT=$(find . -maxdepth 1 -type d -name 'EOS-SDK-*' | head -n 1)
-          if [ -z "$SDK_ROOT" ]; then
-            echo "Failed to find EOS SDK root directory" >&2
-            exit 1
+          if [ -d "SDK" ]; then
+            mv SDK eos_sdk
+          else
+            SDK_ROOT=$(find . -maxdepth 1 -type d -name 'EOS-SDK-*' | head -n 1)
+            if [ -n "$SDK_ROOT" ] && [ -d "$SDK_ROOT/SDK" ]; then
+              mv "$SDK_ROOT/SDK" eos_sdk
+              rm -rf "$SDK_ROOT"
+            else
+              echo "Failed to find EOS SDK root directory" >&2
+              exit 1
+            fi
           fi
-          mv "$SDK_ROOT/SDK" eos_sdk
-          rm -rf "$SDK_ROOT"
           ls -R eos_sdk || true
       - name: Build Mac
         working-directory: godot_epic_extension
@@ -115,12 +125,21 @@ jobs:
           Invoke-WebRequest -Uri $url -OutFile 'eos_sdk.zip'
           if (Test-Path 'eos_sdk_extract') { Remove-Item 'eos_sdk_extract' -Recurse -Force }
           Expand-Archive -Path 'eos_sdk.zip' -DestinationPath 'eos_sdk_extract'
-          $archiveDir = Get-ChildItem -Path 'eos_sdk_extract' -Directory | Where-Object { $_.Name -like 'EOS-SDK-*' } | Select-Object -First 1
-          if (-not $archiveDir) {
-            throw 'Failed to locate EOS SDK archive directory.'
-          }
           if (Test-Path 'eos_sdk') { Remove-Item 'eos_sdk' -Recurse -Force }
-          Move-Item -Path (Join-Path $archiveDir.FullName 'SDK') -Destination 'eos_sdk'
+          $topLevelSdk = Join-Path 'eos_sdk_extract' 'SDK'
+          if (Test-Path $topLevelSdk) {
+            Move-Item -Path $topLevelSdk -Destination 'eos_sdk'
+          } else {
+            $archiveDir = Get-ChildItem -Path 'eos_sdk_extract' -Directory | Where-Object { $_.Name -like 'EOS-SDK-*' } | Select-Object -First 1
+            if (-not $archiveDir) {
+              throw 'Failed to locate EOS SDK archive directory.'
+            }
+            $nestedSdk = Join-Path $archiveDir.FullName 'SDK'
+            if (-not (Test-Path $nestedSdk)) {
+              throw "Located archive directory '$($archiveDir.FullName)' but it does not contain an SDK folder."
+            }
+            Move-Item -Path $nestedSdk -Destination 'eos_sdk'
+          }
           Remove-Item 'eos_sdk_extract' -Recurse -Force
           Get-ChildItem -Recurse eos_sdk || Write-Output 'eos_sdk not found'
       - name: Build Windows x86_64
