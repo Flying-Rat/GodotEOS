@@ -40,11 +40,11 @@ public:
     void SetAchievementsUnlockedCallback(const Callable& callback) override;
 
     // Stats functionality
-    bool IngestStat(const String& stat_name, int amount);
-    bool QueryStats();
-    Array GetStats() const;
-    Dictionary GetStat(const String& stat_name) const;
-    void SetStatsCallback(const Callable& callback);
+    bool IngestStat(const String& stat_name, int amount) override;
+    bool QueryStats() override;
+    Array GetStats() const override;
+    Dictionary GetStat(const String& stat_name) const override;
+    void SetStatsCallback(const Callable& callback) override;
 
 private:
     EOS_HAchievements achievements_handle;
