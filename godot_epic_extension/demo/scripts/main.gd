@@ -32,9 +32,6 @@ extends Node2D
 #   • Query/Get User Scores (requires Product User ID)
 #   • Ingest Leaderboard Stats (requires Product User ID)
 #
-# ⚙️ SYSTEM TAB - Utility functions
-#   • Clear Output
-#
 # Note: Features requiring "Product User ID" need cross-platform Connect service,
 # which may not be available for developer accounts.
 # ============================================================================
@@ -93,7 +90,7 @@ var godot_epic: GodotEpic = null
 # Auto-test variables
 var auto_test_timer: Timer = null
 var auto_test_step: int = 0
-var auto_test_enabled: bool = true  # Set to false to disable auto-test
+var auto_test_enabled: bool = false  # Set to false to disable auto-test
 var auto_test_time_accumulator: float = 0.0
 var auto_test_current_delay: float = 0.0
 
@@ -965,7 +962,7 @@ func _display_leaderboard_ranks(ranks: Array):
 
 		# Show rank and score
 		add_output_line("  " + char(35) + str(rank_number) + " - Score: " + str(score))
-		
+
 		# Show display name if available, otherwise show user ID
 		if not display_name.is_empty():
 			add_output_line("     User: [color=cyan]" + display_name + "[/color]")

@@ -160,10 +160,6 @@ text = "W - Get Specific Player Achievement"
 layout_mode = 2
 text = "0 - Unlock Test Achievement"
 
-[node name="UnlockTestButton2" type="Button" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer/AchievementsTab/VBoxContainer"]
-layout_mode = 2
-text = "0 - Unlock Test Achievement"
-
 [node name="StatsTab" type="ScrollContainer" parent="CanvasLayer/UI/MainContainer/LeftPanel/TabContainer"]
 visible = false
 layout_mode = 2
