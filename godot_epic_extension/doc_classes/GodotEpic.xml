@@ -47,13 +47,13 @@
 				Returns an array of the current player's achievement-related statistics. Each element is a dictionary containing stat name, current value, and other stat metadata. Call query_achievement_stats() first to ensure data is current.
 			</description>
 		</method>
-		<method name="get_current_username">
+		<method name="get_current_username" qualifiers="const">
 			<return type="String" />
 			<description>
 				Returns the display name of the currently logged in user. Returns an empty string if no user is logged in.
 			</description>
 		</method>
-		<method name="get_epic_account_id">
+		<method name="get_epic_account_id" qualifiers="const">
 			<return type="String" />
 			<description>
 				Returns the Epic Account ID of the currently logged in user. This is the Epic Games account identifier. Returns an empty string if no user is logged in.
@@ -103,10 +103,16 @@
 				Returns an array of the current player's achievement progress. Each element is a dictionary containing achievement data such as ID, unlock status, progress percentage, and unlock time. Call query_player_achievements() first to ensure data is current.
 			</description>
 		</method>
-		<method name="get_product_user_id">
+		<method name="get_product_user_id" qualifiers="const">
 			<return type="String" />
 			<description>
 				Returns the Product User ID of the currently logged in user. This is the cross-platform identifier used for most EOS services like leaderboards, achievements, and stats. Returns an empty string if no user is logged in.
+			</description>
+		</method>
+		<method name="get_platform_handle" qualifiers="const">
+			<return type="int" />
+			<description>
+				Returns the underlying Epic Online Services platform handle as an integer pointer. This is primarily used for advanced integration scenarios and low-level EOS SDK operations. Returns 0 if the platform is not initialized.
 			</description>
 		</method>
 		<method name="get_singleton" qualifiers="static">
@@ -145,16 +151,22 @@
 				Initializes the Epic Online Services platform with the provided configuration options. The options dictionary should contain platform initialization parameters such as product_id, sandbox_id, deployment_id, and client credentials. Returns true if the platform was successfully initialized, false otherwise.
 			</description>
 		</method>
-		<method name="is_platform_initialized">
+		<method name="is_platform_initialized" qualifiers="const">
 			<return type="bool" />
 			<description>
 				Checks whether the Epic Online Services platform has been successfully initialized. Returns true if the platform is ready for use, false otherwise.
 			</description>
 		</method>
-		<method name="is_user_logged_in">
+		<method name="is_user_logged_in" qualifiers="const">
 			<return type="bool" />
 			<description>
 				Checks whether a user is currently logged in and authenticated with Epic Online Services. Returns true if authenticated, false otherwise.
+			</description>
+		</method>
+		<method name="login_with_account_portal">
+			<return type="void" />
+			<description>
+				Initiates login using the Epic Games Account Portal. This method opens the Epic Games launcher or browser for user authentication. The user will be redirected to Epic's authentication portal where they can log in with their Epic Games account. This method triggers the login_completed signal when authentication finishes.
 			</description>
 		</method>
 		<method name="login_with_dev">
@@ -217,6 +229,22 @@
 				Internal callback method triggered when authentication operations complete. This method processes the authentication result and emits the login_completed signal. Not intended for direct calling.
 			</description>
 		</method>
+		<method name="on_friend_info_query_completed">
+			<return type="void" />
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="friend_info" type="Dictionary" />
+			<description>
+				Internal callback method triggered when friend information queries complete. This method processes the query result and emits the friend_info_updated signal. Not intended for direct calling.
+			</description>
+		</method>
+		<method name="on_friends_query_completed">
+			<return type="void" />
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="friends_list" type="Array" />
+			<description>
+				Internal callback method triggered when friends list queries complete. This method processes the query result and emits the friends_updated signal. Not intended for direct calling.
+			</description>
+		</method>
 		<method name="on_leaderboard_definitions_completed">
 			<return type="void" />
 			<param index="0" name="success" type="bool" />
@@ -241,6 +269,13 @@
 				Internal callback method triggered when leaderboard user score queries complete. This method processes the query result and emits the leaderboard_user_scores_updated signal. Not intended for direct calling.
 			</description>
 		</method>
+		<method name="on_logout_completed">
+			<return type="void" />
+			<param index="0" name="success" type="bool" />
+			<description>
+				Internal callback method triggered when logout operations complete. This method processes the logout result and emits the logout_completed signal. Not intended for direct calling.
+			</description>
+		</method>
 		<method name="on_player_achievements_completed">
 			<return type="void" />
 			<param index="0" name="success" type="bool" />
@@ -259,6 +294,19 @@
 			<return type="void" />
 			<description>
 				Queries Epic Online Services for the current player's achievement-related statistics. This operation is asynchronous and triggers the achievement_stats_updated signal when completed.
+			</description>
+		</method>
+		<method name="query_all_friends_info">
+			<return type="void" />
+			<description>
+				Queries Epic Online Services for detailed information about all friends in the current user's friends list. This operation is asynchronous and will trigger multiple friend_info_updated signals as each friend's information is retrieved.
+			</description>
+		</method>
+		<method name="query_friend_info">
+			<return type="void" />
+			<param index="0" name="friend_id" type="String" />
+			<description>
+				Queries Epic Online Services for detailed information about a specific friend identified by their user ID. This operation is asynchronous and will trigger the friend_info_updated signal when completed.
 			</description>
 		</method>
 		<method name="query_friends">
@@ -303,6 +351,7 @@
 		</method>
 		<method name="tick">
 			<return type="void" />
+			<param index="0" name="delta" type="float" />
 			<description>
 				Updates the Epic Online Services platform, processing pending callbacks and maintaining connections. Should be called regularly (typically in _process or _physics_process) to ensure proper EOS functionality.
 			</description>
@@ -349,8 +398,15 @@
 				Emitted when multiple achievements are successfully unlocked simultaneously. The unlocked_achievement_ids array contains the IDs of all achievements that were unlocked in the batch operation.
 			</description>
 		</signal>
+		<signal name="friend_info_updated">
+			<param index="0" name="friend_info" type="Dictionary" />
+			<description>
+				Emitted when detailed friend information is received from Epic Online Services. The friend_info dictionary contains information such as user ID, display name, online status, and other available friend data. This signal is triggered by query_friend_info() and query_all_friends_info() operations.
+			</description>
+		</signal>
 		<signal name="friends_updated">
-			<param index="0" name="friends_list" type="Array" />
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="friends_list" type="Array" />
 			<description>
 				Emitted when friends list queries complete. The friends_list array contains dictionaries with friend information such as user IDs, display names, and online status.
 			</description>
