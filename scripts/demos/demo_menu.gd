@@ -6,10 +6,10 @@ extends Control
 @onready var platform_status: Label = $VBoxContainer/StatusPanel/StatusContainer/PlatformStatus
 @onready var user_status: Label = $VBoxContainer/StatusPanel/StatusContainer/UserStatus
 
-@onready var auth_button: Button = $VBoxContainer/DemosSection/DemosGrid/AuthenticationPanel/AuthenticationContainer/AuthButton
-@onready var friends_button: Button = $VBoxContainer/DemosSection/DemosGrid/FriendsPanel/FriendsContainer/FriendsButton
-@onready var achievements_button: Button = $VBoxContainer/DemosSection/DemosGrid/AchievementsPanel/AchievementsContainer/AchievementsButton
-@onready var leaderboards_button: Button = $VBoxContainer/DemosSection/DemosGrid/LeaderboardsPanel/LeaderboardsContainer/LeaderboardsButton
+@onready var auth_button: Button = $VBoxContainer/DemosSection/ScrollContainer/DemosGrid/AuthenticationPanel/AuthenticationContainer/AuthButton
+@onready var friends_button: Button = $VBoxContainer/DemosSection/ScrollContainer/DemosGrid/FriendsPanel/FriendsContainer/FriendsButton
+@onready var achievements_button: Button = $VBoxContainer/DemosSection/ScrollContainer/DemosGrid/AchievementsPanel/AchievementsContainer/AchievementsButton
+@onready var leaderboards_button: Button = $VBoxContainer/DemosSection/ScrollContainer/DemosGrid/LeaderboardsPanel/LeaderboardsContainer/LeaderboardsButton
 
 @onready var exit_button: Button = $VBoxContainer/FooterContainer/ExitButton
 @onready var refresh_button: Button = $VBoxContainer/FooterContainer/RefreshButton

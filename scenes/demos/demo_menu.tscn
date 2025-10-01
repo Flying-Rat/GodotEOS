@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://f2vw6qsltz7o5"]
+[gd_scene load_steps=2 format=3 uid="uid://b7h2lovdatcxe"]
 
 [ext_resource type="Script" path="res://scripts/demos/demo_menu.gd" id="1_menu"]
 
@@ -7,6 +7,8 @@ layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_menu")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
@@ -14,45 +16,29 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 50.0
-offset_top = 50.0
-offset_right = -50.0
-offset_bottom = -50.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Title" type="Label" parent="VBoxContainer"]
 layout_mode = 2
-text = "GodotEpic Demo Suite"
-horizontal_alignment = 1
-add_theme_font_size_override("font_size", 32)
-
-[node name="Subtitle" type="Label" parent="VBoxContainer"]
-layout_mode = 2
 text = "Epic Online Services Integration for Godot"
 horizontal_alignment = 1
-add_theme_font_size_override("font_size", 18)
-
-[node name="HSeparator" type="HSeparator" parent="VBoxContainer"]
-layout_mode = 2
 
 [node name="StatusPanel" type="Panel" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 size_flags_vertical = 0
 
 [node name="StatusContainer" type="VBoxContainer" parent="VBoxContainer/StatusPanel"]
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 14
+anchor_top = 0.5
 anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = 10.0
-offset_right = -20.0
-offset_bottom = -10.0
-
-[node name="StatusTitle" type="Label" parent="VBoxContainer/StatusPanel/StatusContainer"]
-layout_mode = 2
-text = "EpicOS Status"
-horizontal_alignment = 1
-add_theme_font_size_override("font_size", 20)
+anchor_bottom = 0.5
+offset_top = -25.0
+offset_bottom = 25.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="PlatformStatus" type="Label" parent="VBoxContainer/StatusPanel/StatusContainer"]
 layout_mode = 2
@@ -75,162 +61,159 @@ size_flags_vertical = 3
 layout_mode = 2
 text = "Available Demos"
 horizontal_alignment = 1
-add_theme_font_size_override("font_size", 24)
 
-[node name="DemosGrid" type="GridContainer" parent="VBoxContainer/DemosSection"]
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer/DemosSection"]
 layout_mode = 2
 size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="DemosGrid" type="GridContainer" parent="VBoxContainer/DemosSection/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 20
 columns = 2
 
-[node name="AuthenticationPanel" type="Panel" parent="VBoxContainer/DemosSection/DemosGrid"]
+[node name="AuthenticationPanel" type="Panel" parent="VBoxContainer/DemosSection/ScrollContainer/DemosGrid"]
+custom_minimum_size = Vector2(400, 200)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="AuthenticationContainer" type="VBoxContainer" parent="VBoxContainer/DemosSection/DemosGrid/AuthenticationPanel"]
+[node name="AuthenticationContainer" type="VBoxContainer" parent="VBoxContainer/DemosSection/ScrollContainer/DemosGrid/AuthenticationPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = 20.0
-offset_right = -20.0
-offset_bottom = -20.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="AuthTitle" type="Label" parent="VBoxContainer/DemosSection/DemosGrid/AuthenticationPanel/AuthenticationContainer"]
-layout_mode = 2
-text = "🔐 Authentication Demo"
-horizontal_alignment = 1
-add_theme_font_size_override("font_size", 18)
-
-[node name="AuthDescription" type="Label" parent="VBoxContainer/DemosSection/DemosGrid/AuthenticationPanel/AuthenticationContainer"]
+[node name="AuthTitle" type="Label" parent="VBoxContainer/DemosSection/ScrollContainer/DemosGrid/AuthenticationPanel/AuthenticationContainer"]
 layout_mode = 2
 size_flags_vertical = 3
-text = "Demonstrates different login methods:
-• Epic Games account login
-• Account portal login
-• Device ID login
-• Developer login
+text = "🔐 Authentication
 
-Shows platform initialization, user authentication status, and logout functionality."
-autowrap_mode = 3
+Login methods:
+• Epic Games account
+• Account portal
+• Device ID"
+horizontal_alignment = 1
 vertical_alignment = 1
+autowrap_mode = 3
 
-[node name="AuthButton" type="Button" parent="VBoxContainer/DemosSection/DemosGrid/AuthenticationPanel/AuthenticationContainer"]
+[node name="AuthButton" type="Button" parent="VBoxContainer/DemosSection/ScrollContainer/DemosGrid/AuthenticationPanel/AuthenticationContainer"]
 layout_mode = 2
 text = "Open Authentication Demo"
 
-[node name="FriendsPanel" type="Panel" parent="VBoxContainer/DemosSection/DemosGrid"]
+[node name="FriendsPanel" type="Panel" parent="VBoxContainer/DemosSection/ScrollContainer/DemosGrid"]
+custom_minimum_size = Vector2(400, 200)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="FriendsContainer" type="VBoxContainer" parent="VBoxContainer/DemosSection/DemosGrid/FriendsPanel"]
+[node name="FriendsContainer" type="VBoxContainer" parent="VBoxContainer/DemosSection/ScrollContainer/DemosGrid/FriendsPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = 20.0
-offset_right = -20.0
-offset_bottom = -20.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="FriendsTitle" type="Label" parent="VBoxContainer/DemosSection/DemosGrid/FriendsPanel/FriendsContainer"]
-layout_mode = 2
-text = "👥 Friends Demo"
-horizontal_alignment = 1
-add_theme_font_size_override("font_size", 18)
-
-[node name="FriendsDescription" type="Label" parent="VBoxContainer/DemosSection/DemosGrid/FriendsPanel/FriendsContainer"]
+[node name="FriendsTitle" type="Label" parent="VBoxContainer/DemosSection/ScrollContainer/DemosGrid/FriendsPanel/FriendsContainer"]
 layout_mode = 2
 size_flags_vertical = 3
-text = "Demonstrates friends functionality:
+text = "👥 Friends
+
+Friends functionality:
 • Query friends list
-• Get friend information
-• Display friend status
-• Cache management
+• Get friend info
+• Display status
 
-Requires user authentication to access friends features."
-autowrap_mode = 3
+Requires authentication."
+horizontal_alignment = 1
 vertical_alignment = 1
+autowrap_mode = 3
 
-[node name="FriendsButton" type="Button" parent="VBoxContainer/DemosSection/DemosGrid/FriendsPanel/FriendsContainer"]
+[node name="FriendsButton" type="Button" parent="VBoxContainer/DemosSection/ScrollContainer/DemosGrid/FriendsPanel/FriendsContainer"]
 layout_mode = 2
 text = "Open Friends Demo"
 
-[node name="AchievementsPanel" type="Panel" parent="VBoxContainer/DemosSection/DemosGrid"]
+[node name="AchievementsPanel" type="Panel" parent="VBoxContainer/DemosSection/ScrollContainer/DemosGrid"]
+custom_minimum_size = Vector2(400, 200)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="AchievementsContainer" type="VBoxContainer" parent="VBoxContainer/DemosSection/DemosGrid/AchievementsPanel"]
+[node name="AchievementsContainer" type="VBoxContainer" parent="VBoxContainer/DemosSection/ScrollContainer/DemosGrid/AchievementsPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = 20.0
-offset_right = -20.0
-offset_bottom = -20.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="AchievementsTitle" type="Label" parent="VBoxContainer/DemosSection/DemosGrid/AchievementsPanel/AchievementsContainer"]
-layout_mode = 2
-text = "🏆 Achievements Demo"
-horizontal_alignment = 1
-add_theme_font_size_override("font_size", 18)
-
-[node name="AchievementsDescription" type="Label" parent="VBoxContainer/DemosSection/DemosGrid/AchievementsPanel/AchievementsContainer"]
+[node name="AchievementsTitle" type="Label" parent="VBoxContainer/DemosSection/ScrollContainer/DemosGrid/AchievementsPanel/AchievementsContainer"]
 layout_mode = 2
 size_flags_vertical = 3
-text = "Demonstrates achievements system:
-• Query achievement definitions
+text = "🏆 Achievements
+
+Achievements system:
 • View player progress
 • Unlock achievements
-• Manage achievement statistics
-
-Integrates with Epic Games achievements."
-autowrap_mode = 3
+• Manage statistics"
+horizontal_alignment = 1
 vertical_alignment = 1
+autowrap_mode = 3
 
-[node name="AchievementsButton" type="Button" parent="VBoxContainer/DemosSection/DemosGrid/AchievementsPanel/AchievementsContainer"]
+[node name="AchievementsButton" type="Button" parent="VBoxContainer/DemosSection/ScrollContainer/DemosGrid/AchievementsPanel/AchievementsContainer"]
 layout_mode = 2
 text = "Open Achievements Demo"
 
-[node name="LeaderboardsPanel" type="Panel" parent="VBoxContainer/DemosSection/DemosGrid"]
+[node name="LeaderboardsPanel" type="Panel" parent="VBoxContainer/DemosSection/ScrollContainer/DemosGrid"]
+custom_minimum_size = Vector2(400, 200)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="LeaderboardsContainer" type="VBoxContainer" parent="VBoxContainer/DemosSection/DemosGrid/LeaderboardsPanel"]
+[node name="LeaderboardsContainer" type="VBoxContainer" parent="VBoxContainer/DemosSection/ScrollContainer/DemosGrid/LeaderboardsPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = 20.0
-offset_right = -20.0
-offset_bottom = -20.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="LeaderboardsTitle" type="Label" parent="VBoxContainer/DemosSection/DemosGrid/LeaderboardsPanel/LeaderboardsContainer"]
-layout_mode = 2
-text = "📊 Leaderboards Demo"
-horizontal_alignment = 1
-add_theme_font_size_override("font_size", 18)
-
-[node name="LeaderboardsDescription" type="Label" parent="VBoxContainer/DemosSection/DemosGrid/LeaderboardsPanel/LeaderboardsContainer"]
+[node name="LeaderboardsTitle" type="Label" parent="VBoxContainer/DemosSection/ScrollContainer/DemosGrid/LeaderboardsPanel/LeaderboardsContainer"]
 layout_mode = 2
 size_flags_vertical = 3
-text = "Demonstrates leaderboards system:
-• Query leaderboard definitions
-• View rankings and scores
+text = "📊 Leaderboards
+
+Leaderboards system:
+• View rankings
 • Submit statistics
-• Track user progress
-
-Integrates with Epic Games leaderboards."
-autowrap_mode = 3
+• Track progress"
+horizontal_alignment = 1
 vertical_alignment = 1
+autowrap_mode = 3
 
-[node name="LeaderboardsButton" type="Button" parent="VBoxContainer/DemosSection/DemosGrid/LeaderboardsPanel/LeaderboardsContainer"]
+[node name="LeaderboardsButton" type="Button" parent="VBoxContainer/DemosSection/ScrollContainer/DemosGrid/LeaderboardsPanel/LeaderboardsContainer"]
 layout_mode = 2
 text = "Open Leaderboards Demo"
 
@@ -241,25 +224,16 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="InfoTitle" type="Label" parent="VBoxContainer/InfoSection"]
+custom_minimum_size = Vector2(0, 140)
 layout_mode = 2
-text = "Getting Started"
-horizontal_alignment = 1
-add_theme_font_size_override("font_size", 20)
-
-[node name="InfoText" type="RichTextLabel" parent="VBoxContainer/InfoSection"]
-layout_mode = 2
-size_flags_vertical = 0
-custom_minimum_size = Vector2(0, 120)
-bbcode_enabled = true
 text = "[color=yellow]Before using the demos:[/color]
-
 1. Configure your Epic Games credentials in the [color=cyan]Authentication Demo[/color]
 2. Initialize the EOS platform using the [color=green]Initialize EOS Platform[/color] button
 3. Login using one of the available authentication methods
 4. Explore the other demos to see EpicOS features in action
 
 [color=red]Note: You need valid Epic Games Developer Portal credentials for most features to work properly.[/color]"
-fit_content = true
+horizontal_alignment = 1
 
 [node name="HSeparator4" type="HSeparator" parent="VBoxContainer"]
 layout_mode = 2

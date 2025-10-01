@@ -1,12 +1,14 @@
 [gd_scene load_steps=2 format=3 uid="uid://b6ag7wphgp6m0"]
 
-[ext_resource type="Script" uid="uid://xd4v7ogdrv48" path="res://scripts/main_demo.gd" id="1_2v3c4"]
+[ext_resource type="Script" path="res://scripts/main_demo.gd" id="1_2v3c4"]
 
 [node name="MainDemo" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_2v3c4")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
@@ -18,6 +20,8 @@ offset_left = 20.0
 offset_top = 20.0
 offset_right = -20.0
 offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Title" type="Label" parent="VBoxContainer"]
 layout_mode = 2
@@ -51,8 +55,8 @@ text = "Login with Epic Games"
 
 [node name="LogoutButton" type="Button" parent="VBoxContainer/LoginSection/LoginContainer"]
 layout_mode = 2
-text = "Logout"
 disabled = true
+text = "Logout"
 
 [node name="HSeparator3" type="HSeparator" parent="VBoxContainer"]
 layout_mode = 2
@@ -70,8 +74,8 @@ columns = 3
 
 [node name="AchievementButton" type="Button" parent="VBoxContainer/FeaturesSection/FeaturesGrid"]
 layout_mode = 2
-text = "Unlock Achievement"
 disabled = true
+text = "Unlock Achievement"
 
 [node name="StatsSection" type="VBoxContainer" parent="VBoxContainer/FeaturesSection/FeaturesGrid"]
 layout_mode = 2
@@ -85,28 +89,28 @@ layout_mode = 2
 
 [node name="IngestStatButton" type="Button" parent="VBoxContainer/FeaturesSection/FeaturesGrid/StatsSection/StatsButtons"]
 layout_mode = 2
-text = "Ingest Stat"
 disabled = true
+text = "Ingest Stat"
 
 [node name="QueryStatsButton" type="Button" parent="VBoxContainer/FeaturesSection/FeaturesGrid/StatsSection/StatsButtons"]
 layout_mode = 2
-text = "Query Stats"
 disabled = true
+text = "Query Stats"
 
 [node name="LeaderboardButton" type="Button" parent="VBoxContainer/FeaturesSection/FeaturesGrid"]
 layout_mode = 2
-text = "Leaderboard Test"
 disabled = true
+text = "Leaderboard Test"
 
 [node name="SaveButton" type="Button" parent="VBoxContainer/FeaturesSection/FeaturesGrid"]
 layout_mode = 2
-text = "Save to Cloud"
 disabled = true
+text = "Save to Cloud"
 
 [node name="LoadButton" type="Button" parent="VBoxContainer/FeaturesSection/FeaturesGrid"]
 layout_mode = 2
-text = "Load from Cloud"
 disabled = true
+text = "Load from Cloud"
 
 [node name="TestButton" type="Button" parent="VBoxContainer/FeaturesSection/FeaturesGrid"]
 layout_mode = 2
