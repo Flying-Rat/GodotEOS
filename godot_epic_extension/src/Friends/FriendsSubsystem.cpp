@@ -6,7 +6,7 @@
 #include "../Utils/AccountHelpers.h"
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/core/error_macros.hpp>
-#include "../eos_sdk/Include/eos_friends.h"
+#include <eos_friends.h>
 
 using namespace godot;
 

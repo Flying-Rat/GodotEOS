@@ -1,9 +1,9 @@
 #pragma once
 
 #include "../Utils/ISubsystem.h"
-#include "../eos_sdk/Include/eos_sdk.h"
-#include "../eos_sdk/Include/eos_base.h"
-#include "../eos_sdk/Include/eos_auth.h"
+#include <eos_sdk.h>
+#include <eos_base.h>
+#include <eos_auth.h>
 #include <godot_cpp/variant/string.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/callable.hpp>

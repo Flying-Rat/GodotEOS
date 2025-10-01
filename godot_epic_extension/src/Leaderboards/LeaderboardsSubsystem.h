@@ -1,9 +1,9 @@
 #pragma once
 
 #include "ILeaderboardsSubsystem.h"
-#include "../eos_sdk/Include/eos_sdk.h"
-#include "../eos_sdk/Include/eos_leaderboards.h"
-#include "../eos_sdk/Include/eos_stats.h"
+#include <eos_sdk.h>
+#include <eos_leaderboards.h>
+#include <eos_stats.h>
 #include <godot_cpp/classes/ref.hpp>
 #include <godot_cpp/variant/string.hpp>
 #include <godot_cpp/variant/array.hpp>

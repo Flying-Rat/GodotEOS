@@ -1,7 +1,7 @@
 #pragma once
 
 #include "IFriendsSubsystem.h"
-#include "../eos_sdk/Include/eos_friends_types.h"
+#include <eos_friends_types.h>
 #include <godot_cpp/variant/array.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/callable.hpp>

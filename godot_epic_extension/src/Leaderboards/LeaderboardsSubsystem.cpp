@@ -4,8 +4,8 @@
 #include "../Authentication/IAuthenticationSubsystem.h"
 #include "../Authentication/AuthenticationSubsystem.h"
 #include "../Utils/AccountHelpers.h"
-#include "../eos_sdk/Include/eos_sdk.h"
-#include "../eos_sdk/Include/eos_leaderboards.h"
+#include <eos_sdk.h>
+#include <eos_leaderboards.h>
 #include <godot_cpp/core/error_macros.hpp>
 #include <memory>
 #include <string>

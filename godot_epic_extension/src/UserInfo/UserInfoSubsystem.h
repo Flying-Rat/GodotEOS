@@ -1,8 +1,8 @@
 #pragma once
 
 #include "IUserInfoSubsystem.h"
-#include "../eos_sdk/Include/eos_sdk.h"
-#include "../eos_sdk/Include/eos_userinfo.h"
+#include <eos_sdk.h>
+#include <eos_userinfo.h>
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/callable.hpp>
 #include <map>

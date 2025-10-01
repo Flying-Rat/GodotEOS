@@ -1,7 +1,7 @@
 #include "PlatformSubsystem.h"
-#include "../eos_sdk/Include/eos_sdk.h"
-#include "../eos_sdk/Include/eos_logging.h"
-#include "../eos_sdk/Include/eos_achievements.h"
+#include <eos_sdk.h>
+#include <eos_logging.h>
+#include <eos_achievements.h>
 #include <godot_cpp/core/error_macros.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 

@@ -2,7 +2,7 @@
 
 #include "../Utils/ISubsystem.h"
 #include "../Utils/EpicInitOptions.h"
-#include "../eos_sdk/Include/eos_types.h"
+#include <eos_types.h>
 #include <godot_cpp/variant/string.hpp>
 
 namespace godot {

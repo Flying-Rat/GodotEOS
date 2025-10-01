@@ -1,11 +1,11 @@
 #pragma once
 
 #include "IAuthenticationSubsystem.h"
-#include "../eos_sdk/Include/eos_sdk.h"
-#include "../eos_sdk/Include/eos_base.h"
-#include "../eos_sdk/Include/eos_auth.h"
-#include "../eos_sdk/Include/eos_connect.h"
-#include "../eos_sdk/Include/eos_logging.h"
+#include <eos_sdk.h>
+#include <eos_base.h>
+#include <eos_auth.h>
+#include <eos_connect.h>
+#include <eos_logging.h>
 #include <godot_cpp/variant/string.hpp>
 #include <godot_cpp/variant/callable.hpp>
 

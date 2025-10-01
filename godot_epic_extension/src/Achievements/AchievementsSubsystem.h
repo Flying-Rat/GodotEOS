@@ -1,8 +1,8 @@
 #pragma once
 
 #include "IAchievementsSubsystem.h"
-#include "../eos_sdk/Include/eos_achievements_types.h"
-#include "../eos_sdk/Include/eos_stats_types.h"
+#include <eos_achievements_types.h>
+#include <eos_stats_types.h>
 #include <godot_cpp/variant/array.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/callable.hpp>

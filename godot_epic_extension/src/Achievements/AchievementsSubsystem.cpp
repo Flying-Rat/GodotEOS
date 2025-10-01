@@ -3,9 +3,9 @@
 #include "../Platform/IPlatformSubsystem.h"
 #include "../Authentication/IAuthenticationSubsystem.h"
 #include "../Utils/AccountHelpers.h"
-#include "../eos_sdk/Include/eos_sdk.h"
-#include "../eos_sdk/Include/eos_achievements.h"
-#include "../eos_sdk/Include/eos_stats.h"
+#include <eos_sdk.h>
+#include <eos_achievements.h>
+#include <eos_stats.h>
 #include <godot_cpp/core/error_macros.hpp>
 #include <memory>
 #include <string>
