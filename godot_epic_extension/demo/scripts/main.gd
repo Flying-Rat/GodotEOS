@@ -32,9 +32,6 @@ extends Node2D
 #   • Query/Get User Scores (requires Product User ID)
 #   • Ingest Leaderboard Stats (requires Product User ID)
 #
-# ⚙️ SYSTEM TAB - Utility functions
-#   • Clear Output
-#
 # Note: Features requiring "Product User ID" need cross-platform Connect service,
 # which may not be available for developer accounts.
 # ============================================================================
@@ -93,7 +90,7 @@ var godot_epic: GodotEpic = null
 # Auto-test variables
 var auto_test_timer: Timer = null
 var auto_test_step: int = 0
-var auto_test_enabled: bool = true  # Set to false to disable auto-test
+var auto_test_enabled: bool = false  # Set to false to disable auto-test
 var auto_test_time_accumulator: float = 0.0
 var auto_test_current_delay: float = 0.0
 
@@ -131,13 +128,13 @@ func _ready():
 	_connect_system_buttons()
 
 	var init_options = {
-		"product_name": "GodotEpic Demo",
+		"product_name": "",
 		"product_version": "1.0.0",
-		"product_id": "your_product_id_here",
-		"sandbox_id": "your_sandbox_id_here",
-		"deployment_id": "your_deployment_id_here",
-		"client_id": "your_client_id_here",
-		"client_secret": "your_client_secret_here",
+		"product_id": "",
+		"sandbox_id": "",
+		"deployment_id": "",
+		"client_id": "",
+		"client_secret": "",
 		"encryption_key": "1111111111111111111111111111111111111111111111111111111"  # Optional but recommended
 	}
 
