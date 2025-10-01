@@ -3,267 +3,535 @@ extends Node
 # EpicOS Singleton - Main interface for Epic Online Services
 # Integrates with the GodotEpic GDExtension for actual EOS SDK functionality
 
+# Authentication signals
 signal login_completed(success: bool, user_info: Dictionary)
-signal achievement_unlocked(achievement_id: String)
-signal stats_updated(stats: Dictionary)
-signal leaderboard_retrieved(leaderboard_data: Array)
-signal file_saved(success: bool, filename: String)
-signal file_loaded(success: bool, filename: String, data: String)
+signal logout_completed(success: bool)
+
+# Achievement signals
+signal achievement_definitions_completed(success: bool, definitions: Array)
+signal player_achievements_completed(success: bool, achievements: Array)
+signal achievements_unlocked_completed(success: bool, unlocked_achievement_ids: Array)
+signal achievement_stats_completed(success: bool, stats: Array)
+
+# Leaderboard signals
+signal leaderboard_definitions_completed(success: bool, definitions: Array)
+signal leaderboard_ranks_completed(success: bool, ranks: Array)
+signal leaderboard_user_scores_completed(success: bool, user_scores: Dictionary)
+
+# Friends signals
+signal friends_query_completed(success: bool, friends_list: Array)
+signal friend_info_query_completed(success: bool, friend_info: Dictionary)
 
 var _godot_epic: GodotEpic = null
 var _initialized: bool = false
-var _logged_in: bool = false
 var _debug_mode: bool = false
 
 func _ready():
-	print("EpicOS: Initializing Epic Online Services...")
-	# Get the GodotEpic singleton from the GDExtension
-	_godot_epic = GodotEpic.get_singleton()
-	if not _godot_epic:
-		print("EpicOS: ERROR - GodotEpic GDExtension not found!")
-		print("EpicOS: Make sure the GodotEpic extension is properly installed and enabled.")
-		return
+    print("EpicOS: Initializing Epic Online Services...")
+    # Get the GodotEpic singleton from the GDExtension
+    _godot_epic = GodotEpic.get_singleton()
+    if not _godot_epic:
+        print("EpicOS: ERROR - GodotEpic GDExtension not found!")
+        print("EpicOS: Make sure the GodotEpic extension is properly installed and enabled.")
+        return
 
-	print("EpicOS: GodotEpic GDExtension found successfully")
+    print("EpicOS: GodotEpic GDExtension found successfully")
+    _setup_signal_connections()
+
+func _setup_signal_connections():
+    """Connect to GDExtension signals"""
+    if _godot_epic:
+        # Connect authentication signals
+        _godot_epic.connect("authentication_completed", _on_authentication_completed)
+        _godot_epic.connect("logout_completed", _on_logout_completed)
+
+        # Connect achievement signals
+        _godot_epic.connect("achievement_definitions_completed", _on_achievement_definitions_completed)
+        _godot_epic.connect("player_achievements_completed", _on_player_achievements_completed)
+        _godot_epic.connect("achievements_unlocked_completed", _on_achievements_unlocked_completed)
+        _godot_epic.connect("achievement_stats_completed", _on_achievement_stats_completed)
+
+        # Connect leaderboard signals
+        _godot_epic.connect("leaderboard_definitions_completed", _on_leaderboard_definitions_completed)
+        _godot_epic.connect("leaderboard_ranks_completed", _on_leaderboard_ranks_completed)
+        _godot_epic.connect("leaderboard_user_scores_completed", _on_leaderboard_user_scores_completed)
+
+        # Connect friends signals
+        _godot_epic.connect("friends_query_completed", _on_friends_query_completed)
+        _godot_epic.connect("friend_info_query_completed", _on_friend_info_query_completed)
 
 func initialize(config: Dictionary = {}) -> bool:
-	"""Initialize the EOS SDK with configuration options"""
-	if _debug_mode:
-		print("EpicOS: initialize() called")
+    """Initialize the EOS SDK with configuration options"""
+    if _debug_mode:
+        print("EpicOS: initialize() called")
 
-	if not _godot_epic:
-		print("EpicOS: ERROR - GodotEpic GDExtension not available")
-		return false
+    if not _godot_epic:
+        print("EpicOS: ERROR - GodotEpic GDExtension not available")
+        return false
 
-	if _initialized:
-		print("EpicOS: Already initialized")
-		return true
+    if _initialized:
+        print("EpicOS: Already initialized")
+        return true
 
-	# Default configuration - override with your actual Epic credentials
-	var default_config = {
-		"product_name": "GodotEpic",
-		"product_version": "1.0.0",
-		"product_id": "",  # Required: Get from Epic Developer Portal
-		"sandbox_id": "",  # Required: Get from Epic Developer Portal
-		"deployment_id": "",  # Required: Get from Epic Developer Portal
-		"client_id": "",  # Required: Get from Epic Developer Portal
-		"client_secret": ""  # Required: Get from Epic Developer Portal
-	}
+    # Default configuration - override with your actual Epic credentials
+    var default_config = {
+        "product_name": "GodotEpic",
+        "product_version": "1.0.0",
+        "product_id": "",  # Required: Get from Epic Developer Portal
+        "sandbox_id": "",  # Required: Get from Epic Developer Portal
+        "deployment_id": "",  # Required: Get from Epic Developer Portal
+        "client_id": "",  # Required: Get from Epic Developer Portal
+        "client_secret": ""  # Required: Get from Epic Developer Portal
+    }
 
-	# Merge user config with defaults
-	for key in config:
-		default_config[key] = config[key]
+    # Merge user config with defaults
+    for key in config:
+        default_config[key] = config[key]
 
-	# Validate required fields
-	var required_fields = ["product_id", "sandbox_id", "deployment_id", "client_id", "client_secret"]
-	for field in required_fields:
-		if default_config[field] == "":
-			print("EpicOS: ERROR - Missing required field: ", field)
-			print("EpicOS: Please provide all Epic credentials in the configuration")
-			return false
+    # Validate required fields
+    var required_fields = ["product_id", "sandbox_id", "deployment_id", "client_id", "client_secret"]
+    for field in required_fields:
+        if default_config[field] == "":
+            print("EpicOS: ERROR - Missing required field: ", field)
+            print("EpicOS: Please provide all Epic credentials in the configuration")
+            return false
 
-	print("EpicOS: Initializing EOS SDK...")
-	_initialized = _godot_epic.initialize_platform(default_config)
+    print("EpicOS: Initializing EOS SDK...")
+    _initialized = _godot_epic.initialize_platform(default_config)
 
-	if _initialized:
-		print("EpicOS: EOS SDK initialized successfully")
-	else:
-		print("EpicOS: ERROR - Failed to initialize EOS SDK")
+    if _initialized:
+        print("EpicOS: EOS SDK initialized successfully")
+    else:
+        print("EpicOS: ERROR - Failed to initialize EOS SDK")
 
-	return _initialized
+    return _initialized
 
 func set_debug_mode(enabled: bool):
-	"""Enable or disable debug logging"""
-	_debug_mode = enabled
-	print("EpicOS: Debug mode ", "enabled" if enabled else "disabled")
+    """Enable or disable debug logging"""
+    _debug_mode = enabled
+    print("EpicOS: Debug mode ", "enabled" if enabled else "disabled")
 
 func tick(delta: float = 0.0):
-	"""Tick the EOS platform - should be called every frame"""
-	if _godot_epic and _initialized:
-		_godot_epic.tick(delta)
+    """Tick the EOS platform - should be called every frame"""
+    if _godot_epic and _initialized:
+        _godot_epic.tick(delta)
 
 func is_platform_initialized() -> bool:
-	"""Check if the EOS platform is initialized"""
-	if _godot_epic:
-		return _godot_epic.is_platform_initialized()
-	return false
+    """Check if the EOS platform is initialized"""
+    if _godot_epic:
+        return _godot_epic.is_platform_initialized()
+    return false
 
 func get_platform_handle():
-	"""Get the EOS platform handle (for advanced usage)"""
-	if _godot_epic:
-		return _godot_epic.get_platform_handle()
-	return null
-
-func login():
-	"""Authenticate with Epic Games - Currently a placeholder"""
-	if _debug_mode:
-		print("EpicOS: login() called")
-
-	if not _initialized:
-		print("EpicOS: Error - Not initialized. Call initialize() first.")
-		return
-
-	# TODO: Implement EOS authentication when Auth interface is added to GDExtension
-	print("EpicOS: Login functionality not yet implemented in GDExtension")
-	print("EpicOS: This will be added when EOS Auth interface is integrated")
-
-	# For now, simulate login for testing
-	_logged_in = true
-	var user_info = {
-		"display_name": "TestUser",
-		"user_id": "test_user_123",
-		"epic_account_id": "epic_test_123",
-		"note": "Simulated login - real auth coming soon"
-	}
-
-	login_completed.emit(true, user_info)
-	print("EpicOS: Simulated login successful - ", user_info.display_name)
-
-func logout():
-	"""Sign out the current user"""
-	if _debug_mode:
-		print("EpicOS: logout() called")
-
-	# TODO: Implement EOS logout when Auth interface is added
-	_logged_in = false
-	print("EpicOS: User logged out (simulated)")
-
-func is_logged_in() -> bool:
-	"""Check if user is currently authenticated"""
-	return _logged_in
+    """Get the EOS platform handle (for advanced usage)"""
+    if _godot_epic:
+        return _godot_epic.get_platform_handle()
+    return null
 
 func shutdown():
-	"""Shutdown the EOS platform"""
-	if _debug_mode:
-		print("EpicOS: shutdown() called")
+    """Shutdown the EOS platform"""
+    if _debug_mode:
+        print("EpicOS: shutdown() called")
 
-	if _godot_epic and _initialized:
-		_godot_epic.shutdown_platform()
-		_initialized = false
-		_logged_in = false
-		print("EpicOS: EOS platform shutdown complete")
+    if _godot_epic and _initialized:
+        _godot_epic.shutdown_platform()
+        _initialized = false
+        print("EpicOS: EOS platform shutdown complete")
 
 # =============================================================================
-# PLACEHOLDER METHODS - These will be implemented when EOS interfaces are added
-# Currently these are placeholders that show the intended API structure
+# AUTHENTICATION METHODS
 # =============================================================================
+
+func login_with_epic_account(email: String, password: String):
+    """Authenticate with Epic Games using email and password"""
+    if _debug_mode:
+        print("EpicOS: login_with_epic_account() called")
+
+    if not _initialized:
+        print("EpicOS: Error - Not initialized. Call initialize() first.")
+        return
+
+    _godot_epic.login_with_epic_account(email, password)
+
+func login_with_account_portal():
+    """Authenticate with Epic Games using the account portal"""
+    if _debug_mode:
+        print("EpicOS: login_with_account_portal() called")
+
+    if not _initialized:
+        print("EpicOS: Error - Not initialized. Call initialize() first.")
+        return
+
+    _godot_epic.login_with_account_portal()
+
+func login_with_device_id(display_name: String):
+    """Authenticate with Epic Games using device ID"""
+    if _debug_mode:
+        print("EpicOS: login_with_device_id() called")
+
+    if not _initialized:
+        print("EpicOS: Error - Not initialized. Call initialize() first.")
+        return
+
+    _godot_epic.login_with_device_id(display_name)
+
+func login_with_dev(display_name: String):
+    """Authenticate with Epic Games using developer credentials (for testing)"""
+    if _debug_mode:
+        print("EpicOS: login_with_dev() called")
+
+    if not _initialized:
+        print("EpicOS: Error - Not initialized. Call initialize() first.")
+        return
+
+    _godot_epic.login_with_dev(display_name)
+
+func logout():
+    """Sign out the current user"""
+    if _debug_mode:
+        print("EpicOS: logout() called")
+
+    if not _initialized:
+        print("EpicOS: Error - Not initialized. Call initialize() first.")
+        return
+
+    _godot_epic.logout()
+
+func is_user_logged_in() -> bool:
+    """Check if user is currently authenticated"""
+    if _godot_epic:
+        return _godot_epic.is_user_logged_in()
+    return false
+
+func get_current_username() -> String:
+    """Get the current user's display name"""
+    if _godot_epic:
+        return _godot_epic.get_current_username()
+    return ""
+
+func get_epic_account_id() -> String:
+    """Get the current user's Epic Account ID"""
+    if _godot_epic:
+        return _godot_epic.get_epic_account_id()
+    return ""
+
+func get_product_user_id() -> String:
+    """Get the current user's Product User ID"""
+    if _godot_epic:
+        return _godot_epic.get_product_user_id()
+    return ""
+
+# =============================================================================
+# FRIENDS METHODS
+# =============================================================================
+
+func query_friends():
+    """Query the user's friends list"""
+    if _debug_mode:
+        print("EpicOS: query_friends() called")
+
+    if not _initialized:
+        print("EpicOS: Error - Not initialized. Call initialize() first.")
+        return
+
+    _godot_epic.query_friends()
+
+func get_friends_list() -> Array:
+    """Get the cached friends list"""
+    if _godot_epic:
+        return _godot_epic.get_friends_list()
+    return []
+
+func get_friend_info(friend_id: String) -> Dictionary:
+    """Get cached information about a specific friend"""
+    if _godot_epic:
+        return _godot_epic.get_friend_info(friend_id)
+    return {}
+
+func query_friend_info(friend_id: String):
+    """Query information about a specific friend"""
+    if _debug_mode:
+        print("EpicOS: query_friend_info() called for friend: ", friend_id)
+
+    if not _initialized:
+        print("EpicOS: Error - Not initialized. Call initialize() first.")
+        return
+
+    _godot_epic.query_friend_info(friend_id)
+
+func query_all_friends_info():
+    """Query information about all friends"""
+    if _debug_mode:
+        print("EpicOS: query_all_friends_info() called")
+
+    if not _initialized:
+        print("EpicOS: Error - Not initialized. Call initialize() first.")
+        return
+
+    _godot_epic.query_all_friends_info()
+
+# =============================================================================
+# ACHIEVEMENTS METHODS
+# =============================================================================
+
+func query_achievement_definitions():
+    """Query all achievement definitions"""
+    if _debug_mode:
+        print("EpicOS: query_achievement_definitions() called")
+
+    if not _initialized:
+        print("EpicOS: Error - Not initialized. Call initialize() first.")
+        return
+
+    _godot_epic.query_achievement_definitions()
+
+func query_player_achievements():
+    """Query the player's achievement progress"""
+    if _debug_mode:
+        print("EpicOS: query_player_achievements() called")
+
+    if not _initialized:
+        print("EpicOS: Error - Not initialized. Call initialize() first.")
+        return
+
+    _godot_epic.query_player_achievements()
 
 func unlock_achievement(achievement_id: String):
-	"""Unlock an achievement - PLACEHOLDER"""
-	if _debug_mode:
-		print("EpicOS: unlock_achievement(", achievement_id, ") called")
+    """Unlock a single achievement"""
+    if _debug_mode:
+        print("EpicOS: unlock_achievement() called for: ", achievement_id)
 
-	if not is_platform_initialized():
-		print("EpicOS: Error - Platform not initialized")
-		return
+    if not _initialized:
+        print("EpicOS: Error - Not initialized. Call initialize() first.")
+        return
 
-	# TODO: Implement when EOS Achievements interface is added to GDExtension
-	print("EpicOS: Achievement unlock not yet implemented - add EOS Achievements interface")
-	print("EpicOS: Achievement ID: ", achievement_id)
+    _godot_epic.unlock_achievement(achievement_id)
 
-func query_achievements():
-	"""Query all achievements - PLACEHOLDER"""
-	if _debug_mode:
-		print("EpicOS: query_achievements() called")
+func unlock_achievements(achievement_ids: Array):
+    """Unlock multiple achievements"""
+    if _debug_mode:
+        print("EpicOS: unlock_achievements() called for: ", achievement_ids)
 
-	if not is_platform_initialized():
-		print("EpicOS: Error - Platform not initialized")
-		return
+    if not _initialized:
+        print("EpicOS: Error - Not initialized. Call initialize() first.")
+        return
 
-	# TODO: Implement when EOS Achievements interface is added to GDExtension
-	print("EpicOS: Achievement query not yet implemented - add EOS Achievements interface")
+    _godot_epic.unlock_achievements(achievement_ids)
 
-func update_stat(stat_id: String, value: int):
-	"""Update a player statistic - PLACEHOLDER"""
-	if _debug_mode:
-		print("EpicOS: update_stat(", stat_id, ", ", value, ") called")
+func get_achievement_definitions() -> Array:
+    """Get cached achievement definitions"""
+    if _godot_epic:
+        return _godot_epic.get_achievement_definitions()
+    return []
 
-	if not is_platform_initialized():
-		print("EpicOS: Error - Platform not initialized")
-		return
+func get_player_achievements() -> Array:
+    """Get cached player achievements"""
+    if _godot_epic:
+        return _godot_epic.get_player_achievements()
+    return []
 
-	# TODO: Implement when EOS Stats interface is added to GDExtension
-	print("EpicOS: Stats update not yet implemented - add EOS Stats interface")
-	print("EpicOS: Stat: ", stat_id, " = ", value)
+func get_achievement_definition(achievement_id: String) -> Dictionary:
+    """Get a specific achievement definition"""
+    if _godot_epic:
+        return _godot_epic.get_achievement_definition(achievement_id)
+    return {}
 
-func get_stats() -> Dictionary:
-	"""Get current player statistics - PLACEHOLDER"""
-	if _debug_mode:
-		print("EpicOS: get_stats() called")
+func get_player_achievement(achievement_id: String) -> Dictionary:
+    """Get a specific player achievement"""
+    if _godot_epic:
+        return _godot_epic.get_player_achievement(achievement_id)
+    return {}
 
-	if not is_platform_initialized():
-		print("EpicOS: Error - Platform not initialized")
-		return {}
+# =============================================================================
+# ACHIEVEMENT STATS METHODS
+# =============================================================================
 
-	# TODO: Implement when EOS Stats interface is added to GDExtension
-	print("EpicOS: Stats retrieval not yet implemented - add EOS Stats interface")
-	return {}
+func ingest_achievement_stat(stat_name: String, amount: int):
+    """Ingest an achievement statistic"""
+    if _debug_mode:
+        print("EpicOS: ingest_achievement_stat() called for: ", stat_name, " amount: ", amount)
 
-func submit_score(board_id: String, score: int):
-	"""Submit a score to a leaderboard - PLACEHOLDER"""
-	if _debug_mode:
-		print("EpicOS: submit_score(", board_id, ", ", score, ") called")
+    if not _initialized:
+        print("EpicOS: Error - Not initialized. Call initialize() first.")
+        return
 
-	if not is_platform_initialized():
-		print("EpicOS: Error - Platform not initialized")
-		return
+    _godot_epic.ingest_achievement_stat(stat_name, amount)
 
-	# TODO: Implement when EOS Leaderboards interface is added to GDExtension
-	print("EpicOS: Leaderboard submission not yet implemented - add EOS Leaderboards interface")
-	print("EpicOS: Board: ", board_id, ", Score: ", score)
+func query_achievement_stats():
+    """Query achievement statistics"""
+    if _debug_mode:
+        print("EpicOS: query_achievement_stats() called")
 
-func get_leaderboard(board_id: String, count: int = 10):
-	"""Get leaderboard entries - PLACEHOLDER"""
-	if _debug_mode:
-		print("EpicOS: get_leaderboard(", board_id, ", ", count, ") called")
+    if not _initialized:
+        print("EpicOS: Error - Not initialized. Call initialize() first.")
+        return
 
-	if not is_platform_initialized():
-		print("EpicOS: Error - Platform not initialized")
-		return
+    _godot_epic.query_achievement_stats()
 
-	# TODO: Implement when EOS Leaderboards interface is added to GDExtension
-	print("EpicOS: Leaderboard retrieval not yet implemented - add EOS Leaderboards interface")
-	print("EpicOS: Board: ", board_id, ", Count: ", count)
+func get_achievement_stats() -> Array:
+    """Get cached achievement statistics"""
+    if _godot_epic:
+        return _godot_epic.get_achievement_stats()
+    return []
 
-func save_file(filename: String, data: String):
-	"""Save data to Epic cloud storage - PLACEHOLDER"""
-	if _debug_mode:
-		print("EpicOS: save_file(", filename, ") called")
+func get_achievement_stat(stat_name: String) -> Dictionary:
+    """Get a specific achievement statistic"""
+    if _godot_epic:
+        return _godot_epic.get_achievement_stat(stat_name)
+    return {}
 
-	if not is_platform_initialized():
-		print("EpicOS: Error - Platform not initialized")
-		return
+# =============================================================================
+# LEADERBOARDS METHODS
+# =============================================================================
 
-	# TODO: Implement when EOS Player Data Storage interface is added to GDExtension
-	print("EpicOS: Cloud save not yet implemented - add EOS Player Data Storage interface")
-	print("EpicOS: File: ", filename, ", Data length: ", data.length())
+func query_leaderboard_definitions():
+    """Query all leaderboard definitions"""
+    if _debug_mode:
+        print("EpicOS: query_leaderboard_definitions() called")
 
-func load_file(filename: String):
-	"""Load data from Epic cloud storage - PLACEHOLDER"""
-	if _debug_mode:
-		print("EpicOS: load_file(", filename, ") called")
+    if not _initialized:
+        print("EpicOS: Error - Not initialized. Call initialize() first.")
+        return
 
-	if not is_platform_initialized():
-		print("EpicOS: Error - Platform not initialized")
-		return
+    _godot_epic.query_leaderboard_definitions()
 
-	# TODO: Implement when EOS Player Data Storage interface is added to GDExtension
-	print("EpicOS: Cloud load not yet implemented - add EOS Player Data Storage interface")
-	print("EpicOS: File: ", filename)
+func query_leaderboard_ranks(leaderboard_id: String, limit: int = 100):
+    """Query leaderboard ranks"""
+    if _debug_mode:
+        print("EpicOS: query_leaderboard_ranks() called for: ", leaderboard_id, " limit: ", limit)
 
-func test_subsystem_manager():
-	"""Test the SubsystemManager functionality"""
-	if _godot_epic:
-		_godot_epic.test_subsystem_manager()
-	else:
-		print("EpicOS: ERROR - GodotEpic not available for testing")
+    if not _initialized:
+        print("EpicOS: Error - Not initialized. Call initialize() first.")
+        return
+
+    _godot_epic.query_leaderboard_ranks(leaderboard_id, limit)
+
+func query_leaderboard_user_scores(leaderboard_id: String, user_ids: Array):
+    """Query specific user scores for a leaderboard"""
+    if _debug_mode:
+        print("EpicOS: query_leaderboard_user_scores() called for: ", leaderboard_id, " users: ", user_ids)
+
+    if not _initialized:
+        print("EpicOS: Error - Not initialized. Call initialize() first.")
+        return
+
+    _godot_epic.query_leaderboard_user_scores(leaderboard_id, user_ids)
+
+func ingest_stat(stat_name: String, value: int):
+    """Ingest a single statistic for leaderboards"""
+    if _debug_mode:
+        print("EpicOS: ingest_stat() called for: ", stat_name, " value: ", value)
+
+    if not _initialized:
+        print("EpicOS: Error - Not initialized. Call initialize() first.")
+        return
+
+    _godot_epic.ingest_stat(stat_name, value)
+
+func ingest_stats(stats: Dictionary):
+    """Ingest multiple statistics for leaderboards"""
+    if _debug_mode:
+        print("EpicOS: ingest_stats() called with: ", stats)
+
+    if not _initialized:
+        print("EpicOS: Error - Not initialized. Call initialize() first.")
+        return
+
+    _godot_epic.ingest_stats(stats)
+
+func get_leaderboard_definitions() -> Array:
+    """Get cached leaderboard definitions"""
+    if _godot_epic:
+        return _godot_epic.get_leaderboard_definitions()
+    return []
+
+func get_leaderboard_ranks() -> Array:
+    """Get cached leaderboard ranks"""
+    if _godot_epic:
+        return _godot_epic.get_leaderboard_ranks()
+    return []
+
+func get_leaderboard_user_scores() -> Dictionary:
+    """Get cached leaderboard user scores"""
+    if _godot_epic:
+        return _godot_epic.get_leaderboard_user_scores()
+    return {}
+
+# =============================================================================
+# SIGNAL HANDLERS
+# =============================================================================
+
+func _on_authentication_completed(success: bool, user_info: Dictionary):
+    """Handle authentication completion"""
+    if _debug_mode:
+        print("EpicOS: Authentication completed - Success: ", success)
+    login_completed.emit(success, user_info)
+
+func _on_logout_completed(success: bool):
+    """Handle logout completion"""
+    if _debug_mode:
+        print("EpicOS: Logout completed - Success: ", success)
+    logout_completed.emit(success)
+
+func _on_achievement_definitions_completed(success: bool, definitions: Array):
+    """Handle achievement definitions query completion"""
+    if _debug_mode:
+        print("EpicOS: Achievement definitions completed - Success: ", success, " Count: ", definitions.size())
+    achievement_definitions_completed.emit(success, definitions)
+
+func _on_player_achievements_completed(success: bool, achievements: Array):
+    """Handle player achievements query completion"""
+    if _debug_mode:
+        print("EpicOS: Player achievements completed - Success: ", success, " Count: ", achievements.size())
+    player_achievements_completed.emit(success, achievements)
+
+func _on_achievements_unlocked_completed(success: bool, unlocked_achievement_ids: Array):
+    """Handle achievement unlock completion"""
+    if _debug_mode:
+        print("EpicOS: Achievements unlocked completed - Success: ", success, " IDs: ", unlocked_achievement_ids)
+    achievements_unlocked_completed.emit(success, unlocked_achievement_ids)
+
+func _on_achievement_stats_completed(success: bool, stats: Array):
+    """Handle achievement stats query completion"""
+    if _debug_mode:
+        print("EpicOS: Achievement stats completed - Success: ", success, " Count: ", stats.size())
+    achievement_stats_completed.emit(success, stats)
+
+func _on_leaderboard_definitions_completed(success: bool, definitions: Array):
+    """Handle leaderboard definitions query completion"""
+    if _debug_mode:
+        print("EpicOS: Leaderboard definitions completed - Success: ", success, " Count: ", definitions.size())
+    leaderboard_definitions_completed.emit(success, definitions)
+
+func _on_leaderboard_ranks_completed(success: bool, ranks: Array):
+    """Handle leaderboard ranks query completion"""
+    if _debug_mode:
+        print("EpicOS: Leaderboard ranks completed - Success: ", success, " Count: ", ranks.size())
+    leaderboard_ranks_completed.emit(success, ranks)
+
+func _on_leaderboard_user_scores_completed(success: bool, user_scores: Dictionary):
+    """Handle leaderboard user scores query completion"""
+    if _debug_mode:
+        print("EpicOS: Leaderboard user scores completed - Success: ", success, " Users: ", user_scores.size())
+    leaderboard_user_scores_completed.emit(success, user_scores)
+
+func _on_friends_query_completed(success: bool, friends_list: Array):
+    """Handle friends query completion"""
+    if _debug_mode:
+        print("EpicOS: Friends query completed - Success: ", success, " Count: ", friends_list.size())
+    friends_query_completed.emit(success, friends_list)
+
+func _on_friend_info_query_completed(success: bool, friend_info: Dictionary):
+    """Handle friend info query completion"""
+    if _debug_mode:
+        print("EpicOS: Friend info query completed - Success: ", success, " Info: ", friend_info)
+    friend_info_query_completed.emit(success, friend_info)
 
 # =============================================================================
 # PROCESS HANDLING - Integrates with GDExtension ticking
 # =============================================================================
 
-
 func _process(_delta: float) -> void:
-	"""Handle EOS platform ticking every frame"""
-	# Call the GDExtension tick method to process EOS callbacks
-	tick(_delta)
+    """Handle EOS platform ticking every frame"""
+    # Call the GDExtension tick method to process EOS callbacks
+    tick(_delta)
