@@ -20,6 +20,8 @@ env.Append(CPPPATH=["src/", eos_sdk + "/Include"])
 if env["platform"] == "windows":
     env.Append(LIBPATH=[eos_sdk + "/Lib"])
     env.Append(LIBS=["EOSSDK-Win64-Shipping"])
+    # Enable C++ exception handling to fix C4530 warning
+    env.Append(CXXFLAGS=["/EHsc"])
 elif env["platform"] == "linux":
     env.Append(LIBPATH=[eos_sdk + "/Bin"])
     env.Append(LIBS=["EOSSDK-Linux-Shipping"])
