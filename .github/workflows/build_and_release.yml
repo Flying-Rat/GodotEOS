@@ -1,0 +1,208 @@
+name: Build and Release GDExtension
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  release:
+    types: [created]
+
+jobs:
+
+  build-linux-x86_64:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Init submodules
+        run: git submodule update --init --recursive
+      - name: Cache godot-cpp build
+        uses: actions/cache@v4
+        with:
+          path: godot_itch_extension/godot-cpp/bin
+          key: ${{ runner.os }}-godotcpp-${{ hashFiles('godot_itch_extension/godot-cpp/src/**', 'godot_itch_extension/godot-cpp/SConstruct', 'godot_itch_extension/godot-cpp/Makefile') }}
+          restore-keys: |
+            ${{ runner.os }}-godotcpp-
+      - name: Install SCons
+        run: sudo apt-get install -y scons
+      - name: Build Linux x86_64 Debug
+        working-directory: godot_itch_extension
+        run: scons platform=linux arch=x86_64 target=template_debug
+      - name: Build Linux x86_64 Release
+        working-directory: godot_itch_extension
+        run: scons platform=linux arch=x86_64 target=template_release
+      - name: Upload Linux x86_64 Debug Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: godotitch-linux-x86_64-debug
+          path: addons/godot_itch/bin/linux/*debug*x86_64*
+      - name: Upload Linux x86_64 Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: godotitch-linux-x86_64-release
+          path: addons/godot_itch/bin/linux/*release*x86_64*
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Init submodules
+        run: git submodule update --init --recursive
+      - name: Cache godot-cpp build
+        uses: actions/cache@v4
+        with:
+          path: godot_itch_extension/godot-cpp/bin
+          key: ${{ runner.os }}-godotcpp-${{ hashFiles('godot_itch_extension/godot-cpp/src/**', 'godot_itch_extension/godot-cpp/SConstruct', 'godot_itch_extension/godot-cpp/Makefile') }}
+          restore-keys: |
+            ${{ runner.os }}-godotcpp-
+      - name: Install SCons
+        run: brew install scons
+      - name: Build Mac Debug
+        working-directory: godot_itch_extension
+        run: scons platform=macos target=template_debug
+      - name: Build Mac Release
+        working-directory: godot_itch_extension
+        run: scons platform=macos target=template_release
+      - name: Upload Mac Debug Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: godotitch-macos-debug
+          path: addons/godot_itch/bin/macos/*debug*
+      - name: Upload Mac Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: godotitch-macos-release
+          path: addons/godot_itch/bin/macos/*release*
+
+  build-windows-x86_64:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Init submodules
+        run: git submodule update --init --recursive
+      - name: Cache godot-cpp build
+        uses: actions/cache@v4
+        with:
+          path: godot_itch_extension/godot-cpp/bin
+          key: ${{ runner.os }}-godotcpp-${{ hashFiles('godot_itch_extension/godot-cpp/src/**', 'godot_itch_extension/godot-cpp/SConstruct', 'godot_itch_extension/godot-cpp/Makefile') }}
+          restore-keys: |
+            ${{ runner.os }}-godotcpp-
+      - name: Install SCons
+        run: pip install scons
+      - name: Build Windows x86_64 Debug
+        shell: pwsh
+        working-directory: godot_itch_extension
+        run: scons platform=windows arch=x86_64 target=template_debug
+      - name: Build Windows x86_64 Release
+        shell: pwsh
+        working-directory: godot_itch_extension
+        run: scons platform=windows arch=x86_64 target=template_release
+      - name: Upload Windows x86_64 Debug Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: godotitch-windows-x86_64-debug
+          path: addons/godot_itch/bin/windows/*debug*x86_64*
+      - name: Upload Windows x86_64 Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: godotitch-windows-x86_64-release
+          path: addons/godot_itch/bin/windows/*release*x86_64*
+
+  release:
+    needs:
+    #   [build-linux-x86_64, build-linux-arm64, build-linux-rv64, build-macos, build-ios, build-windows-x86_32, build-windows-x86_64, build-android-x86_64, build-android-arm64]
+      [build-linux-x86_64, build-macos, build-windows-x86_64]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Download Linux x86_64 Debug artifact
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: godotitch-linux-x86_64-debug
+          path: artifacts/linux/x86_64/debug
+
+      - name: Download Linux x86_64 Release artifact
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: godotitch-linux-x86_64-release
+          path: artifacts/linux/x86_64/release
+
+      - name: Download Mac debug artifact
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: godotitch-macos-debug
+          path: artifacts/macos/debug
+
+      - name: Download Mac release artifact
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: godotitch-macos-release
+          path: artifacts/macos/release
+
+      - name: Download Windows x86_64 Debug artifact
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: godotitch-windows-x86_64-debug
+          path: artifacts/windows/x86_64/debug
+
+      - name: Download Windows x86_64 Release artifact
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: godotitch-windows-x86_64-release
+          path: artifacts/windows/x86_64/release
+
+      - name: Create bin directories in addons
+        run: |
+          mkdir -p addons/godot_itch/bin/linux
+          mkdir -p addons/godot_itch/bin/macos
+          mkdir -p addons/godot_itch/bin/windows
+
+      - name: Copy downloaded build artifacts into addons
+        run: |
+          # Copy Linux x86_64 debug/release files if present
+          if [ -d artifacts/linux/x86_64/debug ]; then
+            cp -a artifacts/linux/x86_64/debug/. addons/godot_itch/bin/linux/ || true
+          fi
+          if [ -d artifacts/linux/x86_64/release ]; then
+            cp -a artifacts/linux/x86_64/release/. addons/godot_itch/bin/linux/ || true
+          fi
+
+          # Copy macOS debug/release
+          if [ -d artifacts/macos/debug ]; then
+            cp -a artifacts/macos/debug/. addons/godot_itch/bin/macos/ || true
+          fi
+          if [ -d artifacts/macos/release ]; then
+            cp -a artifacts/macos/release/. addons/godot_itch/bin/macos/ || true
+          fi
+
+          # Copy Windows debug/release
+          if [ -d artifacts/windows/x86_64/debug ]; then
+            cp -a artifacts/windows/x86_64/debug/. addons/godot_itch/bin/windows/ || true
+          fi
+          if [ -d artifacts/windows/x86_64/release ]; then
+            cp -a artifacts/windows/x86_64/release/. addons/godot_itch/bin/windows/ || true
+          fi
+
+      - name: Show contents of addons/bin for debug
+        run: |
+          echo "Listing addons/godot_itch/bin"
+          ls -R addons/godot_itch/bin || true
+
+      - name: Zip entire addons folder with tag name
+        shell: bash
+        run: zip -r "GodotItch_${{ github.ref_name }}.zip" addons
+      - name: Create Release with named zip
+        uses: softprops/action-gh-release@v2
+        with:
+          files: GodotItch_${{ github.ref_name }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
