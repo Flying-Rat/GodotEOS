@@ -1,0 +1,224 @@
+[gd_scene load_steps=2 format=3 uid="uid://b8rt2mphox3k1"]
+
+[ext_resource type="Script" path="res://scripts/demos/authentication_demo.gd" id="1_auth"]
+
+[node name="AuthenticationDemo" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_auth")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+
+[node name="Title" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "EpicOS Authentication Demo"
+horizontal_alignment = 1
+add_theme_font_size_override("font_size", 24)
+
+[node name="BackButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+text = "← Back to Menu"
+
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="StatusPanel" type="Panel" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="StatusContainer" type="VBoxContainer" parent="VBoxContainer/StatusPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+
+[node name="StatusTitle" type="Label" parent="VBoxContainer/StatusPanel/StatusContainer"]
+layout_mode = 2
+text = "Authentication Status"
+add_theme_font_size_override("font_size", 18)
+
+[node name="StatusLabel" type="Label" parent="VBoxContainer/StatusPanel/StatusContainer"]
+layout_mode = 2
+text = "Platform Status: Not Initialized"
+
+[node name="UserLabel" type="Label" parent="VBoxContainer/StatusPanel/StatusContainer"]
+layout_mode = 2
+text = "User Status: Not Logged In"
+
+[node name="UserInfoLabel" type="Label" parent="VBoxContainer/StatusPanel/StatusContainer"]
+layout_mode = 2
+text = "Username: N/A"
+
+[node name="AccountInfoLabel" type="Label" parent="VBoxContainer/StatusPanel/StatusContainer"]
+layout_mode = 2
+text = "Epic Account ID: N/A"
+
+[node name="ProductUserLabel" type="Label" parent="VBoxContainer/StatusPanel/StatusContainer"]
+layout_mode = 2
+text = "Product User ID: N/A"
+
+[node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="InitSection" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="InitLabel" type="Label" parent="VBoxContainer/InitSection"]
+layout_mode = 2
+text = "Platform Initialization"
+add_theme_font_size_override("font_size", 16)
+
+[node name="InitButton" type="Button" parent="VBoxContainer/InitSection"]
+layout_mode = 2
+text = "Initialize EOS Platform"
+
+[node name="HSeparator3" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="LoginSection" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="LoginLabel" type="Label" parent="VBoxContainer/LoginSection"]
+layout_mode = 2
+text = "Login Methods"
+add_theme_font_size_override("font_size", 16)
+
+[node name="LoginGrid" type="GridContainer" parent="VBoxContainer/LoginSection"]
+layout_mode = 2
+columns = 2
+
+[node name="EpicAccountPanel" type="Panel" parent="VBoxContainer/LoginSection/LoginGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="EpicAccountContainer" type="VBoxContainer" parent="VBoxContainer/LoginSection/LoginGrid/EpicAccountPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+
+[node name="EpicAccountLabel" type="Label" parent="VBoxContainer/LoginSection/LoginGrid/EpicAccountPanel/EpicAccountContainer"]
+layout_mode = 2
+text = "Epic Account Login"
+horizontal_alignment = 1
+
+[node name="EmailInput" type="LineEdit" parent="VBoxContainer/LoginSection/LoginGrid/EpicAccountPanel/EpicAccountContainer"]
+layout_mode = 2
+placeholder_text = "Email"
+
+[node name="PasswordInput" type="LineEdit" parent="VBoxContainer/LoginSection/LoginGrid/EpicAccountPanel/EpicAccountContainer"]
+layout_mode = 2
+placeholder_text = "Password"
+secret = true
+
+[node name="EpicLoginButton" type="Button" parent="VBoxContainer/LoginSection/LoginGrid/EpicAccountPanel/EpicAccountContainer"]
+layout_mode = 2
+text = "Login with Epic Account"
+disabled = true
+
+[node name="OtherMethodsPanel" type="Panel" parent="VBoxContainer/LoginSection/LoginGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="OtherMethodsContainer" type="VBoxContainer" parent="VBoxContainer/LoginSection/LoginGrid/OtherMethodsPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+
+[node name="OtherMethodsLabel" type="Label" parent="VBoxContainer/LoginSection/LoginGrid/OtherMethodsPanel/OtherMethodsContainer"]
+layout_mode = 2
+text = "Alternative Login Methods"
+horizontal_alignment = 1
+
+[node name="PortalLoginButton" type="Button" parent="VBoxContainer/LoginSection/LoginGrid/OtherMethodsPanel/OtherMethodsContainer"]
+layout_mode = 2
+text = "Login with Account Portal"
+disabled = true
+
+[node name="DeviceContainer" type="HBoxContainer" parent="VBoxContainer/LoginSection/LoginGrid/OtherMethodsPanel/OtherMethodsContainer"]
+layout_mode = 2
+
+[node name="DeviceInput" type="LineEdit" parent="VBoxContainer/LoginSection/LoginGrid/OtherMethodsPanel/OtherMethodsContainer/DeviceContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Display Name"
+
+[node name="DeviceLoginButton" type="Button" parent="VBoxContainer/LoginSection/LoginGrid/OtherMethodsPanel/OtherMethodsContainer/DeviceContainer"]
+layout_mode = 2
+text = "Device Login"
+disabled = true
+
+[node name="DevContainer" type="HBoxContainer" parent="VBoxContainer/LoginSection/LoginGrid/OtherMethodsPanel/OtherMethodsContainer"]
+layout_mode = 2
+
+[node name="DevInput" type="LineEdit" parent="VBoxContainer/LoginSection/LoginGrid/OtherMethodsPanel/OtherMethodsContainer/DevContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Dev Display Name"
+
+[node name="DevLoginButton" type="Button" parent="VBoxContainer/LoginSection/LoginGrid/OtherMethodsPanel/OtherMethodsContainer/DevContainer"]
+layout_mode = 2
+text = "Dev Login"
+disabled = true
+
+[node name="LogoutButton" type="Button" parent="VBoxContainer/LoginSection"]
+layout_mode = 2
+text = "Logout"
+disabled = true
+
+[node name="HSeparator4" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="OutputSection" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="OutputLabel" type="Label" parent="VBoxContainer/OutputSection"]
+layout_mode = 2
+text = "Output Log"
+add_theme_font_size_override("font_size", 16)
+
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer/OutputSection"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="OutputText" type="RichTextLabel" parent="VBoxContainer/OutputSection/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+bbcode_enabled = true
+text = "[color=green]Welcome to the EpicOS Authentication Demo![/color]
+
+This demo shows how to:
+1. Initialize the EOS platform
+2. Use different login methods
+3. Check authentication status
+4. Logout
+
+[color=yellow]Note: You need valid Epic Games credentials configured in the initialize() method.[/color]
+"
+scroll_following = true
