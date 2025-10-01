@@ -20,28 +20,28 @@ jobs:
       - name: Cache godot-cpp build
         uses: actions/cache@v4
         with:
-          path: godot_itch_extension/godot-cpp/bin
-          key: ${{ runner.os }}-godotcpp-${{ hashFiles('godot_itch_extension/godot-cpp/src/**', 'godot_itch_extension/godot-cpp/SConstruct', 'godot_itch_extension/godot-cpp/Makefile') }}
+          path: godot_epic_extension/godot-cpp/bin
+          key: ${{ runner.os }}-godotcpp-${{ hashFiles('godot_epic_extension/godot-cpp/src/**', 'godot_epic_extension/godot-cpp/SConstruct', 'godot_epic_extension/godot-cpp/Makefile') }}
           restore-keys: |
             ${{ runner.os }}-godotcpp-
       - name: Install SCons
         run: sudo apt-get install -y scons
       - name: Build Linux x86_64 Debug
-        working-directory: godot_itch_extension
+        working-directory: godot_epic_extension
         run: scons platform=linux arch=x86_64 target=template_debug
       - name: Build Linux x86_64 Release
-        working-directory: godot_itch_extension
+        working-directory: godot_epic_extension
         run: scons platform=linux arch=x86_64 target=template_release
       - name: Upload Linux x86_64 Debug Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: godotitch-linux-x86_64-debug
-          path: addons/godot_itch/bin/linux/*debug*x86_64*
+          path: addons/godot_eos/bin/linux/*debug*x86_64*
       - name: Upload Linux x86_64 Release Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: godotitch-linux-x86_64-release
-          path: addons/godot_itch/bin/linux/*release*x86_64*
+          path: addons/godot_eos/bin/linux/*release*x86_64*
 
   build-macos:
     runs-on: macos-latest
@@ -53,28 +53,28 @@ jobs:
       - name: Cache godot-cpp build
         uses: actions/cache@v4
         with:
-          path: godot_itch_extension/godot-cpp/bin
-          key: ${{ runner.os }}-godotcpp-${{ hashFiles('godot_itch_extension/godot-cpp/src/**', 'godot_itch_extension/godot-cpp/SConstruct', 'godot_itch_extension/godot-cpp/Makefile') }}
+          path: godot_epic_extension/godot-cpp/bin
+          key: ${{ runner.os }}-godotcpp-${{ hashFiles('godot_epic_extension/godot-cpp/src/**', 'godot_epic_extension/godot-cpp/SConstruct', 'godot_epic_extension/godot-cpp/Makefile') }}
           restore-keys: |
             ${{ runner.os }}-godotcpp-
       - name: Install SCons
         run: brew install scons
       - name: Build Mac Debug
-        working-directory: godot_itch_extension
+        working-directory: godot_epic_extension
         run: scons platform=macos target=template_debug
       - name: Build Mac Release
-        working-directory: godot_itch_extension
+        working-directory: godot_epic_extension
         run: scons platform=macos target=template_release
       - name: Upload Mac Debug Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: godotitch-macos-debug
-          path: addons/godot_itch/bin/macos/*debug*
+          path: addons/godot_eos/bin/macos/*debug*
       - name: Upload Mac Release Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: godotitch-macos-release
-          path: addons/godot_itch/bin/macos/*release*
+          path: addons/godot_eos/bin/macos/*release*
 
   build-windows-x86_64:
     runs-on: windows-latest
@@ -86,30 +86,30 @@ jobs:
       - name: Cache godot-cpp build
         uses: actions/cache@v4
         with:
-          path: godot_itch_extension/godot-cpp/bin
-          key: ${{ runner.os }}-godotcpp-${{ hashFiles('godot_itch_extension/godot-cpp/src/**', 'godot_itch_extension/godot-cpp/SConstruct', 'godot_itch_extension/godot-cpp/Makefile') }}
+          path: godot_epic_extension/godot-cpp/bin
+          key: ${{ runner.os }}-godotcpp-${{ hashFiles('godot_epic_extension/godot-cpp/src/**', 'godot_epic_extension/godot-cpp/SConstruct', 'godot_epic_extension/godot-cpp/Makefile') }}
           restore-keys: |
             ${{ runner.os }}-godotcpp-
       - name: Install SCons
         run: pip install scons
       - name: Build Windows x86_64 Debug
         shell: pwsh
-        working-directory: godot_itch_extension
+        working-directory: godot_epic_extension
         run: scons platform=windows arch=x86_64 target=template_debug
       - name: Build Windows x86_64 Release
         shell: pwsh
-        working-directory: godot_itch_extension
+        working-directory: godot_epic_extension
         run: scons platform=windows arch=x86_64 target=template_release
       - name: Upload Windows x86_64 Debug Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: godotitch-windows-x86_64-debug
-          path: addons/godot_itch/bin/windows/*debug*x86_64*
+          path: addons/godot_eos/bin/windows/*debug*x86_64*
       - name: Upload Windows x86_64 Release Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: godotitch-windows-x86_64-release
-          path: addons/godot_itch/bin/windows/*release*x86_64*
+          path: addons/godot_eos/bin/windows/*release*x86_64*
 
   release:
     needs:
@@ -163,40 +163,40 @@ jobs:
 
       - name: Create bin directories in addons
         run: |
-          mkdir -p addons/godot_itch/bin/linux
-          mkdir -p addons/godot_itch/bin/macos
-          mkdir -p addons/godot_itch/bin/windows
+          mkdir -p addons/godot_eos/bin/linux
+          mkdir -p addons/godot_eos/bin/macos
+          mkdir -p addons/godot_eos/bin/windows
 
       - name: Copy downloaded build artifacts into addons
         run: |
           # Copy Linux x86_64 debug/release files if present
           if [ -d artifacts/linux/x86_64/debug ]; then
-            cp -a artifacts/linux/x86_64/debug/. addons/godot_itch/bin/linux/ || true
+            cp -a artifacts/linux/x86_64/debug/. addons/godot_eos/bin/linux/ || true
           fi
           if [ -d artifacts/linux/x86_64/release ]; then
-            cp -a artifacts/linux/x86_64/release/. addons/godot_itch/bin/linux/ || true
+            cp -a artifacts/linux/x86_64/release/. addons/godot_eos/bin/linux/ || true
           fi
 
           # Copy macOS debug/release
           if [ -d artifacts/macos/debug ]; then
-            cp -a artifacts/macos/debug/. addons/godot_itch/bin/macos/ || true
+            cp -a artifacts/macos/debug/. addons/godot_eos/bin/macos/ || true
           fi
           if [ -d artifacts/macos/release ]; then
-            cp -a artifacts/macos/release/. addons/godot_itch/bin/macos/ || true
+            cp -a artifacts/macos/release/. addons/godot_eos/bin/macos/ || true
           fi
 
           # Copy Windows debug/release
           if [ -d artifacts/windows/x86_64/debug ]; then
-            cp -a artifacts/windows/x86_64/debug/. addons/godot_itch/bin/windows/ || true
+            cp -a artifacts/windows/x86_64/debug/. addons/godot_eos/bin/windows/ || true
           fi
           if [ -d artifacts/windows/x86_64/release ]; then
-            cp -a artifacts/windows/x86_64/release/. addons/godot_itch/bin/windows/ || true
+            cp -a artifacts/windows/x86_64/release/. addons/godot_eos/bin/windows/ || true
           fi
 
       - name: Show contents of addons/bin for debug
         run: |
-          echo "Listing addons/godot_itch/bin"
-          ls -R addons/godot_itch/bin || true
+          echo "Listing addons/godot_eos/bin"
+          ls -R addons/godot_eos/bin || true
 
       - name: Zip entire addons folder with tag name
         shell: bash
