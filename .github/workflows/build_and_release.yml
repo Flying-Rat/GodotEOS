@@ -6,10 +6,9 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+'
   release:
     types: [created]
-    workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
-
   build-linux-x86_64:
     runs-on: ubuntu-latest
     steps:
@@ -32,16 +31,11 @@ jobs:
       - name: Build Linux x86_64 Release
         working-directory: godot_epic_extension
         run: scons platform=linux arch=x86_64 target=template_release
-      - name: Upload Linux x86_64 Debug Artifacts
+      - name: Upload Linux x86_64 Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: godotitch-linux-x86_64-debug
-          path: addons/godot_eos/bin/linux/*debug*x86_64*
-      - name: Upload Linux x86_64 Release Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: godotitch-linux-x86_64-release
-          path: addons/godot_eos/bin/linux/*release*x86_64*
+          name: godotepic-linux-x86_64
+          path: godot_epic_extension/demo/bin/**
 
   build-macos:
     runs-on: macos-latest
@@ -59,22 +53,14 @@ jobs:
             ${{ runner.os }}-godotcpp-
       - name: Install SCons
         run: brew install scons
-      - name: Build Mac Debug
-        working-directory: godot_epic_extension
-        run: scons platform=macos target=template_debug
-      - name: Build Mac Release
+      - name: Build Mac
         working-directory: godot_epic_extension
         run: scons platform=macos target=template_release
-      - name: Upload Mac Debug Artifacts
+      - name: Upload Mac Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: godotitch-macos-debug
-          path: addons/godot_eos/bin/macos/*debug*
-      - name: Upload Mac Release Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: godotitch-macos-release
-          path: addons/godot_eos/bin/macos/*release*
+          name: godotepic-macos
+          path: godot_epic_extension/demo/bin/**
 
   build-windows-x86_64:
     runs-on: windows-latest
@@ -92,118 +78,78 @@ jobs:
             ${{ runner.os }}-godotcpp-
       - name: Install SCons
         run: pip install scons
-      - name: Build Windows x86_64 Debug
-        shell: pwsh
-        working-directory: godot_epic_extension
-        run: scons platform=windows arch=x86_64 target=template_debug
-      - name: Build Windows x86_64 Release
+      - name: Build Windows x86_64
         shell: pwsh
         working-directory: godot_epic_extension
         run: scons platform=windows arch=x86_64 target=template_release
-      - name: Upload Windows x86_64 Debug Artifacts
+      - name: Upload Windows Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: godotitch-windows-x86_64-debug
-          path: addons/godot_eos/bin/windows/*debug*x86_64*
-      - name: Upload Windows x86_64 Release Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: godotitch-windows-x86_64-release
-          path: addons/godot_eos/bin/windows/*release*x86_64*
+          name: godotepic-windows-x86_64
+          path: godot_epic_extension/demo/bin/**
 
   release:
     needs:
-    #   [build-linux-x86_64, build-linux-arm64, build-linux-rv64, build-macos, build-ios, build-windows-x86_32, build-windows-x86_64, build-android-x86_64, build-android-arm64]
-      [build-linux-x86_64, build-macos, build-windows-x86_64]
+      - build-linux-x86_64
+      - build-macos
+      - build-windows-x86_64
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Download Linux x86_64 Debug artifact
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: godotitch-linux-x86_64-debug
-          path: artifacts/linux/x86_64/debug
 
-      - name: Download Linux x86_64 Release artifact
+      - name: Download Linux artifacts
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
-          name: godotitch-linux-x86_64-release
-          path: artifacts/linux/x86_64/release
+          name: godotepic-linux-x86_64
+          path: artifacts/linux/x86_64
 
-      - name: Download Mac debug artifact
+      - name: Download Mac artifacts
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
-          name: godotitch-macos-debug
-          path: artifacts/macos/debug
+          name: godotepic-macos
+          path: artifacts/macos
 
-      - name: Download Mac release artifact
+      - name: Download Windows artifacts
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
-          name: godotitch-macos-release
-          path: artifacts/macos/release
-
-      - name: Download Windows x86_64 Debug artifact
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: godotitch-windows-x86_64-debug
-          path: artifacts/windows/x86_64/debug
-
-      - name: Download Windows x86_64 Release artifact
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: godotitch-windows-x86_64-release
-          path: artifacts/windows/x86_64/release
+          name: godotepic-windows-x86_64
+          path: artifacts/windows/x86_64
 
       - name: Create bin directories in addons
         run: |
-          mkdir -p addons/godot_eos/bin/linux
-          mkdir -p addons/godot_eos/bin/macos
-          mkdir -p addons/godot_eos/bin/windows
+          mkdir -p addons/godot_epic/bin/linux
+          mkdir -p addons/godot_epic/bin/macos
+          mkdir -p addons/godot_epic/bin/windows
 
       - name: Copy downloaded build artifacts into addons
         run: |
-          # Copy Linux x86_64 debug/release files if present
-          if [ -d artifacts/linux/x86_64/debug ]; then
-            cp -a artifacts/linux/x86_64/debug/. addons/godot_eos/bin/linux/ || true
+          set -e
+          if [ -d artifacts/linux/x86_64 ]; then
+            cp -a artifacts/linux/x86_64/. addons/godot_epic/bin/linux/ || true
           fi
-          if [ -d artifacts/linux/x86_64/release ]; then
-            cp -a artifacts/linux/x86_64/release/. addons/godot_eos/bin/linux/ || true
+          if [ -d artifacts/macos ]; then
+            cp -a artifacts/macos/. addons/godot_epic/bin/macos/ || true
           fi
-
-          # Copy macOS debug/release
-          if [ -d artifacts/macos/debug ]; then
-            cp -a artifacts/macos/debug/. addons/godot_eos/bin/macos/ || true
-          fi
-          if [ -d artifacts/macos/release ]; then
-            cp -a artifacts/macos/release/. addons/godot_eos/bin/macos/ || true
-          fi
-
-          # Copy Windows debug/release
-          if [ -d artifacts/windows/x86_64/debug ]; then
-            cp -a artifacts/windows/x86_64/debug/. addons/godot_eos/bin/windows/ || true
-          fi
-          if [ -d artifacts/windows/x86_64/release ]; then
-            cp -a artifacts/windows/x86_64/release/. addons/godot_eos/bin/windows/ || true
+          if [ -d artifacts/windows/x86_64 ]; then
+            cp -a artifacts/windows/x86_64/. addons/godot_epic/bin/windows/ || true
           fi
 
       - name: Show contents of addons/bin for debug
         run: |
-          echo "Listing addons/godot_eos/bin"
-          ls -R addons/godot_eos/bin || true
+          echo "Listing addons/godot_epic/bin"
+          ls -R addons/godot_epic/bin || true
 
       - name: Zip entire addons folder with tag name
         shell: bash
-        run: zip -r "GodotItch_${{ github.ref_name }}.zip" addons
+        run: zip -r "GodotEpic_${{ github.ref_name }}.zip" addons
+
       - name: Create Release with named zip
         uses: softprops/action-gh-release@v2
         with:
-          files: GodotItch_${{ github.ref_name }}.zip
+          files: GodotEpic_${{ github.ref_name }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
