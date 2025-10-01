@@ -66,37 +66,72 @@ else:
         source=sources,
     )
 
-# Copy EOSSDK libraries to demo/bin for all platforms
+# Copy EOSSDK libraries and build artifacts to both demo/bin and addons/godot_epic/bin
 import shutil
 
-def copy_eos_library(target, source, env):
+def copy_build_artifacts(target, source, env):
     platform = env["platform"]
+
+    # Define destination directories
+    demo_bin_dir = os.path.join("demo", "bin")
+    addon_bin_dir = os.path.join("..", "addons", "godot_epic", "bin")
+
+    # Ensure destination directories exist
+    os.makedirs(demo_bin_dir, exist_ok=True)
+    os.makedirs(addon_bin_dir, exist_ok=True)
+
+    # Copy EOS SDK libraries
+    eos_lib_src = None
+    eos_lib_name = None
 
     if platform == "windows":
         eos_lib_src = os.path.join(eos_sdk, "Bin", "EOSSDK-Win64-Shipping.dll")
-        eos_lib_dst = os.path.join("demo", "bin", "EOSSDK-Win64-Shipping.dll")
-        lib_name = "EOSSDK-Win64-Shipping.dll"
+        eos_lib_name = "EOSSDK-Win64-Shipping.dll"
     elif platform == "linux":
         eos_lib_src = os.path.join(eos_sdk, "Bin", "libEOSSDK-Linux-Shipping.so")
-        eos_lib_dst = os.path.join("demo", "bin", "libEOSSDK-Linux-Shipping.so")
-        lib_name = "libEOSSDK-Linux-Shipping.so"
+        eos_lib_name = "libEOSSDK-Linux-Shipping.so"
     elif platform == "macos":
         eos_lib_src = os.path.join(eos_sdk, "Bin", "libEOSSDK-Mac-Shipping.dylib")
-        eos_lib_dst = os.path.join("demo", "bin", "libEOSSDK-Mac-Shipping.dylib")
-        lib_name = "libEOSSDK-Mac-Shipping.dylib"
-    else:
-        return  # Unsupported platform
+        eos_lib_name = "libEOSSDK-Mac-Shipping.dylib"
 
-    if os.path.exists(eos_lib_src):
-        # Ensure the destination directory exists
-        os.makedirs(os.path.dirname(eos_lib_dst), exist_ok=True)
-        shutil.copy2(eos_lib_src, eos_lib_dst)
-        print(f"Copied {lib_name} to demo/bin/")
-    else:
-        print(f"Warning: {lib_name} not found at {eos_lib_src}")
+    if eos_lib_src and os.path.exists(eos_lib_src):
+        # Copy to demo/bin
+        demo_eos_dst = os.path.join(demo_bin_dir, eos_lib_name)
+        shutil.copy2(eos_lib_src, demo_eos_dst)
+        print(f"Copied {eos_lib_name} to demo/bin/")
 
-# Add post-build action to copy the EOS SDK library for supported platforms
+        # Copy to addons/godot_epic/bin
+        addon_eos_dst = os.path.join(addon_bin_dir, eos_lib_name)
+        shutil.copy2(eos_lib_src, addon_eos_dst)
+        print(f"Copied {eos_lib_name} to addons/godot_epic/bin/")
+    elif eos_lib_src:
+        print(f"Warning: {eos_lib_name} not found at {eos_lib_src}")
+
+    # Copy built GDExtension library
+    built_lib_path = str(target[0])
+    built_lib_name = os.path.basename(built_lib_path)
+
+    if os.path.exists(built_lib_path):
+        # Copy to addons/godot_epic/bin
+        addon_lib_dst = os.path.join(addon_bin_dir, built_lib_name)
+        shutil.copy2(built_lib_path, addon_lib_dst)
+        print(f"Copied {built_lib_name} to addons/godot_epic/bin/")
+
+        # For macOS frameworks, copy the entire framework directory
+        if platform == "macos" and built_lib_path.endswith(".framework/libgodotepic.macos.template_debug") or built_lib_path.endswith(".framework/libgodotepic.macos.template_release"):
+            framework_dir = os.path.dirname(built_lib_path)
+            framework_name = os.path.basename(framework_dir)
+            addon_framework_dst = os.path.join(addon_bin_dir, framework_name)
+            if os.path.exists(framework_dir):
+                if os.path.exists(addon_framework_dst):
+                    shutil.rmtree(addon_framework_dst)
+                shutil.copytree(framework_dir, addon_framework_dst)
+                print(f"Copied framework {framework_name} to addons/godot_epic/bin/")
+    else:
+        print(f"Warning: Built library {built_lib_path} not found")
+
+# Add post-build action to copy build artifacts for supported platforms
 if env["platform"] in ["windows", "linux", "macos"]:
-    env.AddPostAction(library, copy_eos_library)
+    env.AddPostAction(library, copy_build_artifacts)
 
 Default(library)
