@@ -1,5 +1,6 @@
 #include "SubsystemManager.h"
 #include "Platform/IPlatformSubsystem.h"
+#include <vector>
 
 namespace godot {
 
