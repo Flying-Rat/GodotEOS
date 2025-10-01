@@ -1,5 +1,6 @@
 #include "SubsystemManager.h"
 #include "Platform/IPlatformSubsystem.h"
+#include <cstdint>
 #include <vector>
 
 namespace godot {
@@ -26,7 +27,8 @@ bool SubsystemManager::InitializeAll() {
         return true;
     }
 
-    UtilityFunctions::print("SubsystemManager: Initializing ", subsystems.size(), " subsystems...");
+    UtilityFunctions::print(
+        "SubsystemManager: Initializing ", static_cast<int64_t>(subsystems.size()), " subsystems...");
 
     // Initialize subsystems in registration order
     for (auto& [type_index, subsystem] : subsystems) {
