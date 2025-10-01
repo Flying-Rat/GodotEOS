@@ -36,6 +36,7 @@ if env["platform"] == "windows":
 elif env["platform"] == "linux":
     env.Append(LIBPATH=[eos_sdk + "/Bin"])
     env.Append(LIBS=["EOSSDK-Linux-Shipping"])
+    env.Append(CXXFLAGS=["-fexceptions"])
 
 sources = Glob("src/*.cpp")
 sources += Glob("src/Utils/*.cpp")
