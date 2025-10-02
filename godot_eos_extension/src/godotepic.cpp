@@ -103,9 +103,9 @@ void GodotEOS::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("achievements_unlocked", PropertyInfo(Variant::ARRAY, "unlocked_achievement_ids")));
 	ADD_SIGNAL(MethodInfo("achievement_unlocked", PropertyInfo(Variant::STRING, "achievement_id"), PropertyInfo(Variant::INT, "unlock_time")));
 	ADD_SIGNAL(MethodInfo("achievement_stats_updated", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::ARRAY, "stats")));
-	ADD_SIGNAL(MethodInfo("leaderboard_definitions_updated", PropertyInfo(Variant::ARRAY, "definitions")));
-	ADD_SIGNAL(MethodInfo("leaderboard_ranks_updated", PropertyInfo(Variant::ARRAY, "ranks")));
-	ADD_SIGNAL(MethodInfo("leaderboard_user_scores_updated", PropertyInfo(Variant::DICTIONARY, "user_scores")));
+	ADD_SIGNAL(MethodInfo("leaderboard_definitions_updated", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::ARRAY, "definitions")));
+	ADD_SIGNAL(MethodInfo("leaderboard_ranks_updated", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::ARRAY, "ranks")));
+	ADD_SIGNAL(MethodInfo("leaderboard_user_scores_updated", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::DICTIONARY, "user_scores")));
 	ADD_SIGNAL(MethodInfo("stats_ingested", PropertyInfo(Variant::ARRAY, "stat_names")));
 }
 
@@ -573,14 +573,14 @@ void GodotEOS::query_leaderboard_definitions() {
 	if (!leaderboards) {
 		UtilityFunctions::printerr("LeaderboardsSubsystem not available");
 		Array empty_definitions;
-		emit_signal("leaderboard_definitions_updated", empty_definitions);
+		emit_signal("leaderboard_definitions_updated", false, empty_definitions);
 		return;
 	}
 
 	if (!leaderboards->QueryLeaderboardDefinitions()) {
 		UtilityFunctions::printerr("LeaderboardsSubsystem query definitions failed");
 		Array empty_definitions;
-		emit_signal("leaderboard_definitions_updated", empty_definitions);
+		emit_signal("leaderboard_definitions_updated", false, empty_definitions);
 	}
 }
 
@@ -591,14 +591,14 @@ void GodotEOS::query_leaderboard_ranks(const String& leaderboard_id, int limit) 
 	if (!leaderboards) {
 		UtilityFunctions::printerr("LeaderboardsSubsystem not available");
 		Array empty_ranks;
-		emit_signal("leaderboard_ranks_updated", empty_ranks);
+		emit_signal("leaderboard_ranks_updated", false, empty_ranks);
 		return;
 	}
 
 	if (!leaderboards->QueryLeaderboardRanks(leaderboard_id, limit)) {
 		UtilityFunctions::printerr("LeaderboardsSubsystem query ranks failed");
 		Array empty_ranks;
-		emit_signal("leaderboard_ranks_updated", empty_ranks);
+		emit_signal("leaderboard_ranks_updated", false, empty_ranks);
 	}
 }
 
@@ -609,14 +609,14 @@ void GodotEOS::query_leaderboard_user_scores(const String& leaderboard_id, const
 	if (!leaderboards) {
 		UtilityFunctions::printerr("LeaderboardsSubsystem not available");
 		Dictionary empty_scores;
-		emit_signal("leaderboard_user_scores_updated", empty_scores);
+		emit_signal("leaderboard_user_scores_updated", false, empty_scores);
 		return;
 	}
 
 	if (!leaderboards->QueryLeaderboardUserScores(leaderboard_id, user_ids)) {
 		UtilityFunctions::printerr("LeaderboardsSubsystem query user scores failed");
 		Dictionary empty_scores;
-		emit_signal("leaderboard_user_scores_updated", empty_scores);
+		emit_signal("leaderboard_user_scores_updated", false, empty_scores);
 	}
 }
 
@@ -971,7 +971,7 @@ void GodotEOS::on_leaderboard_definitions_completed(bool success, const Array& d
 	}
 
 	// Emit the leaderboard_definitions_updated signal
-	emit_signal("leaderboard_definitions_updated", definitions);
+	emit_signal("leaderboard_definitions_updated", success, definitions);
 }
 
 void GodotEOS::on_leaderboard_ranks_completed(bool success, const Array& ranks) {
@@ -984,7 +984,7 @@ void GodotEOS::on_leaderboard_ranks_completed(bool success, const Array& ranks) 
 	}
 
 	// Emit the leaderboard_ranks_updated signal
-	emit_signal("leaderboard_ranks_updated", ranks);
+	emit_signal("leaderboard_ranks_updated", success, ranks);
 }
 
 void GodotEOS::on_leaderboard_user_scores_completed(bool success, const Dictionary& user_scores) {
@@ -997,7 +997,7 @@ void GodotEOS::on_leaderboard_user_scores_completed(bool success, const Dictiona
 	}
 
 	// Emit the leaderboard_user_scores_updated signal
-	emit_signal("leaderboard_user_scores_updated", user_scores);
+	emit_signal("leaderboard_user_scores_updated", success, user_scores);
 }
 
 void GodotEOS::on_friends_query_completed(bool success, const Array& friends_list) {
