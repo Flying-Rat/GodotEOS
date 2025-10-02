@@ -3,16 +3,16 @@ extends Control
 # Friends Demo Script
 # Demonstrates how to use the EpicOS friends features
 
-@onready var status_label: Label = $VBoxContainer/StatusPanel/StatusContainer/StatusLabel
-@onready var query_friends_button: Button = $VBoxContainer/ActionsSection/ActionsGrid/QueryFriendsButton
-@onready var query_all_info_button: Button = $VBoxContainer/ActionsSection/ActionsGrid/QueryAllInfoButton
-@onready var refresh_button: Button = $VBoxContainer/ActionsSection/ActionsGrid/RefreshButton
-@onready var friends_list: ItemList = $VBoxContainer/FriendsSection/FriendsListPanel/FriendsListContainer/FriendsScrollContainer/FriendsList
-@onready var selected_friend_label: Label = $VBoxContainer/FriendsSection/FriendDetailsPanel/FriendDetailsContainer/SelectedFriendLabel
+@onready var status_label: Label = $VBoxContainer/HeaderContainer/StatusPanel/StatusContainer/StatusLabel
+@onready var query_friends_button: Button = $VBoxContainer/ActionsSection/QueryFriendsButton
+@onready var query_all_info_button: Button = $VBoxContainer/ActionsSection/QueryAllInfoButton
+@onready var refresh_button: Button = $VBoxContainer/HeaderContainer/RefreshButton
+@onready var friends_list: ItemList = $VBoxContainer/FriendsSection/FriendsListPanel/FriendsListContainer/FriendsList
+@onready var selected_friend_label: Label = $VBoxContainer/FriendsSection/FriendDetailsPanel/FriendDetailsContainer/FriendDetailsLabel
 @onready var friend_info_text: RichTextLabel = $VBoxContainer/FriendsSection/FriendDetailsPanel/FriendDetailsContainer/FriendInfoScrollContainer/FriendInfoText
-@onready var query_friend_info_button: Button = $VBoxContainer/FriendsSection/FriendDetailsPanel/FriendDetailsContainer/QueryFriendInfoButton
-@onready var output_text: RichTextLabel = $VBoxContainer/OutputSection/OutputScrollContainer/OutputText
-@onready var back_button: Button = $VBoxContainer/BackButton
+@onready var query_friend_info_button: Button = $VBoxContainer/ActionsSection/QueryFriendInfoButton
+@onready var output_text: RichTextLabel = $VBoxContainer/OutputSection/OutputText
+@onready var back_button: Button = $VBoxContainer/HeaderContainer/BackButton
 
 var cached_friends: Array = []
 var selected_friend_id: String = ""
@@ -81,8 +81,8 @@ func _on_back_button_pressed():
 func _on_friends_list_item_selected(index: int):
 	if index >= 0 and index < cached_friends.size():
 		var friend_data = cached_friends[index]
-		if friend_data.has("friend_id"):
-			selected_friend_id = friend_data["friend_id"]
+		if friend_data.has("id"):
+			selected_friend_id = friend_data["id"]
 			selected_friend_label.text = "Selected: " + str(friend_data.get("display_name", "Unknown"))
 			_update_friend_details(friend_data)
 			_update_ui_state()
