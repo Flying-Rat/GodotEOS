@@ -119,6 +119,22 @@ func _on_query_specific_ranks_button_pressed():
 		_log_message("[color=red]Please enter a leaderboard ID![/color]")
 		return
 
+	# Validate that the leaderboard ID exists
+	if not cached_definitions.is_empty():
+		var valid_ids = []
+		var found = false
+		for definition in cached_definitions:
+			var def_id = definition.get("leaderboard_id", "")
+			valid_ids.append(def_id)
+			if def_id == leaderboard_id:
+				found = true
+				break
+
+		if not found:
+			_log_message("[color=red]⚠ Warning: Leaderboard ID '" + leaderboard_id + "' not found in definitions![/color]")
+			_log_message("[color=yellow]Available leaderboard IDs: " + str(valid_ids) + "[/color]")
+			_log_message("[color=yellow]Query may fail. Select a leaderboard from the definitions list or use a valid ID.[/color]")
+
 	_log_message("[color=yellow]Querying ranks for leaderboard: " + leaderboard_id + " (limit: " + str(limit) + ")[/color]")
 
 	if EpicOS:
@@ -198,8 +214,25 @@ func _on_leaderboard_definitions_completed(success: bool, definitions: Array):
 
 		cached_definitions = definitions
 		_refresh_definitions_display()
+
+		if definitions.size() == 0:
+			_log_message("[color=yellow]⚠ No leaderboard definitions found. Make sure you have configured leaderboards in Epic Developer Portal.[/color]")
+		else:
+			# Log available leaderboards for reference
+			_log_message("[color=cyan]Available leaderboards:[/color]")
+			for definition in definitions:
+				var lb_id = definition.get("leaderboard_id", "")
+				var stat_name = definition.get("stat_name", "")
+				_log_message("[color=cyan]  • " + lb_id + " (stat: " + stat_name + ")[/color]")
+
+			# Auto-populate the first leaderboard ID in the input field
+			if leaderboard_input:
+				var first_id = definitions[0].get("leaderboard_id", "")
+				leaderboard_input.text = first_id
+				_log_message("[color=green]Auto-populated leaderboard input with: " + first_id + "[/color]")
 	else:
 		_log_message("[color=red]✗ Leaderboard definitions query failed![/color]")
+		_log_message("[color=red]Check the console output for error details.[/color]")
 
 func _on_leaderboard_ranks_completed(success: bool, ranks: Array):
 	if success:
@@ -208,8 +241,18 @@ func _on_leaderboard_ranks_completed(success: bool, ranks: Array):
 
 		cached_ranks = ranks
 		_refresh_ranks_display()
+
+		if ranks.size() == 0:
+			_log_message("[color=yellow]⚠ No rank entries found. The leaderboard may be empty.[/color]")
+			_log_message("[color=yellow]Try ingesting some stats first to populate the leaderboard.[/color]")
 	else:
 		_log_message("[color=red]✗ Leaderboard ranks query failed![/color]")
+		_log_message("[color=red]Check the console output for the specific error code.[/color]")
+		_log_message("[color=yellow]Common issues:[/color]")
+		_log_message("[color=yellow]  • Error 18: Invalid leaderboard ID or not configured[/color]")
+		_log_message("[color=yellow]  • The leaderboard ID must match what's in Epic Developer Portal[/color]")
+		_log_message("[color=yellow]  • Use 'Query Definitions' to see available leaderboard IDs[/color]")
+		_log_message("[color=yellow]  • Example: Use 'EnemiesSmashedEver' not 'EnemiesDefeated'[/color]")
 
 func _on_leaderboard_user_scores_completed(success: bool, user_scores: Dictionary):
 	if success:

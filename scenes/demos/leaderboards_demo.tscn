@@ -75,7 +75,7 @@ min_value = 1.0
 max_value = 1000.0
 value = 10.0
 
-[node name="QuerySpecificRanksButton" type="Button" parent="VBoxContainer/RanksQuerySection"]
+[node name="QueryRanksButton" type="Button" parent="VBoxContainer/RanksQuerySection"]
 layout_mode = 2
 disabled = true
 text = "Query Ranks"
@@ -85,10 +85,10 @@ layout_mode = 2
 disabled = true
 text = "Query Definitions"
 
-[node name="QueryRanksButton" type="Button" parent="VBoxContainer/RanksQuerySection"]
+[node name="QuerySpecificRanksButton" type="Button" parent="VBoxContainer/RanksQuerySection"]
 layout_mode = 2
 disabled = true
-text = "Query Ranks"
+text = "Query Specific Ranks"
 
 [node name="HSeparator6" type="HSeparator" parent="VBoxContainer"]
 custom_minimum_size = Vector2(0, 5)
@@ -253,5 +253,4 @@ This demo shows how to:
 
 [color=yellow]Note: You must be logged in to use leaderboard features.[/color]
 "
-fit_content = true
 scroll_following = true
