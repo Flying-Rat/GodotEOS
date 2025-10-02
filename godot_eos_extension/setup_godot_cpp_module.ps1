@@ -1,6 +1,20 @@
 # Helper script to initialize or populate the godot-cpp module for GodotEOS (compacted)
 
-$DesiredModuleBranch = 'godot-4.2-stable'
+# Parse the branch from .gitmodules
+$gitmodulesPath = "../.gitmodules"
+if (Test-Path $gitmodulesPath) {
+    $gitmodulesContent = Get-Content $gitmodulesPath -Raw
+    if ($gitmodulesContent -match '\[submodule "godot_eos_extension/godot-cpp"\][\s\S]*?branch\s*=\s*([^\s\n]+)') {
+        $DesiredModuleBranch = $matches[1].Trim()
+        Write-Host "Using branch '$DesiredModuleBranch' from .gitmodules"
+    } else {
+        Write-Warning "Branch not found in .gitmodules; falling back to default 'godot-4.3-stable'"
+        $DesiredModuleBranch = 'godot-4.3-stable'
+    }
+} else {
+    Write-Warning ".gitmodules not found; falling back to default 'godot-4.3-stable'"
+    $DesiredModuleBranch = 'godot-4.3-stable'
+}
 
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
     Write-Error "git is not available in PATH. Cannot initialize submodules."; exit 1
@@ -23,14 +37,17 @@ if (Test-Path (Join-Path $cppPath '.git')) {
     try {
         git fetch origin --prune 2>$null
         if (git rev-parse --verify $DesiredModuleBranch 2>$null) {
-            Write-Host "Checking out local branch '$DesiredModuleBranch'..."
+            Write-Host "Checking out local branch/tag '$DesiredModuleBranch'..."
             git checkout $DesiredModuleBranch 2>$null
         } elseif (git ls-remote --heads origin $DesiredModuleBranch 2>$null | Select-String $DesiredModuleBranch) {
             Write-Host "Creating tracking branch from origin/$DesiredModuleBranch..."
             git checkout -b $DesiredModuleBranch origin/$DesiredModuleBranch 2>$null
+        } elseif (git ls-remote --tags origin $DesiredModuleBranch 2>$null | Select-String $DesiredModuleBranch) {
+            Write-Host "Checking out tag '$DesiredModuleBranch'..."
+            git checkout $DesiredModuleBranch 2>$null
         } else {
-            Write-Host "Branch '$DesiredModuleBranch' not available; leaving as-is."
+            Write-Host "Branch/tag '$DesiredModuleBranch' not available; leaving as-is."
         }
-        if ($LASTEXITCODE -ne 0) { Write-Warning "Branch operation failed." }
+        if ($LASTEXITCODE -ne 0) { Write-Warning "Branch/tag operation failed." }
     } finally { Pop-Location }
 }
