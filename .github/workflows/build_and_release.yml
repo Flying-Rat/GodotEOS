@@ -8,9 +8,6 @@ on:
     types: [created]
   workflow_dispatch:
 
-env:
-  EOS_SDK_URL: 'https://onlineservices.epicgames.com/api/sdk/download?archive_id=774&archive_type=sdk'
-
 jobs:
   build-linux-x86_64:
     runs-on: ubuntu-latest
@@ -28,30 +25,17 @@ jobs:
             ${{ runner.os }}-godotcpp-
       - name: Download EOS SDK
         run: |
-          curl -L -o eos_sdk.zip "${{ env.EOS_SDK_URL }}"
-          rm -rf eos_sdk
-          unzip -q eos_sdk.zip
-          if [ -d "SDK" ]; then
-            mv SDK eos_sdk
-          else
-            SDK_ROOT=$(find . -maxdepth 1 -type d -name 'EOS-SDK-*' | head -n 1)
-            if [ -n "$SDK_ROOT" ] && [ -d "$SDK_ROOT/SDK" ]; then
-              mv "$SDK_ROOT/SDK" eos_sdk
-              rm -rf "$SDK_ROOT"
-            else
-              echo "Failed to find EOS SDK root directory" >&2
-              exit 1
-            fi
+          set -euo pipefail
+          curl -L -o eos_sdk.zip "${{ secrets.EOS_SDK_URL }}"
+          rm -rf eos_sdk eos_sdk_tmp
+          unzip -q eos_sdk.zip -d eos_sdk_tmp
+          SDK_DIR=$(find eos_sdk_tmp -mindepth 1 -maxdepth 2 -type d -name SDK -print -quit)
+          if [ -z "$SDK_DIR" ]; then
+            echo "Failed to locate SDK directory inside EOS archive" >&2
+            exit 1
           fi
-          ls -R eos_sdk || true
-      - name: Log EOS SDK structure (Linux)
-        run: |
-          echo "Current working directory: $(pwd)"
-          echo "Contents of eos_sdk (depth 2):"
-          find eos_sdk -maxdepth 2 -type d -print
-          echo "Key files found:" && find eos_sdk -maxdepth 3 -type f \( -name 'eos_sdk.h' -o -name 'libEOSSDK-Linux-Shipping.so' -o -name 'EOSSDK-Win64-Shipping.dll' \) -print
-          ls -l eos_sdk/Include | head -n 40 || true
-          ls -l eos_sdk/Bin || true
+          mv "$SDK_DIR" eos_sdk
+          rm -rf eos_sdk_tmp eos_sdk.zip
       - name: Install SCons
         run: sudo apt-get install -y scons
       - name: Build Linux x86_64 Debug
@@ -84,30 +68,17 @@ jobs:
         run: brew install scons
       - name: Download EOS SDK
         run: |
-          curl -L -o eos_sdk.zip "${{ env.EOS_SDK_URL }}"
-          rm -rf eos_sdk
-          unzip -q eos_sdk.zip
-          if [ -d "SDK" ]; then
-            mv SDK eos_sdk
-          else
-            SDK_ROOT=$(find . -maxdepth 1 -type d -name 'EOS-SDK-*' | head -n 1)
-            if [ -n "$SDK_ROOT" ] && [ -d "$SDK_ROOT/SDK" ]; then
-              mv "$SDK_ROOT/SDK" eos_sdk
-              rm -rf "$SDK_ROOT"
-            else
-              echo "Failed to find EOS SDK root directory" >&2
-              exit 1
-            fi
+          set -euo pipefail
+          curl -L -o eos_sdk.zip "${{ secrets.EOS_SDK_URL }}"
+          rm -rf eos_sdk eos_sdk_tmp
+          unzip -q eos_sdk.zip -d eos_sdk_tmp
+          SDK_DIR=$(find eos_sdk_tmp -mindepth 1 -maxdepth 2 -type d -name SDK -print -quit)
+          if [ -z "$SDK_DIR" ]; then
+            echo "Failed to locate SDK directory inside EOS archive" >&2
+            exit 1
           fi
-          ls -R eos_sdk || true
-      - name: Log EOS SDK structure (macOS)
-        run: |
-          echo "Current working directory: $(pwd)"
-          echo "Contents of eos_sdk (depth 2):"
-          find eos_sdk -maxdepth 2 -type d -print
-          echo "Key files found:" && find eos_sdk -maxdepth 3 -type f \( -name 'eos_sdk.h' -o -name 'libEOSSDK-Mac-Shipping.dylib' -o -name 'EOSSDK-Win64-Shipping.dll' \) -print
-          ls -l eos_sdk/Include | head -n 40 || true
-          ls -l eos_sdk/Bin || true
+          mv "$SDK_DIR" eos_sdk
+          rm -rf eos_sdk_tmp eos_sdk.zip
       - name: Build Mac
         working-directory: godot_epic_extension
         run: scons platform=macos target=template_release EOS_SDK_PATH=../eos_sdk
@@ -137,39 +108,17 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $url = '${{ env.EOS_SDK_URL }}'
-          Invoke-WebRequest -Uri $url -OutFile 'eos_sdk.zip'
-          if (Test-Path 'eos_sdk_extract') { Remove-Item 'eos_sdk_extract' -Recurse -Force }
-          Expand-Archive -Path 'eos_sdk.zip' -DestinationPath 'eos_sdk_extract'
+          $archive = 'eos_sdk.zip'
+          Invoke-WebRequest -Uri '${{ secrets.EOS_SDK_URL }}' -OutFile $archive
+          if (Test-Path 'eos_sdk_tmp') { Remove-Item 'eos_sdk_tmp' -Recurse -Force }
+          Expand-Archive -Path $archive -DestinationPath 'eos_sdk_tmp' -Force
+          $sdkDir = Get-ChildItem -Path 'eos_sdk_tmp' -Recurse -Directory -Filter 'SDK' | Select-Object -First 1
+          if (-not $sdkDir) {
+            throw 'Failed to locate SDK directory inside EOS archive.'
+          }
           if (Test-Path 'eos_sdk') { Remove-Item 'eos_sdk' -Recurse -Force }
-          $topLevelSdk = Join-Path 'eos_sdk_extract' 'SDK'
-          if (Test-Path $topLevelSdk) {
-            Move-Item -Path $topLevelSdk -Destination 'eos_sdk'
-          } else {
-            $archiveDir = Get-ChildItem -Path 'eos_sdk_extract' -Directory | Where-Object { $_.Name -like 'EOS-SDK-*' } | Select-Object -First 1
-            if (-not $archiveDir) {
-              throw 'Failed to locate EOS SDK archive directory.'
-            }
-            $nestedSdk = Join-Path $archiveDir.FullName 'SDK'
-            if (-not (Test-Path $nestedSdk)) {
-              throw "Located archive directory '$($archiveDir.FullName)' but it does not contain an SDK folder."
-            }
-            Move-Item -Path $nestedSdk -Destination 'eos_sdk'
-          }
-          Remove-Item 'eos_sdk_extract' -Recurse -Force
-          Get-ChildItem -Recurse eos_sdk || Write-Output 'eos_sdk not found'
-      - name: Log EOS SDK structure (Windows)
-        shell: pwsh
-        run: |
-          Write-Host "Current working directory: $(Get-Location)"
-          Write-Host "Directory tree (depth 2):"
-          Get-ChildItem -Path eos_sdk -Depth 2 | ForEach-Object { $_.FullName }
-          Write-Host "Key files present:"; @( 'Include/eos_sdk.h', 'Bin/EOSSDK-Win64-Shipping.dll', 'Bin/libEOSSDK-Linux-Shipping.so', 'Bin/libEOSSDK-Mac-Shipping.dylib' ) | ForEach-Object {
-            $path = Join-Path eos_sdk $_
-            if (Test-Path $path) { Write-Host "  ✓ $path" } else { Write-Host "  ✗ $path" }
-          }
-          Get-ChildItem -Path eos_sdk/Include | Select-Object -First 40 | Format-Table -AutoSize
-          Get-ChildItem -Path eos_sdk/Bin | Format-Table -AutoSize
+          Move-Item -Path $sdkDir.FullName -Destination 'eos_sdk'
+          Remove-Item 'eos_sdk_tmp', $archive -Recurse -Force
       - name: Build Windows x86_64
         shell: pwsh
         working-directory: godot_epic_extension
