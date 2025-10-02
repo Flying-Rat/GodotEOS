@@ -7,6 +7,8 @@ layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_auth")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
@@ -18,195 +20,158 @@ offset_left = 20.0
 offset_top = 20.0
 offset_right = -20.0
 offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Title" type="Label" parent="VBoxContainer"]
 layout_mode = 2
 text = "EpicOS Authentication Demo"
 horizontal_alignment = 1
-add_theme_font_size_override("font_size", 24)
 
-[node name="BackButton" type="Button" parent="VBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 0
-text = "← Back to Menu"
-
-[node name="HSeparator" type="HSeparator" parent="VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
 
-[node name="StatusPanel" type="Panel" parent="VBoxContainer"]
-layout_mode = 2
-size_flags_vertical = 0
-
-[node name="StatusContainer" type="VBoxContainer" parent="VBoxContainer/StatusPanel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = -10.0
-offset_bottom = -10.0
-
-[node name="StatusTitle" type="Label" parent="VBoxContainer/StatusPanel/StatusContainer"]
-layout_mode = 2
-text = "Authentication Status"
-add_theme_font_size_override("font_size", 18)
-
-[node name="StatusLabel" type="Label" parent="VBoxContainer/StatusPanel/StatusContainer"]
-layout_mode = 2
-text = "Platform Status: Not Initialized"
-
-[node name="UserLabel" type="Label" parent="VBoxContainer/StatusPanel/StatusContainer"]
-layout_mode = 2
-text = "User Status: Not Logged In"
-
-[node name="UserInfoLabel" type="Label" parent="VBoxContainer/StatusPanel/StatusContainer"]
-layout_mode = 2
-text = "Username: N/A"
-
-[node name="AccountInfoLabel" type="Label" parent="VBoxContainer/StatusPanel/StatusContainer"]
-layout_mode = 2
-text = "Epic Account ID: N/A"
-
-[node name="ProductUserLabel" type="Label" parent="VBoxContainer/StatusPanel/StatusContainer"]
-layout_mode = 2
-text = "Product User ID: N/A"
-
-[node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
-layout_mode = 2
-
-[node name="InitSection" type="VBoxContainer" parent="VBoxContainer"]
-layout_mode = 2
-
-[node name="InitLabel" type="Label" parent="VBoxContainer/InitSection"]
-layout_mode = 2
-text = "Platform Initialization"
-add_theme_font_size_override("font_size", 16)
-
-[node name="InitButton" type="Button" parent="VBoxContainer/InitSection"]
-layout_mode = 2
-text = "Initialize EOS Platform"
-
-[node name="HSeparator3" type="HSeparator" parent="VBoxContainer"]
-layout_mode = 2
-
-[node name="LoginSection" type="VBoxContainer" parent="VBoxContainer"]
-layout_mode = 2
-
-[node name="LoginLabel" type="Label" parent="VBoxContainer/LoginSection"]
-layout_mode = 2
-text = "Login Methods"
-add_theme_font_size_override("font_size", 16)
-
-[node name="LoginGrid" type="GridContainer" parent="VBoxContainer/LoginSection"]
-layout_mode = 2
-columns = 2
-
-[node name="EpicAccountPanel" type="Panel" parent="VBoxContainer/LoginSection/LoginGrid"]
+[node name="StatusPanel" type="Panel" parent="VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(0, 160)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="EpicAccountContainer" type="VBoxContainer" parent="VBoxContainer/LoginSection/LoginGrid/EpicAccountPanel"]
+[node name="StatusContainer" type="VBoxContainer" parent="VBoxContainer/HBoxContainer/StatusPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = -10.0
-offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 5
 
-[node name="EpicAccountLabel" type="Label" parent="VBoxContainer/LoginSection/LoginGrid/EpicAccountPanel/EpicAccountContainer"]
+[node name="StatusTitle" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/StatusContainer"]
+layout_mode = 2
+text = "Platform Status: Not Initialized"
+
+[node name="UserLabel" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/StatusContainer"]
+layout_mode = 2
+text = "User Status: Not Logged In"
+
+[node name="UserInfoLabel" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/StatusContainer"]
+layout_mode = 2
+text = "Username: N/A"
+
+[node name="AccountInfoLabel" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/StatusContainer"]
+layout_mode = 2
+text = "Epic Account ID: N/A"
+
+[node name="ProductUserLabel" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/StatusContainer"]
+layout_mode = 2
+text = "Product User ID: N/A"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="InitButton" type="Button" parent="VBoxContainer/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Initialize EOS Platform"
+
+[node name="LogoutButton" type="Button" parent="VBoxContainer/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+disabled = true
+text = "Logout"
+
+[node name="BackButton" type="Button" parent="VBoxContainer/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "← Back to Menu"
+
+[node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="LoginVBoxContainer" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="EpicAccountContainer" type="VBoxContainer" parent="VBoxContainer/LoginVBoxContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer_LoginSection_LoginGrid_EpicAccountPanel_EpicAccountContainer#EpicAccountLabel" type="Label" parent="VBoxContainer/LoginVBoxContainer/EpicAccountContainer"]
 layout_mode = 2
 text = "Epic Account Login"
 horizontal_alignment = 1
 
-[node name="EmailInput" type="LineEdit" parent="VBoxContainer/LoginSection/LoginGrid/EpicAccountPanel/EpicAccountContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/LoginVBoxContainer/EpicAccountContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/LoginVBoxContainer/EpicAccountContainer/HBoxContainer"]
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="EmailInput" type="LineEdit" parent="VBoxContainer/LoginVBoxContainer/EpicAccountContainer/HBoxContainer/VBoxContainer"]
 layout_mode = 2
 placeholder_text = "Email"
 
-[node name="PasswordInput" type="LineEdit" parent="VBoxContainer/LoginSection/LoginGrid/EpicAccountPanel/EpicAccountContainer"]
+[node name="PasswordInput" type="LineEdit" parent="VBoxContainer/LoginVBoxContainer/EpicAccountContainer/HBoxContainer/VBoxContainer"]
 layout_mode = 2
 placeholder_text = "Password"
 secret = true
 
-[node name="EpicLoginButton" type="Button" parent="VBoxContainer/LoginSection/LoginGrid/EpicAccountPanel/EpicAccountContainer"]
+[node name="EpicLoginButton" type="Button" parent="VBoxContainer/LoginVBoxContainer/EpicAccountContainer/HBoxContainer"]
 layout_mode = 2
-text = "Login with Epic Account"
 disabled = true
+text = "Login with Epic Account"
 
-[node name="OtherMethodsPanel" type="Panel" parent="VBoxContainer/LoginSection/LoginGrid"]
+[node name="VSeparator" type="VSeparator" parent="VBoxContainer/LoginVBoxContainer/EpicAccountContainer/HBoxContainer"]
+custom_minimum_size = Vector2(10, 0)
 layout_mode = 2
-size_flags_horizontal = 3
 
-[node name="OtherMethodsContainer" type="VBoxContainer" parent="VBoxContainer/LoginSection/LoginGrid/OtherMethodsPanel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = -10.0
-offset_bottom = -10.0
-
-[node name="OtherMethodsLabel" type="Label" parent="VBoxContainer/LoginSection/LoginGrid/OtherMethodsPanel/OtherMethodsContainer"]
+[node name="PortalLoginButton" type="Button" parent="VBoxContainer/LoginVBoxContainer/EpicAccountContainer/HBoxContainer"]
 layout_mode = 2
-text = "Alternative Login Methods"
+disabled = true
+text = "Login with Account Portal"
+
+[node name="VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel#OtherMethodsContainer" type="VBoxContainer" parent="VBoxContainer/LoginVBoxContainer/EpicAccountContainer"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel_OtherMethodsContainer#OtherMethodsLabel" type="Label" parent="VBoxContainer/LoginVBoxContainer/EpicAccountContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel#OtherMethodsContainer"]
+layout_mode = 2
+text = "Login Method for development"
 horizontal_alignment = 1
 
-[node name="PortalLoginButton" type="Button" parent="VBoxContainer/LoginSection/LoginGrid/OtherMethodsPanel/OtherMethodsContainer"]
-layout_mode = 2
-text = "Login with Account Portal"
-disabled = true
-
-[node name="DeviceContainer" type="HBoxContainer" parent="VBoxContainer/LoginSection/LoginGrid/OtherMethodsPanel/OtherMethodsContainer"]
+[node name="VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel_OtherMethodsContainer#DevContainer" type="HBoxContainer" parent="VBoxContainer/LoginVBoxContainer/EpicAccountContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel#OtherMethodsContainer"]
 layout_mode = 2
 
-[node name="DeviceInput" type="LineEdit" parent="VBoxContainer/LoginSection/LoginGrid/OtherMethodsPanel/OtherMethodsContainer/DeviceContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-placeholder_text = "Display Name"
-
-[node name="DeviceLoginButton" type="Button" parent="VBoxContainer/LoginSection/LoginGrid/OtherMethodsPanel/OtherMethodsContainer/DeviceContainer"]
-layout_mode = 2
-text = "Device Login"
-disabled = true
-
-[node name="DevContainer" type="HBoxContainer" parent="VBoxContainer/LoginSection/LoginGrid/OtherMethodsPanel/OtherMethodsContainer"]
-layout_mode = 2
-
-[node name="DevInput" type="LineEdit" parent="VBoxContainer/LoginSection/LoginGrid/OtherMethodsPanel/OtherMethodsContainer/DevContainer"]
+[node name="DevInput" type="LineEdit" parent="VBoxContainer/LoginVBoxContainer/EpicAccountContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel#OtherMethodsContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel_OtherMethodsContainer#DevContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 placeholder_text = "Dev Display Name"
 
-[node name="DevLoginButton" type="Button" parent="VBoxContainer/LoginSection/LoginGrid/OtherMethodsPanel/OtherMethodsContainer/DevContainer"]
+[node name="DevLoginButton" type="Button" parent="VBoxContainer/LoginVBoxContainer/EpicAccountContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel#OtherMethodsContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel_OtherMethodsContainer#DevContainer"]
+custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
+disabled = true
 text = "Dev Login"
-disabled = true
-
-[node name="LogoutButton" type="Button" parent="VBoxContainer/LoginSection"]
-layout_mode = 2
-text = "Logout"
-disabled = true
 
 [node name="HSeparator4" type="HSeparator" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 
 [node name="OutputSection" type="VBoxContainer" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 140)
 layout_mode = 2
 size_flags_vertical = 3
 
 [node name="OutputLabel" type="Label" parent="VBoxContainer/OutputSection"]
 layout_mode = 2
+size_flags_vertical = 1
 text = "Output Log"
-add_theme_font_size_override("font_size", 16)
 
-[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer/OutputSection"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="OutputText" type="RichTextLabel" parent="VBoxContainer/OutputSection/ScrollContainer"]
+[node name="OutputText" type="RichTextLabel" parent="VBoxContainer/OutputSection"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3

@@ -3,25 +3,24 @@ extends Control
 # Authentication Demo Script
 # Demonstrates how to use the EpicOS authentication features
 
-@onready var status_label: Label = $VBoxContainer/StatusPanel/StatusContainer/StatusLabel
-@onready var user_label: Label = $VBoxContainer/StatusPanel/StatusContainer/UserLabel
-@onready var user_info_label: Label = $VBoxContainer/StatusPanel/StatusContainer/UserInfoLabel
-@onready var account_info_label: Label = $VBoxContainer/StatusPanel/StatusContainer/AccountInfoLabel
-@onready var product_user_label: Label = $VBoxContainer/StatusPanel/StatusContainer/ProductUserLabel
+@onready var status_label: Label = $VBoxContainer/HBoxContainer/StatusPanel/StatusContainer/StatusTitle
+@onready var user_label: Label = $VBoxContainer/HBoxContainer/StatusPanel/StatusContainer/UserLabel
+@onready var user_info_label: Label = $VBoxContainer/HBoxContainer/StatusPanel/StatusContainer/UserInfoLabel
+@onready var account_info_label: Label = $VBoxContainer/HBoxContainer/StatusPanel/StatusContainer/AccountInfoLabel
+@onready var product_user_label: Label = $VBoxContainer/HBoxContainer/StatusPanel/StatusContainer/ProductUserLabel
 
-@onready var init_button: Button = $VBoxContainer/InitSection/InitButton
-@onready var email_input: LineEdit = $VBoxContainer/LoginSection/LoginGrid/EpicAccountPanel/EpicAccountContainer/EmailInput
-@onready var password_input: LineEdit = $VBoxContainer/LoginSection/LoginGrid/EpicAccountPanel/EpicAccountContainer/PasswordInput
-@onready var epic_login_button: Button = $VBoxContainer/LoginSection/LoginGrid/EpicAccountPanel/EpicAccountContainer/EpicLoginButton
-@onready var portal_login_button: Button = $VBoxContainer/LoginSection/LoginGrid/OtherMethodsPanel/OtherMethodsContainer/PortalLoginButton
-@onready var device_input: LineEdit = $VBoxContainer/LoginSection/LoginGrid/OtherMethodsPanel/OtherMethodsContainer/DeviceContainer/DeviceInput
-@onready var device_login_button: Button = $VBoxContainer/LoginSection/LoginGrid/OtherMethodsPanel/OtherMethodsContainer/DeviceContainer/DeviceLoginButton
-@onready var dev_input: LineEdit = $VBoxContainer/LoginSection/LoginGrid/OtherMethodsPanel/OtherMethodsContainer/DevContainer/DevInput
-@onready var dev_login_button: Button = $VBoxContainer/LoginSection/LoginGrid/OtherMethodsPanel/OtherMethodsContainer/DevContainer/DevLoginButton
-@onready var logout_button: Button = $VBoxContainer/LoginSection/LogoutButton
+@onready var init_button: Button = $VBoxContainer/HBoxContainer/VBoxContainer/InitButton
+@onready var email_input: LineEdit = $"VBoxContainer/LoginVBoxContainer/EpicAccountContainer/HBoxContainer/VBoxContainer/EmailInput"
+@onready var password_input: LineEdit = $"VBoxContainer/LoginVBoxContainer/EpicAccountContainer/HBoxContainer/VBoxContainer/PasswordInput"
+@onready var epic_login_button: Button = $"VBoxContainer/LoginVBoxContainer/EpicAccountContainer/HBoxContainer/EpicLoginButton"
+@onready var portal_login_button: Button = $"VBoxContainer/LoginVBoxContainer/EpicAccountContainer/HBoxContainer/PortalLoginButton"
+@onready var device_input: LineEdit = $"VBoxContainer/LoginVBoxContainer/EpicAccountContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel#OtherMethodsContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel_OtherMethodsContainer#DeviceContainer/DeviceInput"
+@onready var dev_input: LineEdit = $"VBoxContainer/LoginVBoxContainer/EpicAccountContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel#OtherMethodsContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel_OtherMethodsContainer#DevContainer/DevInput"
+@onready var dev_login_button: Button = $"VBoxContainer/LoginVBoxContainer/EpicAccountContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel#OtherMethodsContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel_OtherMethodsContainer#DevContainer/DevLoginButton"
+@onready var logout_button: Button = $VBoxContainer/HBoxContainer/VBoxContainer/LogoutButton
 
-@onready var output_text: RichTextLabel = $VBoxContainer/OutputSection/ScrollContainer/OutputText
-@onready var back_button: Button = $VBoxContainer/BackButton
+@onready var output_text: RichTextLabel = $VBoxContainer/OutputSection/OutputText
+@onready var back_button: Button = $VBoxContainer/HBoxContainer/VBoxContainer/BackButton
 
 var is_platform_initialized: bool = false
 var is_user_logged_in: bool = false
@@ -31,7 +30,6 @@ func _ready():
 	init_button.pressed.connect(_on_init_button_pressed)
 	epic_login_button.pressed.connect(_on_epic_login_button_pressed)
 	portal_login_button.pressed.connect(_on_portal_login_button_pressed)
-	device_login_button.pressed.connect(_on_device_login_button_pressed)
 	dev_login_button.pressed.connect(_on_dev_login_button_pressed)
 	logout_button.pressed.connect(_on_logout_button_pressed)
 	back_button.pressed.connect(_on_back_button_pressed)
@@ -95,19 +93,6 @@ func _on_portal_login_button_pressed():
 
 	if EpicOS:
 		EpicOS.login_with_account_portal()
-	else:
-		_log_message("[color=red]EpicOS not available![/color]")
-
-func _on_device_login_button_pressed():
-	var display_name = device_input.text.strip_edges()
-
-	if display_name.is_empty():
-		display_name = "GodotEOS_User"
-
-	_log_message("[color=yellow]Attempting Device ID login with display name: " + display_name + "[/color]")
-
-	if EpicOS:
-		EpicOS.login_with_device_id(display_name)
 	else:
 		_log_message("[color=red]EpicOS not available![/color]")
 
@@ -179,7 +164,6 @@ func _update_ui_state():
 	init_button.disabled = is_platform_initialized
 	epic_login_button.disabled = not is_platform_initialized or is_user_logged_in
 	portal_login_button.disabled = not is_platform_initialized or is_user_logged_in
-	device_login_button.disabled = not is_platform_initialized or is_user_logged_in
 	dev_login_button.disabled = not is_platform_initialized or is_user_logged_in
 	logout_button.disabled = not is_user_logged_in
 
