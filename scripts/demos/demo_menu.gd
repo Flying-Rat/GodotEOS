@@ -3,16 +3,16 @@ extends Control
 # Demo Menu Script
 # Main navigation hub for all EpicOS demo scenes
 
-@onready var platform_status: Label = $VBoxContainer/StatusPanel/StatusContainer/PlatformStatus
-@onready var user_status: Label = $VBoxContainer/StatusPanel/StatusContainer/UserStatus
+@onready var platform_status: Label = $VBoxContainer/HBoxContainer/StatusPanel/StatusContainer/PlatformStatus
+@onready var user_status: Label = $VBoxContainer/HBoxContainer/StatusPanel/StatusContainer/UserStatus
 
 @onready var auth_button: Button = $VBoxContainer/DemosSection/ScrollContainer/DemosGrid/AuthenticationPanel/AuthenticationContainer/AuthButton
 @onready var friends_button: Button = $VBoxContainer/DemosSection/ScrollContainer/DemosGrid/FriendsPanel/FriendsContainer/FriendsButton
 @onready var achievements_button: Button = $VBoxContainer/DemosSection/ScrollContainer/DemosGrid/AchievementsPanel/AchievementsContainer/AchievementsButton
 @onready var leaderboards_button: Button = $VBoxContainer/DemosSection/ScrollContainer/DemosGrid/LeaderboardsPanel/LeaderboardsContainer/LeaderboardsButton
 
-@onready var exit_button: Button = $VBoxContainer/FooterContainer/ExitButton
-@onready var refresh_button: Button = $VBoxContainer/FooterContainer/RefreshButton
+@onready var exit_button: Button = $VBoxContainer/HBoxContainer/HeaderContainer/ExitButton
+@onready var refresh_button: Button = $VBoxContainer/HBoxContainer/HeaderContainer/RefreshButton
 
 func _ready():
 	# Connect button signals

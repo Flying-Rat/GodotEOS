@@ -24,12 +24,15 @@ layout_mode = 2
 text = "Epic Online Services Integration for Godot"
 horizontal_alignment = 1
 
-[node name="StatusPanel" type="Panel" parent="VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="StatusPanel" type="Panel" parent="VBoxContainer/HBoxContainer"]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
-size_flags_vertical = 0
+size_flags_horizontal = 3
 
-[node name="StatusContainer" type="VBoxContainer" parent="VBoxContainer/StatusPanel"]
+[node name="StatusContainer" type="VBoxContainer" parent="VBoxContainer/HBoxContainer/StatusPanel"]
 layout_mode = 1
 anchors_preset = 14
 anchor_top = 0.5
@@ -40,15 +43,42 @@ offset_bottom = 25.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="PlatformStatus" type="Label" parent="VBoxContainer/StatusPanel/StatusContainer"]
+[node name="PlatformStatus" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/StatusContainer"]
 layout_mode = 2
 text = "Platform: Not Initialized"
 horizontal_alignment = 1
 
-[node name="UserStatus" type="Label" parent="VBoxContainer/StatusPanel/StatusContainer"]
+[node name="UserStatus" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/StatusContainer"]
 layout_mode = 2
 text = "User: Not Logged In"
 horizontal_alignment = 1
+
+[node name="HeaderContainer" type="HBoxContainer" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="VSeparator2" type="VSeparator" parent="VBoxContainer/HBoxContainer/HeaderContainer"]
+layout_mode = 2
+
+[node name="VersionLabel" type="Label" parent="VBoxContainer/HBoxContainer/HeaderContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "GodotEpic v1.0.0 - Epic Online Services Demo Suite"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="VSeparator3" type="VSeparator" parent="VBoxContainer/HBoxContainer/HeaderContainer"]
+layout_mode = 2
+
+[node name="RefreshButton" type="Button" parent="VBoxContainer/HBoxContainer/HeaderContainer"]
+layout_mode = 2
+text = "Refresh Status"
+
+[node name="VSeparator" type="VSeparator" parent="VBoxContainer/HBoxContainer/HeaderContainer"]
+layout_mode = 2
+
+[node name="ExitButton" type="Button" parent="VBoxContainer/HBoxContainer/HeaderContainer"]
+layout_mode = 2
+text = "Exit Application"
 
 [node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
 layout_mode = 2
@@ -79,17 +109,12 @@ columns = 2
 custom_minimum_size = Vector2(400, 200)
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
 
 [node name="AuthenticationContainer" type="VBoxContainer" parent="VBoxContainer/DemosSection/ScrollContainer/DemosGrid/AuthenticationPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = -10.0
-offset_bottom = -10.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -98,10 +123,7 @@ layout_mode = 2
 size_flags_vertical = 3
 text = "🔐 Authentication
 
-Login methods:
-• Epic Games account
-• Account portal
-• Device ID"
+Login methods: Epic Games account, Account portal, Device ID (for DEV)"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
@@ -114,17 +136,12 @@ text = "Open Authentication Demo"
 custom_minimum_size = Vector2(400, 200)
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
 
 [node name="FriendsContainer" type="VBoxContainer" parent="VBoxContainer/DemosSection/ScrollContainer/DemosGrid/FriendsPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = -10.0
-offset_bottom = -10.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -133,10 +150,7 @@ layout_mode = 2
 size_flags_vertical = 3
 text = "👥 Friends
 
-Friends functionality:
-• Query friends list
-• Get friend info
-• Display status
+Friends functionality: Query friends list, Get friend info, Display status
 
 Requires authentication."
 horizontal_alignment = 1
@@ -151,17 +165,12 @@ text = "Open Friends Demo"
 custom_minimum_size = Vector2(400, 200)
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
 
 [node name="AchievementsContainer" type="VBoxContainer" parent="VBoxContainer/DemosSection/ScrollContainer/DemosGrid/AchievementsPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = -10.0
-offset_bottom = -10.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -170,10 +179,7 @@ layout_mode = 2
 size_flags_vertical = 3
 text = "🏆 Achievements
 
-Achievements system:
-• View player progress
-• Unlock achievements
-• Manage statistics"
+Achievements system: View player progress, Unlock achievements, Manage statistics"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
@@ -186,17 +192,12 @@ text = "Open Achievements Demo"
 custom_minimum_size = Vector2(400, 200)
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
 
 [node name="LeaderboardsContainer" type="VBoxContainer" parent="VBoxContainer/DemosSection/ScrollContainer/DemosGrid/LeaderboardsPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = -10.0
-offset_bottom = -10.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -205,10 +206,7 @@ layout_mode = 2
 size_flags_vertical = 3
 text = "📊 Leaderboards
 
-Leaderboards system:
-• View rankings
-• Submit statistics
-• Track progress"
+Leaderboards system: View rankings, Submit statistics, Track progress"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
@@ -223,9 +221,10 @@ layout_mode = 2
 [node name="InfoSection" type="VBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
 
-[node name="InfoTitle" type="Label" parent="VBoxContainer/InfoSection"]
+[node name="InfoTitle" type="RichTextLabel" parent="VBoxContainer/InfoSection"]
 custom_minimum_size = Vector2(0, 140)
 layout_mode = 2
+bbcode_enabled = true
 text = "[color=yellow]Before using the demos:[/color]
 1. Configure your Epic Games credentials in the [color=cyan]Authentication Demo[/color]
 2. Initialize the EOS platform using the [color=green]Initialize EOS Platform[/color] button
@@ -233,28 +232,4 @@ text = "[color=yellow]Before using the demos:[/color]
 4. Explore the other demos to see EpicOS features in action
 
 [color=red]Note: You need valid Epic Games Developer Portal credentials for most features to work properly.[/color]"
-horizontal_alignment = 1
-
-[node name="HSeparator4" type="HSeparator" parent="VBoxContainer"]
-layout_mode = 2
-
-[node name="FooterContainer" type="HBoxContainer" parent="VBoxContainer"]
-layout_mode = 2
-
-[node name="ExitButton" type="Button" parent="VBoxContainer/FooterContainer"]
-layout_mode = 2
-text = "Exit Application"
-
-[node name="RefreshButton" type="Button" parent="VBoxContainer/FooterContainer"]
-layout_mode = 2
-text = "Refresh Status"
-
-[node name="VSeparator" type="VSeparator" parent="VBoxContainer/FooterContainer"]
-layout_mode = 2
-
-[node name="VersionLabel" type="Label" parent="VBoxContainer/FooterContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "GodotEpic v1.0.0 - Epic Online Services Demo Suite"
-horizontal_alignment = 2
-vertical_alignment = 1
+fit_content = true
