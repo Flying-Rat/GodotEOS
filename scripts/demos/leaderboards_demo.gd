@@ -3,27 +3,27 @@ extends Control
 # Leaderboards Demo Script
 # Demonstrates how to use the EpicOS leaderboards features
 
-@onready var status_label: Label = $VBoxContainer/StatusPanel/StatusContainer/StatusLabel
-@onready var query_definitions_button: Button = $VBoxContainer/ActionsSection/ActionsGrid/QueryDefinitionsButton
-@onready var query_ranks_button: Button = $VBoxContainer/ActionsSection/ActionsGrid/QueryRanksButton
-@onready var refresh_button: Button = $VBoxContainer/ActionsSection/ActionsGrid/RefreshButton
+@onready var status_label: Label = $VBoxContainer/StatusContainer/StatusPanel/StatusLabel
+@onready var query_definitions_button: Button = $VBoxContainer/RanksQuerySection/QueryDefinitionsButton
+@onready var query_ranks_button: Button = $VBoxContainer/RanksQuerySection/QueryRanksButton
+@onready var refresh_button: Button = $VBoxContainer/StatusContainer/RefreshButton
 
-@onready var leaderboard_input: LineEdit = $VBoxContainer/RanksQuerySection/RanksQueryContainer/LeaderboardInput
-@onready var limit_input: SpinBox = $VBoxContainer/RanksQuerySection/RanksQueryContainer/LimitInput
-@onready var query_specific_ranks_button: Button = $VBoxContainer/RanksQuerySection/RanksQueryContainer/QuerySpecificRanksButton
+@onready var leaderboard_input: LineEdit = $VBoxContainer/RanksQuerySection/LeaderboardInput
+@onready var limit_input: SpinBox = $VBoxContainer/RanksQuerySection/LimitInput
+@onready var query_specific_ranks_button: Button = $VBoxContainer/RanksQuerySection/QuerySpecificRanksButton
 
-@onready var stat_name_input: LineEdit = $VBoxContainer/StatsSection/SingleStatContainer/StatNameInput
-@onready var stat_value_input: SpinBox = $VBoxContainer/StatsSection/SingleStatContainer/StatValueInput
-@onready var ingest_stat_button: Button = $VBoxContainer/StatsSection/SingleStatContainer/IngestStatButton
-@onready var test_stats_button: Button = $VBoxContainer/StatsSection/MultipleStatsContainer/TestStatsButton
-@onready var random_score_button: Button = $VBoxContainer/StatsSection/MultipleStatsContainer/RandomScoreButton
+@onready var stat_name_input: LineEdit = $VBoxContainer/StatsSection/HBoxContainer/StatNameInput
+@onready var stat_value_input: SpinBox = $VBoxContainer/StatsSection/HBoxContainer/StatValueInput
+@onready var ingest_stat_button: Button = $VBoxContainer/StatsSection/HBoxContainer/IngestStatButton
+@onready var test_stats_button: Button = $VBoxContainer/StatsSection/HBoxContainer/TestStatsButton
+@onready var random_score_button: Button = $VBoxContainer/StatsSection/HBoxContainer/RandomScoreButton
 
-@onready var definitions_list: ItemList = $VBoxContainer/DataSection/DefinitionsPanel/DefinitionsContainer/DefinitionsScrollContainer/DefinitionsList
-@onready var ranks_list: ItemList = $VBoxContainer/DataSection/RanksPanel/RanksContainer/RanksScrollContainer/RanksList
-@onready var user_scores_list: ItemList = $VBoxContainer/DataSection/UserScoresPanel/UserScoresContainer/UserScoresScrollContainer/UserScoresList
+@onready var definitions_list: ItemList = $VBoxContainer/DataSection/DefinitionsPanel/DefinitionsContainer/DefinitionsList
+@onready var ranks_list: ItemList = $VBoxContainer/DataSection/RanksPanel/RanksContainer/RanksList
+@onready var user_scores_list: ItemList = $VBoxContainer/DataSection/UserScoresPanel/UserScoresContainer/UserScoresList
 
-@onready var output_text: RichTextLabel = $VBoxContainer/OutputSection/OutputScrollContainer/OutputText
-@onready var back_button: Button = $VBoxContainer/BackButton
+@onready var output_text: RichTextLabel = $VBoxContainer/OutputSection/OutputText
+@onready var back_button: Button = $VBoxContainer/StatusContainer/BackButton
 
 var cached_definitions: Array = []
 var cached_ranks: Array = []

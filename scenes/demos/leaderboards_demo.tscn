@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://e1uv5pskry6n4"]
+[gd_scene load_steps=2 format=3 uid="uid://6g1knvb7sbwd"]
 
 [ext_resource type="Script" path="res://scripts/demos/leaderboards_demo.gd" id="1_leaderboards"]
 
@@ -7,6 +7,8 @@ layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_leaderboards")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
@@ -18,136 +20,126 @@ offset_left = 20.0
 offset_top = 20.0
 offset_right = -20.0
 offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Title" type="Label" parent="VBoxContainer"]
 layout_mode = 2
 text = "EpicOS Leaderboards Demo"
 horizontal_alignment = 1
-add_theme_font_size_override("font_size", 24)
 
-[node name="BackButton" type="Button" parent="VBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 0
-text = "← Back to Menu"
-
-[node name="HSeparator" type="HSeparator" parent="VBoxContainer"]
+[node name="StatusContainer" type="HBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
 
-[node name="StatusPanel" type="Panel" parent="VBoxContainer"]
+[node name="StatusPanel" type="Panel" parent="VBoxContainer/StatusContainer"]
+custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
-size_flags_vertical = 0
+size_flags_horizontal = 3
 
-[node name="StatusContainer" type="VBoxContainer" parent="VBoxContainer/StatusPanel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = -10.0
-offset_bottom = -10.0
-
-[node name="StatusLabel" type="Label" parent="VBoxContainer/StatusPanel/StatusContainer"]
+[node name="StatusLabel" type="Label" parent="VBoxContainer/StatusContainer/StatusPanel"]
 layout_mode = 2
+offset_left = 4.0
+offset_top = 8.0
+offset_right = 469.0
+offset_bottom = 31.0
 text = "Status: Not Logged In (Leaderboards require authentication)"
-add_theme_font_size_override("font_size", 16)
 
-[node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
-layout_mode = 2
-
-[node name="ActionsSection" type="VBoxContainer" parent="VBoxContainer"]
-layout_mode = 2
-
-[node name="ActionsLabel" type="Label" parent="VBoxContainer/ActionsSection"]
-layout_mode = 2
-text = "Leaderboard Actions"
-add_theme_font_size_override("font_size", 18)
-
-[node name="ActionsGrid" type="GridContainer" parent="VBoxContainer/ActionsSection"]
-layout_mode = 2
-columns = 3
-
-[node name="QueryDefinitionsButton" type="Button" parent="VBoxContainer/ActionsSection/ActionsGrid"]
-layout_mode = 2
-text = "Query Definitions"
-disabled = true
-
-[node name="QueryRanksButton" type="Button" parent="VBoxContainer/ActionsSection/ActionsGrid"]
-layout_mode = 2
-text = "Query Ranks"
-disabled = true
-
-[node name="RefreshButton" type="Button" parent="VBoxContainer/ActionsSection/ActionsGrid"]
+[node name="RefreshButton" type="Button" parent="VBoxContainer/StatusContainer"]
 layout_mode = 2
 text = "Refresh Display"
 
-[node name="RanksQuerySection" type="VBoxContainer" parent="VBoxContainer"]
+[node name="BackButton" type="Button" parent="VBoxContainer/StatusContainer"]
+layout_mode = 2
+size_flags_horizontal = 8
+text = "← Back to Menu"
+
+[node name="HSeparator7" type="HSeparator" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 5)
+layout_mode = 2
+
+[node name="RanksQuerySection" type="HBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
 
 [node name="RanksQueryLabel" type="Label" parent="VBoxContainer/RanksQuerySection"]
 layout_mode = 2
-text = "Query Specific Leaderboard"
-add_theme_font_size_override("font_size", 16)
+text = "Query Specific Leaderboard:"
 
-[node name="RanksQueryContainer" type="HBoxContainer" parent="VBoxContainer/RanksQuerySection"]
-layout_mode = 2
-
-[node name="LeaderboardInput" type="LineEdit" parent="VBoxContainer/RanksQuerySection/RanksQueryContainer"]
+[node name="LeaderboardInput" type="LineEdit" parent="VBoxContainer/RanksQuerySection"]
 layout_mode = 2
 size_flags_horizontal = 3
 placeholder_text = "Leaderboard ID"
 
-[node name="LimitInput" type="SpinBox" parent="VBoxContainer/RanksQuerySection/RanksQueryContainer"]
+[node name="LimitInput" type="SpinBox" parent="VBoxContainer/RanksQuerySection"]
 layout_mode = 2
 min_value = 1.0
 max_value = 1000.0
 value = 10.0
 
-[node name="QuerySpecificRanksButton" type="Button" parent="VBoxContainer/RanksQuerySection/RanksQueryContainer"]
+[node name="QuerySpecificRanksButton" type="Button" parent="VBoxContainer/RanksQuerySection"]
 layout_mode = 2
-text = "Query Ranks"
 disabled = true
+text = "Query Ranks"
 
-[node name="StatsSection" type="VBoxContainer" parent="VBoxContainer"]
+[node name="QueryDefinitionsButton" type="Button" parent="VBoxContainer/RanksQuerySection"]
+layout_mode = 2
+disabled = true
+text = "Query Definitions"
+
+[node name="QueryRanksButton" type="Button" parent="VBoxContainer/RanksQuerySection"]
+layout_mode = 2
+disabled = true
+text = "Query Ranks"
+
+[node name="HSeparator6" type="HSeparator" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 5)
+layout_mode = 2
+
+[node name="StatsSection" type="HBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
 
 [node name="StatsLabel" type="Label" parent="VBoxContainer/StatsSection"]
 layout_mode = 2
-text = "Submit Statistics"
-add_theme_font_size_override("font_size", 16)
+text = "Submit Statistics:"
 
-[node name="SingleStatContainer" type="HBoxContainer" parent="VBoxContainer/StatsSection"]
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/StatsSection"]
 layout_mode = 2
+size_flags_horizontal = 3
 
-[node name="StatNameInput" type="LineEdit" parent="VBoxContainer/StatsSection/SingleStatContainer"]
+[node name="TestStatsButton" type="Button" parent="VBoxContainer/StatsSection/HBoxContainer"]
 layout_mode = 2
-size_flags_horizontal = 2
+disabled = true
+text = "Submit Test Stats"
+
+[node name="RandomScoreButton" type="Button" parent="VBoxContainer/StatsSection/HBoxContainer"]
+layout_mode = 2
+disabled = true
+text = "Submit Random Score"
+
+[node name="VSeparator" type="VSeparator" parent="VBoxContainer/StatsSection/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="StatNameInput" type="LineEdit" parent="VBoxContainer/StatsSection/HBoxContainer"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 8
 placeholder_text = "Stat Name"
 
-[node name="StatValueInput" type="SpinBox" parent="VBoxContainer/StatsSection/SingleStatContainer"]
+[node name="StatValueInput" type="SpinBox" parent="VBoxContainer/StatsSection/HBoxContainer"]
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
+size_flags_horizontal = 8
 max_value = 999999.0
 value = 100.0
 
-[node name="IngestStatButton" type="Button" parent="VBoxContainer/StatsSection/SingleStatContainer"]
+[node name="IngestStatButton" type="Button" parent="VBoxContainer/StatsSection/HBoxContainer"]
 layout_mode = 2
+size_flags_horizontal = 8
+disabled = true
 text = "Submit Single Stat"
-disabled = true
 
-[node name="MultipleStatsContainer" type="HBoxContainer" parent="VBoxContainer/StatsSection"]
-layout_mode = 2
-
-[node name="TestStatsButton" type="Button" parent="VBoxContainer/StatsSection/MultipleStatsContainer"]
-layout_mode = 2
-text = "Submit Test Stats"
-disabled = true
-
-[node name="RandomScoreButton" type="Button" parent="VBoxContainer/StatsSection/MultipleStatsContainer"]
-layout_mode = 2
-text = "Submit Random Score"
-disabled = true
-
-[node name="HSeparator3" type="HSeparator" parent="VBoxContainer"]
+[node name="HSeparator5" type="HSeparator" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 5)
 layout_mode = 2
 
 [node name="DataSection" type="HBoxContainer" parent="VBoxContainer"]
@@ -167,17 +159,15 @@ offset_left = 10.0
 offset_top = 10.0
 offset_right = -10.0
 offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="DefinitionsLabel" type="Label" parent="VBoxContainer/DataSection/DefinitionsPanel/DefinitionsContainer"]
 layout_mode = 2
+size_flags_vertical = 1
 text = "Leaderboard Definitions"
-add_theme_font_size_override("font_size", 16)
 
-[node name="DefinitionsScrollContainer" type="ScrollContainer" parent="VBoxContainer/DataSection/DefinitionsPanel/DefinitionsContainer"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="DefinitionsList" type="ItemList" parent="VBoxContainer/DataSection/DefinitionsPanel/DefinitionsContainer/DefinitionsScrollContainer"]
+[node name="DefinitionsList" type="ItemList" parent="VBoxContainer/DataSection/DefinitionsPanel/DefinitionsContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -195,17 +185,15 @@ offset_left = 10.0
 offset_top = 10.0
 offset_right = -10.0
 offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="RanksLabel" type="Label" parent="VBoxContainer/DataSection/RanksPanel/RanksContainer"]
 layout_mode = 2
+size_flags_vertical = 1
 text = "Leaderboard Ranks"
-add_theme_font_size_override("font_size", 16)
 
-[node name="RanksScrollContainer" type="ScrollContainer" parent="VBoxContainer/DataSection/RanksPanel/RanksContainer"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="RanksList" type="ItemList" parent="VBoxContainer/DataSection/RanksPanel/RanksContainer/RanksScrollContainer"]
+[node name="RanksList" type="ItemList" parent="VBoxContainer/DataSection/RanksPanel/RanksContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -223,22 +211,21 @@ offset_left = 10.0
 offset_top = 10.0
 offset_right = -10.0
 offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="UserScoresLabel" type="Label" parent="VBoxContainer/DataSection/UserScoresPanel/UserScoresContainer"]
 layout_mode = 2
+size_flags_vertical = 1
 text = "User Scores"
-add_theme_font_size_override("font_size", 16)
 
-[node name="UserScoresScrollContainer" type="ScrollContainer" parent="VBoxContainer/DataSection/UserScoresPanel/UserScoresContainer"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="UserScoresList" type="ItemList" parent="VBoxContainer/DataSection/UserScoresPanel/UserScoresContainer/UserScoresScrollContainer"]
+[node name="UserScoresList" type="ItemList" parent="VBoxContainer/DataSection/UserScoresPanel/UserScoresContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="HSeparator4" type="HSeparator" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 5)
 layout_mode = 2
 
 [node name="OutputSection" type="VBoxContainer" parent="VBoxContainer"]
@@ -247,14 +234,11 @@ size_flags_vertical = 2
 
 [node name="OutputLabel" type="Label" parent="VBoxContainer/OutputSection"]
 layout_mode = 2
+size_flags_vertical = 1
 text = "Output Log"
-add_theme_font_size_override("font_size", 16)
 
-[node name="OutputScrollContainer" type="ScrollContainer" parent="VBoxContainer/OutputSection"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="OutputText" type="RichTextLabel" parent="VBoxContainer/OutputSection/OutputScrollContainer"]
+[node name="OutputText" type="RichTextLabel" parent="VBoxContainer/OutputSection"]
+custom_minimum_size = Vector2(0, 200)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -269,4 +253,5 @@ This demo shows how to:
 
 [color=yellow]Note: You must be logged in to use leaderboard features.[/color]
 "
+fit_content = true
 scroll_following = true
