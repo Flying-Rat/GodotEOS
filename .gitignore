@@ -49,7 +49,9 @@ godot_eos_extension/eos_samples
 # Ignore temp libraries
 ~*.dll
 
-# Exception: Allow specific file in demo/bin
-!godot_eos_extension/demo/bin/godotepic.gdextension
+# Exception: Allow .gdextension files in bin directories
+!godot_eos_extension/demo/bin/godoteos.gdextension
+!addons/godoteos/bin/godoteos.gdextension
+
 .vscode/settings.json
 godot_eos_extension/eos_sample
