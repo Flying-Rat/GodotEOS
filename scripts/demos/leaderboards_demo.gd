@@ -291,13 +291,13 @@ func _refresh_definitions_display():
 		return
 
 	for definition in cached_definitions:
-		var display_name = str(definition.get("display_name", "Unknown Leaderboard"))
 		var leaderboard_id = str(definition.get("leaderboard_id", ""))
+		var agregation = str(definition.get("aggregation", ""))
 		var stat_name = str(definition.get("stat_name", ""))
 
-		var display_text = display_name
-		if not leaderboard_id.is_empty():
-			display_text += " [" + leaderboard_id + "]"
+		var display_text = leaderboard_id
+		if not agregation.is_empty():
+			display_text += " [" + agregation + "]"
 		if not stat_name.is_empty():
 			display_text += " (" + stat_name + ")"
 
