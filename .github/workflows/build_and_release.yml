@@ -19,8 +19,8 @@ jobs:
       - name: Cache godot-cpp build
         uses: actions/cache@v4
         with:
-          path: godot_epic_extension/godot-cpp/bin
-          key: ${{ runner.os }}-godotcpp-${{ hashFiles('godot_epic_extension/godot-cpp/src/**', 'godot_epic_extension/godot-cpp/SConstruct', 'godot_epic_extension/godot-cpp/Makefile') }}
+          path: godot_eos_extension/godot-cpp/bin
+          key: ${{ runner.os }}-godotcpp-${{ hashFiles('godot_eos_extension/godot-cpp/src/**', 'godot_eos_extension/godot-cpp/SConstruct', 'godot_eos_extension/godot-cpp/Makefile') }}
           restore-keys: |
             ${{ runner.os }}-godotcpp-
       - name: Download EOS SDK
@@ -39,16 +39,16 @@ jobs:
       - name: Install SCons
         run: sudo apt-get install -y scons
       - name: Build Linux x86_64 Debug
-        working-directory: godot_epic_extension
+        working-directory: godot_eos_extension
         run: scons platform=linux arch=x86_64 target=template_debug EOS_SDK_PATH=../eos_sdk
       - name: Build Linux x86_64 Release
-        working-directory: godot_epic_extension
+        working-directory: godot_eos_extension
         run: scons platform=linux arch=x86_64 target=template_release EOS_SDK_PATH=../eos_sdk
       - name: Upload Linux x86_64 Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: godotepic-linux-x86_64
-          path: godot_epic_extension/demo/bin/**
+          name: godoteos-linux-x86_64
+          path: godot_eos_extension/demo/bin/**
 
   build-macos:
     runs-on: macos-latest
@@ -60,8 +60,8 @@ jobs:
       - name: Cache godot-cpp build
         uses: actions/cache@v4
         with:
-          path: godot_epic_extension/godot-cpp/bin
-          key: ${{ runner.os }}-godotcpp-${{ hashFiles('godot_epic_extension/godot-cpp/src/**', 'godot_epic_extension/godot-cpp/SConstruct', 'godot_epic_extension/godot-cpp/Makefile') }}
+          path: godot_eos_extension/godot-cpp/bin
+          key: ${{ runner.os }}-godotcpp-${{ hashFiles('godot_eos_extension/godot-cpp/src/**', 'godot_eos_extension/godot-cpp/SConstruct', 'godot_eos_extension/godot-cpp/Makefile') }}
           restore-keys: |
             ${{ runner.os }}-godotcpp-
       - name: Install SCons
@@ -80,13 +80,13 @@ jobs:
           mv "$SDK_DIR" eos_sdk
           rm -rf eos_sdk_tmp eos_sdk.zip
       - name: Build Mac
-        working-directory: godot_epic_extension
+        working-directory: godot_eos_extension
         run: scons platform=macos target=template_release EOS_SDK_PATH=../eos_sdk
       - name: Upload Mac Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: godotepic-macos
-          path: godot_epic_extension/demo/bin/**
+          name: godoteos-macos
+          path: godot_eos_extension/demo/bin/**
 
   build-windows-x86_64:
     runs-on: windows-latest
@@ -98,8 +98,8 @@ jobs:
       - name: Cache godot-cpp build
         uses: actions/cache@v4
         with:
-          path: godot_epic_extension/godot-cpp/bin
-          key: ${{ runner.os }}-godotcpp-${{ hashFiles('godot_epic_extension/godot-cpp/src/**', 'godot_epic_extension/godot-cpp/SConstruct', 'godot_epic_extension/godot-cpp/Makefile') }}
+          path: godot_eos_extension/godot-cpp/bin
+          key: ${{ runner.os }}-godotcpp-${{ hashFiles('godot_eos_extension/godot-cpp/src/**', 'godot_eos_extension/godot-cpp/SConstruct', 'godot_eos_extension/godot-cpp/Makefile') }}
           restore-keys: |
             ${{ runner.os }}-godotcpp-
       - name: Install SCons
@@ -121,13 +121,13 @@ jobs:
           Remove-Item 'eos_sdk_tmp', $archive -Recurse -Force
       - name: Build Windows x86_64
         shell: pwsh
-        working-directory: godot_epic_extension
+        working-directory: godot_eos_extension
         run: scons platform=windows arch=x86_64 target=template_release EOS_SDK_PATH=../eos_sdk
       - name: Upload Windows Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: godotepic-windows-x86_64
-          path: godot_epic_extension/demo/bin/**
+          name: godoteos-windows-x86_64
+          path: godot_eos_extension/demo/bin/**
 
   release:
     needs:
@@ -143,46 +143,46 @@ jobs:
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
-          name: godotepic-linux-x86_64
+          name: godoteos-linux-x86_64
           path: artifacts/linux/x86_64
 
       - name: Download Mac artifacts
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
-          name: godotepic-macos
+          name: godoteos-macos
           path: artifacts/macos
 
       - name: Download Windows artifacts
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
-          name: godotepic-windows-x86_64
+          name: godoteos-windows-x86_64
           path: artifacts/windows/x86_64
 
       - name: Create bin directories in addons
         run: |
-          mkdir -p addons/godot_epic/bin/linux
-          mkdir -p addons/godot_epic/bin/macos
-          mkdir -p addons/godot_epic/bin/windows
+          mkdir -p addons/godoteos/bin/linux
+          mkdir -p addons/godoteos/bin/macos
+          mkdir -p addons/godoteos/bin/windows
 
       - name: Copy downloaded build artifacts into addons
         run: |
           set -e
           if [ -d artifacts/linux/x86_64 ]; then
-            cp -a artifacts/linux/x86_64/. addons/godot_epic/bin/linux/ || true
+            cp -a artifacts/linux/x86_64/. addons/godoteos/bin/linux/ || true
           fi
           if [ -d artifacts/macos ]; then
-            cp -a artifacts/macos/. addons/godot_epic/bin/macos/ || true
+            cp -a artifacts/macos/. addons/godoteos/bin/macos/ || true
           fi
           if [ -d artifacts/windows/x86_64 ]; then
-            cp -a artifacts/windows/x86_64/. addons/godot_epic/bin/windows/ || true
+            cp -a artifacts/windows/x86_64/. addons/godoteos/bin/windows/ || true
           fi
 
       - name: Show contents of addons/bin for debug
         run: |
-          echo "Listing addons/godot_epic/bin"
-          ls -R addons/godot_epic/bin || true
+          echo "Listing addons/godoteos/bin"
+          ls -R addons/godoteos/bin || true
 
       - name: Zip entire addons folder with tag name
         shell: bash
