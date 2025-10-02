@@ -1,266 +1,303 @@
-[gd_scene load_steps=2 format=3 uid="uid://d0tv4orjqx5m3"]
+[gd_scene load_steps=2 format=3 uid="uid://6cf02yugmud1"]
 
-[ext_resource type="Script" path="res://scripts/demos/achievements_demo.gd" id="1_achievements"]
+[ext_resource type="Script" uid="uid://dqkwmnfa3x2yi" path="res://scripts/demos/achievements_demo.gd" id="1"]
 
 [node name="AchievementsDemo" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-script = ExtResource("1_achievements")
+offset_bottom = 164.375
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = 20.0
-offset_right = -20.0
-offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
 
-[node name="Title" type="Label" parent="VBoxContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="HeaderHBox" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer/HeaderHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 24
 text = "EpicOS Achievements Demo"
-horizontal_alignment = 1
-add_theme_font_size_override("font_size", 24)
 
-[node name="BackButton" type="Button" parent="VBoxContainer"]
+[node name="BackButton" type="Button" parent="MarginContainer/VBoxContainer/HeaderHBox"]
+unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 0
 text = "← Back to Menu"
 
-[node name="HSeparator" type="HSeparator" parent="VBoxContainer"]
+[node name="StatusPanel" type="PanelContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 
-[node name="StatusPanel" type="Panel" parent="VBoxContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/StatusPanel"]
 layout_mode = 2
-size_flags_vertical = 0
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
 
-[node name="StatusContainer" type="VBoxContainer" parent="VBoxContainer/StatusPanel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = -10.0
-offset_bottom = -10.0
-
-[node name="StatusLabel" type="Label" parent="VBoxContainer/StatusPanel/StatusContainer"]
+[node name="StatusLabel" type="Label" parent="MarginContainer/VBoxContainer/StatusPanel/MarginContainer"]
+unique_name_in_owner = true
 layout_mode = 2
-text = "Status: Not Logged In (Achievements require authentication)"
-add_theme_font_size_override("font_size", 16)
+text = "Status: Not logged in"
 
-[node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
+[node name="MainSplitHBox" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
 
-[node name="ActionsSection" type="VBoxContainer" parent="VBoxContainer"]
+[node name="QuickActionsPanel" type="PanelContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox"]
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
+size_flags_horizontal = 0
 
-[node name="ActionsLabel" type="Label" parent="VBoxContainer/ActionsSection"]
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel"]
 layout_mode = 2
-text = "Achievement Actions"
-add_theme_font_size_override("font_size", 18)
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
 
-[node name="ActionsGrid" type="GridContainer" parent="VBoxContainer/ActionsSection"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer"]
 layout_mode = 2
-columns = 4
+theme_override_constants/separation = 5
 
-[node name="QueryDefinitionsButton" type="Button" parent="VBoxContainer/ActionsSection/ActionsGrid"]
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Quick Actions"
+
+[node name="QuickActionsGrid" type="GridContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+columns = 2
+
+[node name="UnlockAchievement1Button" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "Unlock Achievement 1"
+
+[node name="UnlockAchievement2Button" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "Unlock Achievement 2"
+
+[node name="IncrementStat1Button" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "Increment Stat +1"
+
+[node name="IncrementStat5Button" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "Increment Stat +5"
+
+[node name="QueryAllAchievementsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "Query All Achievements"
+
+[node name="QueryAllStatsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "Query All Stats"
+
+[node name="RefreshAchievementsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "Refresh Achievements"
+
+[node name="QueryDefinitionsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 text = "Query Definitions"
-disabled = true
 
-[node name="QueryPlayerButton" type="Button" parent="VBoxContainer/ActionsSection/ActionsGrid"]
+[node name="QueryPlayerButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
-text = "Query Player Achievements"
-disabled = true
+text = "Query Player Progress"
 
-[node name="QueryStatsButton" type="Button" parent="VBoxContainer/ActionsSection/ActionsGrid"]
-layout_mode = 2
-text = "Query Achievement Stats"
-disabled = true
-
-[node name="RefreshButton" type="Button" parent="VBoxContainer/ActionsSection/ActionsGrid"]
-layout_mode = 2
-text = "Refresh Display"
-
-[node name="HSeparator3" type="HSeparator" parent="VBoxContainer"]
-layout_mode = 2
-
-[node name="UnlockSection" type="VBoxContainer" parent="VBoxContainer"]
-layout_mode = 2
-
-[node name="UnlockLabel" type="Label" parent="VBoxContainer/UnlockSection"]
-layout_mode = 2
-text = "Unlock Achievements"
-add_theme_font_size_override("font_size", 16)
-
-[node name="UnlockContainer" type="HBoxContainer" parent="VBoxContainer/UnlockSection"]
-layout_mode = 2
-
-[node name="AchievementInput" type="LineEdit" parent="VBoxContainer/UnlockSection/UnlockContainer"]
+[node name="MainContentHBox" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
-placeholder_text = "Achievement ID"
+theme_override_constants/separation = 10
 
-[node name="UnlockButton" type="Button" parent="VBoxContainer/UnlockSection/UnlockContainer"]
+[node name="AchievementsPanel" type="PanelContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox/MainContentHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox/MainContentHBox/AchievementsPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox/MainContentHBox/AchievementsPanel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="AchievementsLabel" type="Label" parent="MarginContainer/VBoxContainer/MainSplitHBox/MainContentHBox/AchievementsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Achievement Progress"
+
+[node name="AchievementsScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox/MainContentHBox/AchievementsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="AchievementCardsContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox/MainContentHBox/AchievementsPanel/MarginContainer/VBoxContainer/AchievementsScrollContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="ManualTestingPanel" type="PanelContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/ManualTestingPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ManualTestingPanel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TestingLabel" type="Label" parent="MarginContainer/VBoxContainer/ManualTestingPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Manual Testing Tools"
+
+[node name="ControlsHBox" type="HBoxContainer" parent="MarginContainer/VBoxContainer/ManualTestingPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="AchievementControlSection" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ManualTestingPanel/MarginContainer/VBoxContainer/ControlsHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 5
+
+[node name="AchievementSectionLabel" type="Label" parent="MarginContainer/VBoxContainer/ManualTestingPanel/MarginContainer/VBoxContainer/ControlsHBox/AchievementControlSection"]
+layout_mode = 2
+text = "Achievement Control:"
+
+[node name="AchievementIDLineEdit" type="LineEdit" parent="MarginContainer/VBoxContainer/ManualTestingPanel/MarginContainer/VBoxContainer/ControlsHBox/AchievementControlSection"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "Enter Achievement ID"
+
+[node name="UnlockAchievementButton" type="Button" parent="MarginContainer/VBoxContainer/ManualTestingPanel/MarginContainer/VBoxContainer/ControlsHBox/AchievementControlSection"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Unlock Achievement"
-disabled = true
 
-[node name="UnlockAllButton" type="Button" parent="VBoxContainer/UnlockSection/UnlockContainer"]
+[node name="StatControlSection" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ManualTestingPanel/MarginContainer/VBoxContainer/ControlsHBox"]
 layout_mode = 2
-text = "Unlock All Test Achievements"
-disabled = true
+size_flags_horizontal = 3
+theme_override_constants/separation = 5
 
-[node name="StatsSection" type="VBoxContainer" parent="VBoxContainer"]
+[node name="StatSectionLabel" type="Label" parent="MarginContainer/VBoxContainer/ManualTestingPanel/MarginContainer/VBoxContainer/ControlsHBox/StatControlSection"]
 layout_mode = 2
+text = "Statistics Control:"
 
-[node name="StatsLabel" type="Label" parent="VBoxContainer/StatsSection"]
+[node name="StatNameLineEdit" type="LineEdit" parent="MarginContainer/VBoxContainer/ManualTestingPanel/MarginContainer/VBoxContainer/ControlsHBox/StatControlSection"]
+unique_name_in_owner = true
 layout_mode = 2
-text = "Achievement Stats"
-add_theme_font_size_override("font_size", 16)
+placeholder_text = "Enter Stat Name"
 
-[node name="StatsContainer" type="HBoxContainer" parent="VBoxContainer/StatsSection"]
+[node name="StatControlHBox" type="HBoxContainer" parent="MarginContainer/VBoxContainer/ManualTestingPanel/MarginContainer/VBoxContainer/ControlsHBox/StatControlSection"]
 layout_mode = 2
+theme_override_constants/separation = 5
 
-[node name="StatNameInput" type="LineEdit" parent="VBoxContainer/StatsSection/StatsContainer"]
+[node name="StatAmountLabel" type="Label" parent="MarginContainer/VBoxContainer/ManualTestingPanel/MarginContainer/VBoxContainer/ControlsHBox/StatControlSection/StatControlHBox"]
 layout_mode = 2
-size_flags_horizontal = 2
-placeholder_text = "Stat Name"
+text = "Amount:"
 
-[node name="StatValueInput" type="SpinBox" parent="VBoxContainer/StatsSection/StatsContainer"]
+[node name="StatAmountSpinBox" type="SpinBox" parent="MarginContainer/VBoxContainer/ManualTestingPanel/MarginContainer/VBoxContainer/ControlsHBox/StatControlSection/StatControlHBox"]
+unique_name_in_owner = true
 layout_mode = 2
-max_value = 999999.0
+size_flags_horizontal = 3
+min_value = 1.0
+max_value = 1000.0
 value = 1.0
 
-[node name="IngestStatButton" type="Button" parent="VBoxContainer/StatsSection/StatsContainer"]
+[node name="IngestStatButton" type="Button" parent="MarginContainer/VBoxContainer/ManualTestingPanel/MarginContainer/VBoxContainer/ControlsHBox/StatControlSection/StatControlHBox"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Ingest Stat"
-disabled = true
 
-[node name="HSeparator4" type="HSeparator" parent="VBoxContainer"]
+[node name="OutputPanel" type="PanelContainer" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 200)
 layout_mode = 2
 
-[node name="DataSection" type="HBoxContainer" parent="VBoxContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/OutputPanel"]
 layout_mode = 2
-size_flags_vertical = 3
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
 
-[node name="DefinitionsPanel" type="Panel" parent="VBoxContainer/DataSection"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/OutputPanel/MarginContainer"]
 layout_mode = 2
-size_flags_horizontal = 3
+theme_override_constants/separation = 5
 
-[node name="DefinitionsContainer" type="VBoxContainer" parent="VBoxContainer/DataSection/DefinitionsPanel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = -10.0
-offset_bottom = -10.0
-
-[node name="DefinitionsLabel" type="Label" parent="VBoxContainer/DataSection/DefinitionsPanel/DefinitionsContainer"]
+[node name="OutputHeaderHBox" type="HBoxContainer" parent="MarginContainer/VBoxContainer/OutputPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
-text = "Achievement Definitions"
-add_theme_font_size_override("font_size", 16)
 
-[node name="DefinitionsScrollContainer" type="ScrollContainer" parent="VBoxContainer/DataSection/DefinitionsPanel/DefinitionsContainer"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="DefinitionsList" type="ItemList" parent="VBoxContainer/DataSection/DefinitionsPanel/DefinitionsContainer/DefinitionsScrollContainer"]
+[node name="OutputLabel" type="Label" parent="MarginContainer/VBoxContainer/OutputPanel/MarginContainer/VBoxContainer/OutputHeaderHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="PlayerPanel" type="Panel" parent="VBoxContainer/DataSection"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="PlayerContainer" type="VBoxContainer" parent="VBoxContainer/DataSection/PlayerPanel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = -10.0
-offset_bottom = -10.0
-
-[node name="PlayerLabel" type="Label" parent="VBoxContainer/DataSection/PlayerPanel/PlayerContainer"]
-layout_mode = 2
-text = "Player Achievements"
-add_theme_font_size_override("font_size", 16)
-
-[node name="PlayerScrollContainer" type="ScrollContainer" parent="VBoxContainer/DataSection/PlayerPanel/PlayerContainer"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="PlayerList" type="ItemList" parent="VBoxContainer/DataSection/PlayerPanel/PlayerContainer/PlayerScrollContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="StatsPanel" type="Panel" parent="VBoxContainer/DataSection"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="StatsDataContainer" type="VBoxContainer" parent="VBoxContainer/DataSection/StatsPanel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = -10.0
-offset_bottom = -10.0
-
-[node name="StatsDataLabel" type="Label" parent="VBoxContainer/DataSection/StatsPanel/StatsDataContainer"]
-layout_mode = 2
-text = "Achievement Stats"
-add_theme_font_size_override("font_size", 16)
-
-[node name="StatsScrollContainer" type="ScrollContainer" parent="VBoxContainer/DataSection/StatsPanel/StatsDataContainer"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="StatsList" type="ItemList" parent="VBoxContainer/DataSection/StatsPanel/StatsDataContainer/StatsScrollContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="HSeparator5" type="HSeparator" parent="VBoxContainer"]
-layout_mode = 2
-
-[node name="OutputSection" type="VBoxContainer" parent="VBoxContainer"]
-layout_mode = 2
-size_flags_vertical = 2
-
-[node name="OutputLabel" type="Label" parent="VBoxContainer/OutputSection"]
-layout_mode = 2
+theme_override_font_sizes/font_size = 16
 text = "Output Log"
-add_theme_font_size_override("font_size", 16)
 
-[node name="OutputScrollContainer" type="ScrollContainer" parent="VBoxContainer/OutputSection"]
+[node name="AutoScrollCheckbox" type="CheckButton" parent="MarginContainer/VBoxContainer/OutputPanel/MarginContainer/VBoxContainer/OutputHeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+button_pressed = true
+text = "Auto-scroll"
+
+[node name="ClearLogButton" type="Button" parent="MarginContainer/VBoxContainer/OutputPanel/MarginContainer/VBoxContainer/OutputHeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Clear Log"
+
+[node name="OutputScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer/OutputPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="OutputText" type="RichTextLabel" parent="VBoxContainer/OutputSection/OutputScrollContainer"]
+[node name="OutputText" type="RichTextLabel" parent="MarginContainer/VBoxContainer/OutputPanel/MarginContainer/VBoxContainer/OutputScrollContainer"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 bbcode_enabled = true
-text = "[color=green]Welcome to the EpicOS Achievements Demo![/color]
-
-This demo shows how to:
-1. Query achievement definitions from Epic Games
-2. Query player's achievement progress
-3. Unlock achievements
-4. Manage achievement statistics
-
-[color=yellow]Note: You must be logged in to use achievement features.[/color]
-"
 scroll_following = true
