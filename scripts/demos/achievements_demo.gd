@@ -11,10 +11,6 @@ extends Control
 @onready var status_label: Label = %StatusLabel
 
 # Quick Actions
-@onready var quick_unlock_button: Button = %UnlockAchievement1Button
-@onready var quick_unlock_button_2: Button = %UnlockAchievement2Button
-@onready var quick_increment_one_button: Button = %IncrementStat1Button
-@onready var quick_increment_five_button: Button = %IncrementStat5Button
 @onready var quick_increment_ten_button: Button = %QueryAllAchievementsButton
 @onready var quick_refresh_all_button: Button = %QueryAllStatsButton
 
@@ -83,14 +79,6 @@ func _ready():
 
 func _setup_signal_connections():
 	# Quick action buttons in the scene are mapped differently
-	if quick_unlock_button:
-		quick_unlock_button.pressed.connect(func(): _unlock_achievement("achievement1"))
-	if quick_unlock_button_2:
-		quick_unlock_button_2.pressed.connect(func(): _unlock_achievement("achievement2"))
-	if quick_increment_one_button:
-		quick_increment_one_button.pressed.connect(func(): _increment_stat_from_input(1))
-	if quick_increment_five_button:
-		quick_increment_five_button.pressed.connect(func(): _increment_stat_from_input(5))
 	if quick_increment_ten_button:
 		quick_increment_ten_button.pressed.connect(_on_refresh_all_pressed)
 	if quick_refresh_all_button:
@@ -638,10 +626,6 @@ func _update_ui_state():
 
 	var controls_enabled := platform_initialized and is_logged_in
 	var buttons_to_disable = [
-		quick_unlock_button,
-		quick_unlock_button_2,
-		quick_increment_one_button,
-		quick_increment_five_button,
 		quick_increment_ten_button,
 		quick_refresh_all_button,
 		refresh_achievements_button,

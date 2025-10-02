@@ -87,31 +87,7 @@ text = "Quick Actions"
 layout_mode = 2
 theme_override_constants/h_separation = 10
 theme_override_constants/v_separation = 10
-columns = 2
-
-[node name="UnlockAchievement1Button" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(150, 0)
-layout_mode = 2
-text = "Unlock Achievement 1"
-
-[node name="UnlockAchievement2Button" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(150, 0)
-layout_mode = 2
-text = "Unlock Achievement 2"
-
-[node name="IncrementStat1Button" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(150, 0)
-layout_mode = 2
-text = "Increment Stat +1"
-
-[node name="IncrementStat5Button" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(150, 0)
-layout_mode = 2
-text = "Increment Stat +5"
+columns = 1
 
 [node name="QueryAllAchievementsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
 unique_name_in_owner = true
