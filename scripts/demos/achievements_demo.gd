@@ -192,6 +192,7 @@ func _ingest_stat(stat_name: String, amount: int):
 # ============================================================================
 
 func _on_refresh_all_pressed():
+	EpicOS.set_debug_mode(true)  # Enable detailed logging for debugging
 	_log_message("[color=yellow]🔄 Refreshing all achievement data...[/color]")
 	if EpicOS:
 		EpicOS.query_achievement_definitions()
@@ -241,7 +242,7 @@ func _on_player_list_item_selected(index: int):
 		
 	var achievement: Dictionary = cached_player_achievements[index]
 	var achievement_id := str(achievement.get("achievement_id", "Unknown"))
-	var unlocked: bool = achievement.get("unlocked", false)
+	var unlocked: bool = achievement.get("is_unlocked", false)
 	var progress: float = achievement.get("progress", 0.0)
 	_log_message("[color=cyan]Selected: " + achievement_id + " - Unlocked: " + str(unlocked) + " - Progress: " + str(progress) + "%[/color]")
 
@@ -278,6 +279,12 @@ func _on_player_achievements_completed(success: bool, achievements: Array):
 		_refresh_player_display()
 		_refresh_achievements_display()
 		_log_message("[color=green]✓ Loaded " + str(achievements.size()) + " player achievements[/color]")
+		
+		# Simple print of achievement names and unlock status
+		for achievement in achievements:
+			var achievement_name = achievement.get("display_name", "Unknown")
+			var is_unlocked = achievement.get("is_unlocked", false)
+			print("Achievement: ", achievement_name, " - is_unlocked: ", is_unlocked)
 	else:
 		_log_message("[color=red]✗ Failed to load player achievements[/color]")
 
@@ -309,14 +316,53 @@ func _on_achievement_unlocked(achievement_id: String, unlock_time: int):
 	_log_message("[color=cyan]Achievement ID: " + achievement_id + "[/color]")
 	_log_message("[color=cyan]Unlocked at: " + Time.get_datetime_string_from_unix_time(unlock_time) + "[/color]")
 	_log_message("[color=gold]═══════════════════════════════════════[/color]")
+	
+	# Refresh achievement display to show the newly unlocked achievement
+	if EpicOS:
+		EpicOS.query_player_achievements()
 
 func _on_achievement_stats_completed(success: bool, stats: Array):
 	if success:
 		cached_stats = stats
 		_refresh_stats_display()
 		_log_message("[color=green]✓ Loaded " + str(stats.size()) + " achievement stats[/color]")
+		
+		# Log individual stats to output since we don't have a stats panel
+		if stats.size() > 0:
+			_log_message("[color=cyan]📊 Achievement Statistics (active stats only):[/color]")
+			_log_message("[color=gray]Note: EpicOS only returns stats that have been initialized/touched[/color]")
+			for stat in stats:
+				var stat_name := str(stat.get("name", "Unknown"))
+				var stat_value: int = stat.get("value", 0)
+				_log_message("[color=white]  • " + stat_name + ": " + str(stat_value) + "[/color]")
+			
+			# Also show any stat names that might be referenced in achievement definitions
+			_show_potential_unused_stats()
+		else:
+			_log_message("[color=yellow]  No achievement stats found (no stats have been initialized yet)[/color]")
+			_log_message("[color=gray]  Try using 'Increment Stat' in Manual Testing to initialize some stats[/color]")
 	else:
 		_log_message("[color=red]✗ Failed to load achievement stats[/color]")
+
+func _show_potential_unused_stats():
+	"""Check achievement definitions for stat references that might not be in active stats"""
+	if cached_definitions.is_empty():
+		return
+		
+	var active_stat_names = []
+	for stat in cached_stats:
+		active_stat_names.append(str(stat.get("name", "")))
+	
+	# Look for stat references in achievement definitions
+	var potential_stats = []
+	for definition in cached_definitions:
+		var def_text = str(definition)
+		# Look for common stat patterns (this is basic pattern matching)
+		if "stat" in def_text.to_lower():
+			_log_message("[color=gray]  Achievement '" + str(definition.get("display_name", "Unknown")) + "' may reference stats[/color]")
+	
+	if potential_stats.size() == 0 and active_stat_names.size() > 0:
+		_log_message("[color=gray]  All available stats from EpicOS are shown above[/color]")
 
 func _on_login_status_changed(success: bool, user_info: Dictionary):
 	if success:
@@ -380,7 +426,7 @@ func _refresh_player_display():
 
 	for achievement in cached_player_achievements:
 		var achievement_id := str(achievement.get("achievement_id", "Unknown"))
-		var unlocked: bool = achievement.get("unlocked", false)
+		var unlocked: bool = achievement.get("is_unlocked", false)
 		var progress: float = achievement.get("progress", 0.0)
 		var unlock_time: int = achievement.get("unlock_time", 0)
 
@@ -440,136 +486,87 @@ func _find_player_achievement(achievement_id: String) -> Dictionary:
 			return achievement
 	return {}
 
+func _find_achievement_definition(achievement_id: String) -> Dictionary:
+	"""Find achievement definition data for a given achievement ID"""
+	for definition in cached_definitions:
+		if str(definition.get("achievement_id", "")) == achievement_id:
+			return definition
+	return {}
+
 func _create_placeholder_card():
-	"""Create a placeholder card when no achievement data is available"""
-	var card = PanelContainer.new()
-	card.custom_minimum_size = Vector2(0, 60)  # Smaller height
-	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL  # Make it wide
+	"""Create a placeholder item when no achievement data is available"""
+	var item = PanelContainer.new()
+	item.custom_minimum_size = Vector2(0, 40)  # Match simplified height
+	item.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	
 	var margin = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 10)  # Reduced margins
-	margin.add_theme_constant_override("margin_right", 10)
-	margin.add_theme_constant_override("margin_top", 8)
-	margin.add_theme_constant_override("margin_bottom", 8)
-	card.add_child(margin)
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_top", 4)
+	margin.add_theme_constant_override("margin_bottom", 4)
+	item.add_child(margin)
 	
 	var label = Label.new()
 	label.text = "Loading achievements... Please wait or click 'Refresh Achievements'"
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 14)  # Smaller font
+	label.add_theme_font_size_override("font_size", 14)
+	label.modulate = Color.GRAY
 	margin.add_child(label)
 	
-	achievement_cards_container.add_child(card)
+	achievement_cards_container.add_child(item)
 
 func _create_achievement_card(definition: Dictionary, player_data: Dictionary):
-	"""Create a visual achievement card"""
+	"""Create a simple achievement item"""
 	var achievement_id := str(definition.get("achievement_id", "Unknown"))
 	var display_name := str(definition.get("display_name", achievement_id))
-	var description := str(definition.get("description", "No description available"))
 	
-	# Player data
-	var unlocked: bool = player_data.get("unlocked", false)
-	var progress: float = player_data.get("progress", 0.0)
-	var unlock_time: int = player_data.get("unlock_time", 0)
+	# Player data - simplified state values (no percentages)
+	var is_unlocked: bool = player_data.get("is_unlocked", false)
 	
-	# Create card container - horizontally smaller but wide
-	var card = PanelContainer.new()
-	card.custom_minimum_size = Vector2(0, 80)  # Reduced height
-	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL  # Make it wide
+	var state_text: String = "Unlocked" if is_unlocked else "Locked"
 	
-	# Add margin - reduced margins
+	# Create simple item container
+	var item = PanelContainer.new()
+	item.custom_minimum_size = Vector2(0, 40)  # Much smaller height
+	item.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	
+	# Add minimal margin
 	var margin = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 10)  # Reduced from 15
-	margin.add_theme_constant_override("margin_right", 10)
-	margin.add_theme_constant_override("margin_top", 8)   # Reduced from 10
-	margin.add_theme_constant_override("margin_bottom", 8)
-	card.add_child(margin)
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_top", 4)
+	margin.add_theme_constant_override("margin_bottom", 4)
+	item.add_child(margin)
 	
-	# Create main horizontal layout
+	# Simple horizontal layout
 	var hbox = HBoxContainer.new()
-	hbox.add_theme_constant_override("separation", 12)  # Reduced from 15
+	hbox.add_theme_constant_override("separation", 10)
 	margin.add_child(hbox)
 	
-	# Status icon - smaller
-	var status_label = Label.new()
-	status_label.custom_minimum_size = Vector2(25, 0)  # Reduced from 30
-	if unlocked:
-		status_label.text = "🏆"
-		status_label.modulate = Color.GOLD
+	# Achievement name
+	var name_label = Label.new()
+	name_label.text = display_name
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.add_theme_font_size_override("font_size", 14)
+	if is_unlocked:
+		name_label.modulate = Color.WHITE
 	else:
-		status_label.text = "⏳"
-		status_label.modulate = Color.GRAY
-	status_label.add_theme_font_size_override("font_size", 20)  # Reduced from 24
-	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	status_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	hbox.add_child(status_label)
+		name_label.modulate = Color.LIGHT_GRAY
+	hbox.add_child(name_label)
 	
-	# Achievement info
-	var info_container = VBoxContainer.new()
-	info_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	hbox.add_child(info_container)
-	
-	# Title - smaller font
-	var title_label = Label.new()
-	title_label.text = display_name
-	title_label.add_theme_font_size_override("font_size", 14)  # Reduced from 16
-	if unlocked:
-		title_label.modulate = Color.WHITE
+	# State display (no percentages)
+	var state_label = Label.new()
+	state_label.text = state_text
+	state_label.add_theme_font_size_override("font_size", 12)
+	if is_unlocked:
+		state_label.modulate = Color.GREEN
 	else:
-		title_label.modulate = Color.LIGHT_GRAY
-	info_container.add_child(title_label)
+		state_label.modulate = Color.YELLOW
+	hbox.add_child(state_label)
 	
-	# Description - smaller font
-	var desc_label = Label.new()
-	desc_label.text = description
-	desc_label.add_theme_font_size_override("font_size", 10)  # Reduced from 12
-	desc_label.modulate = Color.LIGHT_GRAY
-	desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	info_container.add_child(desc_label)
-	
-	# Progress/Status info - smaller font
-	var status_info = Label.new()
-	if unlocked:
-		if unlock_time > 0:
-			var datetime: Dictionary = Time.get_datetime_dict_from_unix_time(unlock_time)
-			var date_str = "%d-%02d-%02d %02d:%02d" % [datetime.year, datetime.month, datetime.day, datetime.hour, datetime.minute]
-			status_info.text = "Unlocked on: " + date_str
-		else:
-			status_info.text = "Unlocked"
-		status_info.modulate = Color.GREEN
-	else:
-		status_info.text = "Progress: " + str(progress) + "%"
-		status_info.modulate = Color.YELLOW
-	status_info.add_theme_font_size_override("font_size", 9)  # Reduced from 10
-	info_container.add_child(status_info)
-	
-	# Actions - smaller
-	var actions_container = VBoxContainer.new()
-	actions_container.custom_minimum_size = Vector2(100, 0)  # Reduced from 120
-	hbox.add_child(actions_container)
-	
-	# Achievement ID (for testing) - smaller font
-	var id_label = Label.new()
-	id_label.text = "ID: " + achievement_id
-	id_label.add_theme_font_size_override("font_size", 8)  # Reduced from 9
-	id_label.modulate = Color.DIM_GRAY
-	id_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	actions_container.add_child(id_label)
-	
-	# Unlock button (only if not unlocked) - smaller
-	if not unlocked:
-		var unlock_btn = Button.new()
-		unlock_btn.text = "Unlock"
-		unlock_btn.custom_minimum_size = Vector2(80, 25)  # Reduced from 100x30
-		unlock_btn.pressed.connect(func(): _unlock_achievement(achievement_id))
-		actions_container.add_child(unlock_btn)
-	
-	# Add the card to the container
-	achievement_cards_container.add_child(card)
-	
-	# Log the achievement for debugging
-	_log_message("[color=cyan]📋 " + display_name + " (" + achievement_id + ") - " + ("✅ Unlocked" if unlocked else "⏳ " + str(progress) + "%") + "[/color]")
+	# Add the item to the container
+	achievement_cards_container.add_child(item)
 
 func _update_featured_stat_display_from_cache():
 	if not stat_name_input:
@@ -587,9 +584,9 @@ func _update_featured_stat_display_from_cache():
 		return
 
 	for stat in cached_stats:
-		var name := str(stat.get("name", ""))
-		if name == target_name:
-			_set_featured_stat(name, int(stat.get("value", 0)))
+		var stat_name := str(stat.get("name", ""))
+		if stat_name == target_name:
+			_set_featured_stat(stat_name, int(stat.get("value", 0)))
 			return
 
 	_set_featured_stat(target_name, 0)
