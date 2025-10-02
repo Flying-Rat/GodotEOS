@@ -30,6 +30,7 @@ theme_override_constants/separation = 10
 
 [node name="HeaderHBox" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
+theme_override_constants/separation = 20
 
 [node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer/HeaderHBox"]
 layout_mode = 2
@@ -37,33 +38,24 @@ size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 24
 text = "EpicOS Achievements Demo"
 
+[node name="StatusLabel" type="Label" parent="MarginContainer/VBoxContainer/HeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Status: Not logged in"
+
 [node name="BackButton" type="Button" parent="MarginContainer/VBoxContainer/HeaderHBox"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "← Back to Menu"
 
-[node name="StatusPanel" type="PanelContainer" parent="MarginContainer/VBoxContainer"]
-layout_mode = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/StatusPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 10
-
-[node name="StatusLabel" type="Label" parent="MarginContainer/VBoxContainer/StatusPanel/MarginContainer"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Status: Not logged in"
-
 [node name="MainSplitHBox" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 250)
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_vertical = 0
 theme_override_constants/separation = 10
 
 [node name="QuickActionsPanel" type="PanelContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox"]
-custom_minimum_size = Vector2(300, 0)
+custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 size_flags_horizontal = 0
 
@@ -78,16 +70,10 @@ theme_override_constants/margin_bottom = 10
 layout_mode = 2
 theme_override_constants/separation = 5
 
-[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "Quick Actions"
-
 [node name="QuickActionsGrid" type="GridContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_constants/h_separation = 10
+size_flags_horizontal = 4
 theme_override_constants/v_separation = 10
-columns = 1
 
 [node name="QueryAllAchievementsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
 unique_name_in_owner = true
