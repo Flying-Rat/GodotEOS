@@ -1,7 +1,7 @@
 extends Node
 
 # EpicOS Singleton - Main interface for Epic Online Services
-# Integrates with the GodotEpic GDExtension for actual EOS SDK functionality
+# Integrates with the GodotEOS GDExtension for actual EOS SDK functionality
 
 # Authentication signals
 signal login_completed(success: bool, user_info: Dictionary)
@@ -22,20 +22,20 @@ signal leaderboard_user_scores_completed(success: bool, user_scores: Dictionary)
 signal friends_query_completed(success: bool, friends_list: Array)
 signal friend_info_query_completed(success: bool, friend_info: Dictionary)
 
-var _godot_epic: GodotEpic = null
+var _godot_epic: GodotEOS = null
 var _initialized: bool = false
 var _debug_mode: bool = false
 
 func _ready():
 	print("EpicOS: Initializing Epic Online Services...")
-	# Get the GodotEpic singleton from the GDExtension
-	_godot_epic = GodotEpic.get_singleton()
+	# Get the GodotEOS singleton from the GDExtension
+	_godot_epic = GodotEOS.get_singleton()
 	if not _godot_epic:
-		print("EpicOS: ERROR - GodotEpic GDExtension not found!")
-		print("EpicOS: Make sure the GodotEpic extension is properly installed and enabled.")
+		print("EpicOS: ERROR - GodotEOS GDExtension not found!")
+		print("EpicOS: Make sure the GodotEOS extension is properly installed and enabled.")
 		return
 
-	print("EpicOS: GodotEpic GDExtension found successfully")
+	print("EpicOS: GodotEOS GDExtension found successfully")
 	_setup_signal_connections()
 
 func _setup_signal_connections():
@@ -66,7 +66,7 @@ func initialize(config: Dictionary = {}) -> bool:
 		print("EpicOS: initialize() called")
 
 	if not _godot_epic:
-		print("EpicOS: ERROR - GodotEpic GDExtension not available")
+		print("EpicOS: ERROR - GodotEOS GDExtension not available")
 		return false
 
 	if _initialized:
@@ -75,7 +75,7 @@ func initialize(config: Dictionary = {}) -> bool:
 
 	# Default configuration - override with your actual Epic credentials
 	var default_config = {
-		"product_name": "GodotEpic",
+		"product_name": "GodotEOS",
 		"product_version": "1.0.0",
 		"product_id": "",  # Required: Get from Epic Developer Portal
 		"sandbox_id": "",  # Required: Get from Epic Developer Portal

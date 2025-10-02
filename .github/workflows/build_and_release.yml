@@ -186,11 +186,11 @@ jobs:
 
       - name: Zip entire addons folder with tag name
         shell: bash
-        run: zip -r "GodotEpic_${{ github.ref_name }}.zip" addons
+        run: zip -r "GodotEOS_${{ github.ref_name }}.zip" addons
 
       - name: Create Release with named zip
         uses: softprops/action-gh-release@v2
         with:
-          files: GodotEpic_${{ github.ref_name }}.zip
+          files: GodotEOS_${{ github.ref_name }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

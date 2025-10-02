@@ -1,10 +1,10 @@
-# GodotEpic GDExtension
+# GodotEOS GDExtension
 
 This folder contains the GDExtension native plugin for integrating Epic Online Services (EOS) with Godot Engine. It provides the native library, build scripts, and a demo project to validate the integration.
 
 Purpose
 -------
-- Host native code and build scripts for the GodotEpic GDExtension.
+- Host native code and build scripts for the GodotEOS GDExtension.
 - Provide an example/demo Godot project that loads the extension and includes EOS sample assets.
 - Provide setup utilities to prepare the extension for local builds and local testing.
 
@@ -59,7 +59,7 @@ Running the demo
 ----------------
 1. Ensure the built `.gdextension` and any required EOS runtime DLLs are in `godot_epic_extension/demo/bin/` (or copy them into the demo project's `bin/` folder).
 2. Open `godot_epic_extension/demo/project.godot` in Godot Editor 4.x.
-3. Enable the `GodotEpic` plugin (if required) under Project Settings → Plugins.
+3. Enable the `GodotEOS` plugin (if required) under Project Settings → Plugins.
 4. Run the `main.tscn` scene to see the demo UI and test EOS-related flows.
 
 Setup helper scripts

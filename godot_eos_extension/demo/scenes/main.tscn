@@ -39,7 +39,7 @@ size_flags_horizontal = 0
 [node name="Title" type="Label" parent="CanvasLayer/UI/MainContainer/LeftPanel"]
 layout_mode = 2
 theme_type_variation = &"HeaderMedium"
-text = "GodotEpic Demo"
+text = "GodotEOS Demo"
 horizontal_alignment = 1
 
 [node name="HSeparator" type="HSeparator" parent="CanvasLayer/UI/MainContainer/LeftPanel"]
@@ -247,7 +247,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 bbcode_enabled = true
-text = "GodotEpic Demo Starting...
+text = "GodotEOS Demo Starting...
 "
 fit_content = true
 scroll_following = true

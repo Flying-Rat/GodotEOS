@@ -1,4 +1,4 @@
-# GodotEpic Development Plan
+# GodotEOS Development Plan
 ## Epic Online Services (EOS) Integration for Godot Engine
 
 This document outlines the 14-day development plan for creating a comprehensive EOS integration plugin for Godot Engine.
@@ -23,7 +23,7 @@ This document outlines the 14-day development plan for creating a comprehensive 
 
 **Work:**
 - Implement EOS SDK initialization in GDExtension
-- Create GodotEpic singleton for lifecycle management
+- Create GodotEOS singleton for lifecycle management
 - Retrieve basic account/profile info and print to Godot console
 
 **Result:** Plugin loads EOS SDK, prints profile info

@@ -1,7 +1,7 @@
 extends Node2D
 
 # ============================================================================
-# GODOT EPIC DEMO - TAB-BASED UI
+# GODOT EOS DEMO - TAB-BASED UI
 # ============================================================================
 # This demo showcases Epic Online Services (EOS) integration with Godot.
 # The UI is organized into logical tabs for better user experience:
@@ -36,7 +36,7 @@ extends Node2D
 # which may not be available for developer accounts.
 # ============================================================================
 
-var godot_epic: GodotEpic = null
+var godot_eos: GodotEOS = null
 
 # UI References
 @onready var status_label: Label = $CanvasLayer/UI/MainContainer/LeftPanel/StatusLabel
@@ -96,7 +96,7 @@ var auto_test_current_delay: float = 0.0
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	godot_epic = GodotEpic.get_singleton()
+	godot_eos = GodotEOS.get_singleton()
 
 	# Set tab names by index (0, 1, 2, etc.)
 	tab_container.set_tab_title(0, "🔐 Login")
@@ -106,18 +106,18 @@ func _ready():
 	tab_container.set_tab_title(4, "🏁 Leaderboards")
 
 	# Connect to signals for async operations
-	godot_epic.connect("login_completed", _on_login_completed)
-	godot_epic.connect("logout_completed", _on_logout_completed)
-	godot_epic.connect("friends_updated", _on_friends_updated)
-	godot_epic.connect("achievement_definitions_updated", _on_achievement_definitions_updated)
-	godot_epic.connect("player_achievements_updated", _on_player_achievements_updated)
-	godot_epic.connect("achievements_unlocked", _on_achievements_unlocked)
-	godot_epic.connect("achievement_unlocked", _on_achievement_unlocked)
-	godot_epic.connect("achievement_stats_updated", _on_achievement_stats_updated)
-	godot_epic.connect("leaderboard_definitions_updated", _on_leaderboard_definitions_updated)
-	godot_epic.connect("leaderboard_ranks_updated", _on_leaderboard_ranks_updated)
-	godot_epic.connect("leaderboard_user_scores_updated", _on_leaderboard_user_scores_updated)
-	godot_epic.connect("stats_ingested", _on_stats_ingested)
+	godot_eos.connect("login_completed", _on_login_completed)
+	godot_eos.connect("logout_completed", _on_logout_completed)
+	godot_eos.connect("friends_updated", _on_friends_updated)
+	godot_eos.connect("achievement_definitions_updated", _on_achievement_definitions_updated)
+	godot_eos.connect("player_achievements_updated", _on_player_achievements_updated)
+	godot_eos.connect("achievements_unlocked", _on_achievements_unlocked)
+	godot_eos.connect("achievement_unlocked", _on_achievement_unlocked)
+	godot_eos.connect("achievement_stats_updated", _on_achievement_stats_updated)
+	godot_eos.connect("leaderboard_definitions_updated", _on_leaderboard_definitions_updated)
+	godot_eos.connect("leaderboard_ranks_updated", _on_leaderboard_ranks_updated)
+	godot_eos.connect("leaderboard_user_scores_updated", _on_leaderboard_user_scores_updated)
+	godot_eos.connect("stats_ingested", _on_stats_ingested)
 
 	# Connect button signals by tab groups
 	_connect_authentication_buttons()
@@ -128,7 +128,7 @@ func _ready():
 	_connect_system_buttons()
 
 	var init_options = {
-		"product_name": "GodotEpic Demo",
+		"product_name": "GodotEOS Demo",
 		"product_version": "1.0.0",
 		"product_id": "your_product_id_here",
 		"sandbox_id": "your_sandbox_id_here",
@@ -139,7 +139,7 @@ func _ready():
 	}
 
 	# Initialize the EOS platform
-	var success = godot_epic.initialize_platform(init_options)
+	var success = godot_eos.initialize_platform(init_options)
 	if success:
 		status_label.text = "✅ EOS Platform Ready"
 		add_output_line("🚀 [color=green]EOS Platform initialized successfully![/color]")
@@ -169,8 +169,8 @@ func _ready():
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta):
 	# Tick the EOS platform to handle callbacks and updates
-	if godot_epic and godot_epic.is_platform_initialized():
-		godot_epic.tick(_delta)
+	if godot_eos and godot_eos.is_platform_initialized():
+		godot_eos.tick(_delta)
 
 	# Handle auto-test timing
 	if auto_test_enabled and auto_test_step >= 0 and auto_test_current_delay > 0:
@@ -230,8 +230,8 @@ func add_output_line(text: String):
 		print(text)  # Also print to console
 
 func update_button_states():
-	var is_logged_in = godot_epic and godot_epic.is_user_logged_in()
-	var has_product_user_id = godot_epic and not godot_epic.get_product_user_id().is_empty()
+	var is_logged_in = godot_eos and godot_eos.is_user_logged_in()
+	var has_product_user_id = godot_eos and not godot_eos.get_product_user_id().is_empty()
 
 	_update_epic_login_button(is_logged_in)
 	# Update Authentication tab buttons
@@ -263,7 +263,7 @@ func _update_epic_login_button(is_logged_in: bool):
 		login_account_portal_button.disabled = false  # Account Portal doesn't need credentials
 
 func _on_login_credentials_changed(_new_text: String = ""):
-	var is_logged_in = godot_epic and godot_epic.is_user_logged_in()
+	var is_logged_in = godot_eos and godot_eos.is_user_logged_in()
 	_update_epic_login_button(is_logged_in)
 
 func _on_password_submitted(_new_text: String):
@@ -308,7 +308,7 @@ func _update_leaderboards_tab_buttons(is_logged_in: bool, has_product_user_id: b
 # ============================================================================
 
 func _on_login_epic_pressed():
-	if not godot_epic:
+	if not godot_eos:
 		add_output_line("[color=red]❌ EOS Platform not ready yet.[/color]")
 		return
 
@@ -335,10 +335,10 @@ func _on_login_epic_pressed():
 	if is_instance_valid(username_field):
 		username_field.release_focus()
 
-	godot_epic.login_with_epic_account(username, password)
+	godot_eos.login_with_epic_account(username, password)
 
 func _on_login_account_portal_pressed():
-	if not godot_epic:
+	if not godot_eos:
 		add_output_line("[color=red]❌ EOS Platform not ready yet.[/color]")
 		return
 
@@ -348,20 +348,20 @@ func _on_login_account_portal_pressed():
 	login_account_portal_button.disabled = true
 	login_epic_button.disabled = true
 
-	godot_epic.login_with_account_portal()
+	godot_eos.login_with_account_portal()
 
 func _on_login_device1_pressed():
 	add_output_line("[color=cyan]🔐 Starting Dev login (TestUser123)...[/color]")
-	godot_epic.login_with_dev("TestUser123")
+	godot_eos.login_with_dev("TestUser123")
 
 func _on_login_device2_pressed():
 	add_output_line("[color=cyan]🔐 Starting Dev login (Player1)...[/color]")
-	godot_epic.login_with_dev("Player1")
+	godot_eos.login_with_dev("Player1")
 
 func _on_logout_pressed():
-	if godot_epic.is_user_logged_in():
+	if godot_eos.is_user_logged_in():
 		add_output_line("[color=cyan]🚪 Logging out...[/color]")
-		godot_epic.logout()
+		godot_eos.logout()
 	else:
 		add_output_line("[color=orange]⚠️ Not logged in![/color]")
 
@@ -370,16 +370,16 @@ func _on_logout_pressed():
 # ============================================================================
 
 func _on_query_friends_pressed():
-	if godot_epic.is_user_logged_in():
+	if godot_eos.is_user_logged_in():
 		add_output_line("[color=blue]👥 Querying friends list...[/color]")
-		godot_epic.query_friends()
+		godot_eos.query_friends()
 	else:
 		add_output_line("[color=red]❌ Please login first![/color]")
 
 func _on_get_friends_pressed():
-	if godot_epic.is_user_logged_in():
+	if godot_eos.is_user_logged_in():
 		add_output_line("[color=blue]👥 Getting current friends list...[/color]")
-		var friends = godot_epic.get_friends_list()
+		var friends = godot_eos.get_friends_list()
 		_display_friends_list(friends)
 	else:
 		add_output_line("[color=red]❌ Please login first![/color]")
@@ -390,14 +390,14 @@ func _on_get_friends_pressed():
 
 func _on_query_ach_defs_pressed():
 	add_output_line("[color=yellow]🏆 Querying achievement definitions...[/color]")
-	godot_epic.query_achievement_definitions()
+	godot_eos.query_achievement_definitions()
 
 func _on_query_player_ach_pressed():
-	if godot_epic.is_user_logged_in():
-		var product_user_id = godot_epic.get_product_user_id()
+	if godot_eos.is_user_logged_in():
+		var product_user_id = godot_eos.get_product_user_id()
 		if not product_user_id.is_empty():
 			add_output_line("[color=yellow]🎯 Querying player achievements...[/color]")
-			godot_epic.query_player_achievements()
+			godot_eos.query_player_achievements()
 		else:
 			add_output_line("[color=orange]⚠️ Achievements require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
 	else:
@@ -405,15 +405,15 @@ func _on_query_player_ach_pressed():
 
 func _on_get_ach_defs_pressed():
 	add_output_line("[color=yellow]🏆 Getting current achievement definitions...[/color]")
-	var definitions = godot_epic.get_achievement_definitions()
+	var definitions = godot_eos.get_achievement_definitions()
 	_display_achievement_definitions(definitions)
 
 func _on_get_player_ach_pressed():
-	if godot_epic.is_user_logged_in():
-		var product_user_id = godot_epic.get_product_user_id()
+	if godot_eos.is_user_logged_in():
+		var product_user_id = godot_eos.get_product_user_id()
 		if not product_user_id.is_empty():
 			add_output_line("[color=yellow]🎯 Getting current player achievements...[/color]")
-			var achievements = godot_epic.get_player_achievements()
+			var achievements = godot_eos.get_player_achievements()
 			_display_player_achievements(achievements)
 		else:
 			add_output_line("[color=orange]⚠️ Achievements require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
@@ -421,11 +421,11 @@ func _on_get_player_ach_pressed():
 		add_output_line("[color=red]❌ Please login first![/color]")
 
 func _on_unlock_test_pressed():
-	if godot_epic.is_user_logged_in():
-		var product_user_id = godot_epic.get_product_user_id()
+	if godot_eos.is_user_logged_in():
+		var product_user_id = godot_eos.get_product_user_id()
 		if not product_user_id.is_empty():
 			add_output_line("[color=purple]🎉 Attempting to unlock test achievement...[/color]")
-			godot_epic.unlock_achievement("achievement_first_level")
+			godot_eos.unlock_achievement("achievement_first_level")
 		else:
 			add_output_line("[color=orange]⚠️ Achievements require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
 	else:
@@ -433,15 +433,15 @@ func _on_unlock_test_pressed():
 
 func _on_get_specific_def_pressed():
 	add_output_line("[color=yellow]🏆 Getting specific achievement definition...[/color]")
-	var definition = godot_epic.get_achievement_definition("test_achievement")
+	var definition = godot_eos.get_achievement_definition("test_achievement")
 	_display_single_achievement_definition(definition)
 
 func _on_get_specific_player_pressed():
-	if godot_epic.is_user_logged_in():
-		var product_user_id = godot_epic.get_product_user_id()
+	if godot_eos.is_user_logged_in():
+		var product_user_id = godot_eos.get_product_user_id()
 		if not product_user_id.is_empty():
 			add_output_line("[color=yellow]🎯 Getting specific player achievement...[/color]")
-			var achievement = godot_epic.get_player_achievement("test_achievement")
+			var achievement = godot_eos.get_player_achievement("test_achievement")
 			_display_single_player_achievement(achievement)
 		else:
 			add_output_line("[color=orange]⚠️ Achievements require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
@@ -453,33 +453,33 @@ func _on_get_specific_player_pressed():
 # ============================================================================
 
 func _on_ingest_stat_pressed():
-	if godot_epic.is_user_logged_in():
-		var product_user_id = godot_epic.get_product_user_id()
+	if godot_eos.is_user_logged_in():
+		var product_user_id = godot_eos.get_product_user_id()
 		if not product_user_id.is_empty():
 			add_output_line("[color=purple]📊 Ingesting test stat (EnemiesDefeated: +1)...[/color]")
-			godot_epic.ingest_achievement_stat("EnemiesDefeated", 1)
+			godot_eos.ingest_achievement_stat("EnemiesDefeated", 1)
 		else:
 			add_output_line("[color=orange]⚠️ Stats require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
 	else:
 		add_output_line("[color=red]❌ Please login first![/color]")
 
 func _on_query_stats_pressed():
-	if godot_epic.is_user_logged_in():
-		var product_user_id = godot_epic.get_product_user_id()
+	if godot_eos.is_user_logged_in():
+		var product_user_id = godot_eos.get_product_user_id()
 		if not product_user_id.is_empty():
 			add_output_line("[color=purple]📊 Querying achievement stats...[/color]")
-			godot_epic.query_achievement_stats()
+			godot_eos.query_achievement_stats()
 		else:
 			add_output_line("[color=orange]⚠️ Stats require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
 	else:
 		add_output_line("[color=red]❌ Please login first![/color]")
 
 func _on_get_stats_pressed():
-	if godot_epic.is_user_logged_in():
-		var product_user_id = godot_epic.get_product_user_id()
+	if godot_eos.is_user_logged_in():
+		var product_user_id = godot_eos.get_product_user_id()
 		if not product_user_id.is_empty():
 			add_output_line("[color=purple]📊 Getting current achievement stats...[/color]")
-			var stats = godot_epic.get_achievement_stats()
+			var stats = godot_eos.get_achievement_stats()
 			_display_achievement_stats(stats)
 		else:
 			add_output_line("[color=orange]⚠️ Stats require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
@@ -492,30 +492,30 @@ func _on_get_stats_pressed():
 
 func _on_query_leaderboard_defs_pressed():
 	add_output_line("[color=cyan]🏁 Querying leaderboard definitions...[/color]")
-	godot_epic.query_leaderboard_definitions()
+	godot_eos.query_leaderboard_definitions()
 
 func _on_get_leaderboard_defs_pressed():
 	add_output_line("[color=cyan]🏁 Getting current leaderboard definitions...[/color]")
-	var definitions = godot_epic.get_leaderboard_definitions()
+	var definitions = godot_eos.get_leaderboard_definitions()
 	_display_leaderboard_definitions(definitions)
 
 func _on_query_leaderboard_ranks_pressed():
-	if godot_epic.is_user_logged_in():
-		var product_user_id = godot_epic.get_product_user_id()
+	if godot_eos.is_user_logged_in():
+		var product_user_id = godot_eos.get_product_user_id()
 		if not product_user_id.is_empty():
 			add_output_line("[color=cyan]🏁 Querying leaderboard ranks (top 10)...[/color]")
-			godot_epic.query_leaderboard_ranks("EnemiesSmashedEver", 10)
+			godot_eos.query_leaderboard_ranks("EnemiesSmashedEver", 10)
 		else:
 			add_output_line("[color=orange]⚠️ Leaderboards require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
 	else:
 		add_output_line("[color=red]❌ Please login first![/color]")
 
 func _on_get_leaderboard_ranks_pressed():
-	if godot_epic.is_user_logged_in():
-		var product_user_id = godot_epic.get_product_user_id()
+	if godot_eos.is_user_logged_in():
+		var product_user_id = godot_eos.get_product_user_id()
 		if not product_user_id.is_empty():
 			add_output_line("[color=cyan]🏁 Getting current leaderboard ranks...[/color]")
-			var ranks = godot_epic.get_leaderboard_ranks()
+			var ranks = godot_eos.get_leaderboard_ranks()
 			_display_leaderboard_ranks(ranks)
 		else:
 			add_output_line("[color=orange]⚠️ Leaderboards require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
@@ -523,23 +523,23 @@ func _on_get_leaderboard_ranks_pressed():
 		add_output_line("[color=red]❌ Please login first![/color]")
 
 func _on_query_user_scores_pressed():
-	if godot_epic.is_user_logged_in():
-		var product_user_id = godot_epic.get_product_user_id()
+	if godot_eos.is_user_logged_in():
+		var product_user_id = godot_eos.get_product_user_id()
 		if not product_user_id.is_empty():
 			add_output_line("[color=cyan]🏁 Querying user scores...[/color]")
 			var user_ids = [product_user_id]  # Query current user's score
-			godot_epic.query_leaderboard_user_scores("EnemiesSmashedEver", user_ids)
+			godot_eos.query_leaderboard_user_scores("EnemiesSmashedEver", user_ids)
 		else:
 			add_output_line("[color=orange]⚠️ Leaderboards require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
 	else:
 		add_output_line("[color=red]❌ Please login first![/color]")
 
 func _on_get_user_scores_pressed():
-	if godot_epic.is_user_logged_in():
-		var product_user_id = godot_epic.get_product_user_id()
+	if godot_eos.is_user_logged_in():
+		var product_user_id = godot_eos.get_product_user_id()
 		if not product_user_id.is_empty():
 			add_output_line("[color=cyan]🏁 Getting current user scores...[/color]")
-			var user_scores = godot_epic.get_leaderboard_user_scores()
+			var user_scores = godot_eos.get_leaderboard_user_scores()
 			_display_leaderboard_user_scores(user_scores)
 		else:
 			add_output_line("[color=orange]⚠️ Leaderboards require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
@@ -547,11 +547,11 @@ func _on_get_user_scores_pressed():
 		add_output_line("[color=red]❌ Please login first![/color]")
 
 func _on_ingest_leaderboard_stat_pressed():
-	if godot_epic.is_user_logged_in():
-		var product_user_id = godot_epic.get_product_user_id()
+	if godot_eos.is_user_logged_in():
+		var product_user_id = godot_eos.get_product_user_id()
 		if not product_user_id.is_empty():
 			add_output_line("[color=cyan]🏁 Ingesting test leaderboard stat (Score: +100)...[/color]")
-			godot_epic.ingest_stat("Score", 100)
+			godot_eos.ingest_stat("Score", 100)
 		else:
 			add_output_line("[color=orange]⚠️ Leaderboards require cross-platform features (Product User ID). Connect service is not available for developer accounts.[/color]")
 	else:
@@ -1008,15 +1008,15 @@ func _on_auto_test_timer_timeout():
 		0:
 			# Step 0: Login with dev id "TestUser123"
 			add_output_line("[color=magenta]🤖 Auto-test Step 1/3: Logging in with TestUser123...[/color]")
-			godot_epic.login_with_dev("TestUser123")
+			godot_eos.login_with_dev("TestUser123")
 			auto_test_step = 1
 			auto_test_current_delay = 5.0
 
 		1:
 			# Step 1: Query friends (only if logged in)
-			if godot_epic.is_user_logged_in():
+			if godot_eos.is_user_logged_in():
 				add_output_line("[color=magenta]🤖 Auto-test Step 2/3: Querying friends...[/color]")
-				godot_epic.query_friends()
+				godot_eos.query_friends()
 				auto_test_step = 2
 				auto_test_current_delay = 5.0
 			else:
@@ -1026,11 +1026,11 @@ func _on_auto_test_timer_timeout():
 
 		2:
 			# Step 2: Query achievements (only if we have Product User ID)
-			if godot_epic.is_user_logged_in():
-				var product_user_id = godot_epic.get_product_user_id()
+			if godot_eos.is_user_logged_in():
+				var product_user_id = godot_eos.get_product_user_id()
 				if not product_user_id.is_empty():
 					add_output_line("[color=magenta]🤖 Auto-test Step 3/3: Querying achievements...[/color]")
-					godot_epic.query_player_achievements()
+					godot_eos.query_player_achievements()
 					auto_test_step = 3
 					auto_test_current_delay = 5.0
 				else:
@@ -1045,7 +1045,7 @@ func _on_auto_test_timer_timeout():
 		3:
 			# Step 3: Finish auto-test
 			add_output_line("[color=magenta]🤖 Auto-test completed![/color]")
-			var product_user_id = godot_epic.get_product_user_id()
+			var product_user_id = godot_eos.get_product_user_id()
 			if not product_user_id.is_empty():
 				add_output_line("[color=green]✓ Cross-platform features available (Product User ID: " + product_user_id + ")[/color]")
 			else:
@@ -1065,10 +1065,10 @@ func _on_auto_test_timer_timeout():
 func _exit_tree():
 	# Clean shutdown of EOS platform
 	print("Main: Starting cleanup...")
-	if godot_epic:
+	if godot_eos:
 		print("Main: Shutting down EOS platform...")
-		godot_epic.shutdown_platform()
+		godot_eos.shutdown_platform()
 		print("Main: EOS Platform shut down.")
 	else:
-		print("Main: No GodotEpic instance to clean up")
+		print("Main: No GodotEOS instance to clean up")
 	print("Main: Cleanup complete")

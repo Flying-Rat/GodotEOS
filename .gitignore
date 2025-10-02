@@ -21,11 +21,11 @@ builds/
 .sconsign.dblite
 
 # Ignore demo build outputs
-godot_epic_extension/demo/bin/
+godot_eos_extension/demo/bin/
 
 # Ignore EOS SDK contents but not the directory itself
-godot_epic_extension/eos_sdk/*
-!godot_epic_extension/eos_sdk/put_eos_sdk_here
+godot_eos_extension/eos_sdk/*
+!godot_eos_extension/eos_sdk/put_eos_sdk_here
 
 # Ignore secrets files
 *.secrets
@@ -41,15 +41,15 @@ tests/*.secrets
 **/.godot/
 
 # Godot-cpp generated files
-godot_epic_extension/src/gen
+godot_eos_extension/src/gen
 
 # Ignore eos_samples
-godot_epic_extension/eos_samples
+godot_eos_extension/eos_samples
 
 # Ignore temp libraries
 ~*.dll
 
 # Exception: Allow specific file in demo/bin
-!godot_epic_extension/demo/bin/godotepic.gdextension
+!godot_eos_extension/demo/bin/godotepic.gdextension
 .vscode/settings.json
-godot_epic_extension/eos_sample
+godot_eos_extension/eos_sample

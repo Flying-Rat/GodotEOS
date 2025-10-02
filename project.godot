@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="GodotEpic Plugin"
+config/name="GodotEOS Plugin"
 config/description="Demo project showcasing Godot Epic plugin"
 config/version="1.0.0"
 run/main_scene="res://scenes/demos/demo_menu.tscn"
@@ -19,7 +19,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-EpicOS="*res://addons/godot_epic/epic_os.gd"
+EpicOS="*res://addons/godoteos/epic_os.gd"
 
 [display]
 
@@ -30,7 +30,7 @@ window/stretch/aspect="keep_width"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/godot_epic/plugin.cfg")
+enabled=PackedStringArray("res://addons/godoteos/plugin.cfg")
 
 [rendering]
 

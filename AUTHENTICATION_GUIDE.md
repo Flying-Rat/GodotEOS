@@ -1,4 +1,4 @@
-# GodotEpic Authentication Guide
+# GodotEOS Authentication Guide
 
 ## Understanding Error Code 10 (EOS_InvalidParameters)
 
@@ -36,7 +36,7 @@ Error code 10 indicates that the Epic Online Services (EOS) SDK received invalid
 
 ## Authentication Flow
 
-The GodotEpic extension uses a two-step authentication process:
+The GodotEOS extension uses a two-step authentication process:
 
 1. **Auth Service Login**: Authenticates with Epic Account or Device ID
    - Provides Epic Account ID

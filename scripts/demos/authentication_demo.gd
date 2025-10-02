@@ -54,7 +54,7 @@ func _on_init_button_pressed():
 
 	# Example configuration - replace with your actual Epic Games credentials
 	var config = {
-		"product_name": "GodotEpic Demo",
+		"product_name": "GodotEOS Demo",
 		"product_version": "1.0.0",
 		"product_id": "your_product_id_here",  # Get from Epic Developer Portal
 		"sandbox_id": "your_sandbox_id_here",  # Get from Epic Developer Portal
@@ -102,7 +102,7 @@ func _on_device_login_button_pressed():
 	var display_name = device_input.text.strip_edges()
 
 	if display_name.is_empty():
-		display_name = "GodotEpic_User"
+		display_name = "GodotEOS_User"
 
 	_log_message("[color=yellow]Attempting Device ID login with display name: " + display_name + "[/color]")
 

@@ -1,4 +1,4 @@
-# GodotEpic Authentication Issue Resolution
+# GodotEOS Authentication Issue Resolution
 
 ## Issue Summary
 The "Dev login" feature is failing because it requires the **EOS Dev Auth Tool** to be running, which is a separate Epic Games development tool.
@@ -55,7 +55,7 @@ func _on_login_device2_pressed():
 
 ### 3. Improved Login Flow
 - **Issue**: Login completion signals weren't being emitted
-- **Fix**: Complete callback chain from AuthenticationSubsystem → GodotEpic → UI
+- **Fix**: Complete callback chain from AuthenticationSubsystem → GodotEOS → UI
 - **Result**: UI properly updates on login success/failure
 
 ## Authentication Types Available

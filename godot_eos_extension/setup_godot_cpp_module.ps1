@@ -1,4 +1,4 @@
-# Helper script to initialize or populate the godot-cpp module for GodotEpic (compacted)
+# Helper script to initialize or populate the godot-cpp module for GodotEOS (compacted)
 
 $DesiredModuleBranch = 'godot-4.2-stable'
 
@@ -6,7 +6,7 @@ if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
     Write-Error "git is not available in PATH. Cannot initialize submodules."; exit 1
 }
 
-Write-Host "Initializing git submodules for GodotEpic extension..."
+Write-Host "Initializing git submodules for GodotEOS extension..."
 git submodule update --init --recursive
 if ($LASTEXITCODE -ne 0) { Write-Error "git submodule init/update failed."; exit 1 }
 

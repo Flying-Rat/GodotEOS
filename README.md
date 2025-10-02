@@ -1,4 +1,4 @@
-# GodotEpic
+# GodotEOS
 **Epic Online Services (EOS) Integration for Godot Engine**
 
 A comprehensive GDExtension plugin that brings Epic Games Online Services to Godot Engine, enabling developers to integrate achievements, leaderboards, cloud saves, authentication, and more into their games.
@@ -44,7 +44,7 @@ A comprehensive GDExtension plugin that brings Epic Games Online Services to God
 3. Note your Product ID, Sandbox ID, and Deployment ID
 
 ### 2. Godot Project Setup
-1. Add the GodotEpic plugin to your project
+1. Add the GodotEOS plugin to your project
 2. Create an autoload for `EpicOS` (the plugin will handle this automatically)
 3. Configure your EOS credentials in the project settings
 
@@ -56,7 +56,7 @@ func _ready():
     # Connect to EOS signals
     EpicOS.login_completed.connect(_on_login_completed)
     EpicOS.achievement_unlocked.connect(_on_achievement_unlocked)
-    
+
     # Initialize EOS
     EpicOS.initialize()
 
@@ -148,21 +148,21 @@ This repository **IS** a complete demo project showcasing all EOS features! You 
 - **Authentication UI**: Login/logout with Epic Games account
 - **Achievement Testing**: Unlock achievements and track progress
 - **Statistics Tracking**: Update and retrieve player statistics
-- **Leaderboard Integration**: Submit scores and view leaderboard rankings  
+- **Leaderboard Integration**: Submit scores and view leaderboard rankings
 - **Cloud Save System**: Save and load player data to Epic's cloud storage
 - **Real-time Output Log**: Monitor EOS operations and responses
 
 ### How to Run the Demo
 
 1. Open this project in Godot Engine 4.x
-2. Enable the GodotEpic plugin in Project Settings → Plugins
+2. Enable the GodotEOS plugin in Project Settings → Plugins
 3. Run the project (scenes/main.tscn)
 4. Follow the on-screen instructions to test EOS features
 
 ### Demo Workflow
 
 1. **Initialize**: The demo automatically initializes EOS when started
-2. **Login**: Click "Login with Epic Games" to authenticate  
+2. **Login**: Click "Login with Epic Games" to authenticate
 3. **Test Features**: Once logged in, use the feature buttons to test different EOS APIs
 4. **Monitor Output**: Watch the output log to see EOS responses and status updates
 
@@ -173,8 +173,8 @@ This demo currently uses **mock implementations** for testing the UI and API str
 ### Demo Project Structure
 
 - `scenes/main.tscn` - Main demo scene with interactive UI
-- `scripts/main_demo.gd` - Demo logic and UI event handling  
-- `addons/godot_epic/` - GodotEpic plugin files
+- `scripts/main_demo.gd` - Demo logic and UI event handling
+- `addons/godoteos/` - GodotEOS plugin files
   - `epic_os.gd` - Main EOS interface singleton (mock implementation)
   - `plugin.cfg` - Plugin configuration
   - `plugin.gd` - Plugin activation/deactivation logic
@@ -182,7 +182,7 @@ This demo currently uses **mock implementations** for testing the UI and API str
 ### For Plugin Users
 
 When the plugin is complete, developers can:
-- Copy the `addons/godot_epic/` folder to their own projects
+- Copy the `addons/godoteos/` folder to their own projects
 - Use the same API calls demonstrated in `scripts/main_demo.gd`
 - Reference this demo as a complete integration example
 

@@ -1,7 +1,7 @@
 # Epic Online Services (EOS) SDK Analysis
 ## Comprehensive Study of Architecture, Samples, and Implementation Patterns
 
-This document provides a detailed analysis of the Epic Online Services SDK v1.18.0.4, examining its architecture, sample applications, and implementation patterns to inform the GodotEpic development.
+This document provides a detailed analysis of the Epic Online Services SDK v1.18.0.4, examining its architecture, sample applications, and implementation patterns to inform the GodotEOS development.
 
 ---
 
@@ -73,7 +73,7 @@ void QueryAchievements()
     EOS_Achievements_QueryDefinitionsOptions Options = {};
     Options.ApiVersion = EOS_ACHIEVEMENTS_QUERYDEFINITIONS_API_LATEST;
     Options.LocalUserId = GetCurrentUser();
-    
+
     EOS_Achievements_QueryDefinitions(
         AchievementsHandle,
         &Options,
@@ -98,7 +98,7 @@ void OnQueryAchievementsComplete(const EOS_Achievements_OnQueryDefinitionsComple
 
 ### **Categories of Samples**
 
-#### **1. Authentication & Social** 
+#### **1. Authentication & Social**
 - **AuthAndFriends**: Complete social integration example
   - Epic Games account authentication
   - Friends list management
@@ -186,7 +186,7 @@ protected:
     std::unique_ptr<FAuthentication> Auth;
     std::unique_ptr<FFriends> Friends;
     std::unique_ptr<FUsers> Users;
-    
+
 public:
     virtual void Init();
     virtual void Update();
@@ -209,7 +209,7 @@ class FPlatform
 private:
     static EOS_HPlatform PlatformHandle;
     static bool bIsInit;
-    
+
 public:
     static bool Create();
     static void Release();
@@ -228,7 +228,7 @@ public:
     {
         EventManager::Subscribe<T>(Listener);
     }
-    
+
     static void TriggerPlayerLoggedIn(FProductUserId UserId);
     static void TriggerAchievementUnlocked(const std::string& AchievementId);
 };
@@ -254,7 +254,7 @@ public:
 #### **1. Authentication Interface** (`EOS_HAuth`)
 ```cpp
 // Epic Games account authentication
-void EOS_Auth_Login(EOS_HAuth Handle, 
+void EOS_Auth_Login(EOS_HAuth Handle,
                    const EOS_Auth_LoginOptions* Options,
                    void* ClientData,
                    const EOS_Auth_OnLoginCallback CompletionDelegate);
@@ -388,7 +388,7 @@ PlatformOptions.ClientCredentials.ClientSecret = "client_secret";
 EOS_Auth_LoginOptions LoginOptions = {};
 LoginOptions.ApiVersion = EOS_AUTH_LOGIN_API_LATEST;
 LoginOptions.Credentials = &Credentials;
-LoginOptions.ScopeFlags = EOS_EAuthScopeFlags::EOS_AS_BasicProfile | 
+LoginOptions.ScopeFlags = EOS_EAuthScopeFlags::EOS_AS_BasicProfile |
                          EOS_EAuthScopeFlags::EOS_AS_FriendsList;
 
 EOS_Auth_Login(AuthHandle, &LoginOptions, nullptr, OnLoginComplete);
@@ -413,62 +413,62 @@ EOS_Connect_Login(ConnectHandle, &ConnectOptions, nullptr, OnConnectLoginComplet
 ### **Achievement Data Flow**
 ```cpp
 // 1. Query definitions from backend
-QueryAchievementDefinitions() 
-    → OnDefinitionsReceived() 
+QueryAchievementDefinitions()
+    → OnDefinitionsReceived()
     → CacheDefinitions()
 
 // 2. Query user progress
-QueryUserAchievements() 
-    → OnUserProgressReceived() 
+QueryUserAchievements()
+    → OnUserProgressReceived()
     → UpdateLocalCache()
 
 // 3. Unlock achievement
-UnlockAchievement(achievementId) 
-    → OnUnlockComplete() 
+UnlockAchievement(achievementId)
+    → OnUnlockComplete()
     → TriggerNotification()
 ```
 
 ### **Cloud Save Data Flow**
 ```cpp
 // 1. Query available files
-QueryFileList() 
-    → OnFileListReceived() 
+QueryFileList()
+    → OnFileListReceived()
     → DisplayFileManager()
 
 // 2. Download file
-ReadFile(fileName) 
-    → OnReadProgress() 
-    → OnReadComplete() 
+ReadFile(fileName)
+    → OnReadProgress()
+    → OnReadComplete()
     → LoadGameData()
 
 // 3. Upload file
-WriteFile(fileName, data) 
-    → OnWriteProgress() 
-    → OnWriteComplete() 
+WriteFile(fileName, data)
+    → OnWriteProgress()
+    → OnWriteComplete()
     → UpdateUI()
 ```
 
 ### **Leaderboard Data Flow**
 ```cpp
 // 1. Query definitions
-QueryLeaderboardDefinitions() 
-    → OnDefinitionsReceived() 
+QueryLeaderboardDefinitions()
+    → OnDefinitionsReceived()
     → CacheLeaderboards()
 
 // 2. Submit score (via stats)
-IngestStat(statName, value) 
-    → OnStatIngested() 
+IngestStat(statName, value)
+    → OnStatIngested()
     → TriggerLeaderboardUpdate()
 
 // 3. Query rankings
-QueryLeaderboardRanks(leaderboardId) 
-    → OnRanksReceived() 
+QueryLeaderboardRanks(leaderboardId)
+    → OnRanksReceived()
     → DisplayLeaderboard()
 ```
 
 ---
 
-## 🎯 **Key Insights for GodotEpic Implementation**
+## 🎯 **Key Insights for GodotEOS Implementation**
 
 ### **1. Architecture Adoption**
 - **Central Platform Instance**: Mirror EOS's platform-centric design
@@ -483,7 +483,7 @@ QueryLeaderboardRanks(leaderboardId)
 
 **Phase 2 (Game Services)**:
 1. Achievements
-2. Stats  
+2. Stats
 3. Player Data Storage
 
 **Phase 3 (Advanced)**:
@@ -556,17 +556,17 @@ func handle_operation_result(result_code: int) -> bool:
 class FGame : public FBaseGame
 {
 public:
-    FGame() 
+    FGame()
     {
         // Initialize specific services
         Achievements = std::make_unique<FAchievements>();
         Leaderboard = std::make_unique<FLeaderboard>();
     }
-    
+
     void Init() override
     {
         FBaseGame::Init();  // Platform init
-        
+
         // Initialize services
         Achievements->Init();
         Leaderboard->Init();
@@ -580,16 +580,16 @@ class FAchievements
 {
 private:
     EOS_HAchievements AchievementsHandle;
-    
+
 public:
     void Init()
     {
         AchievementsHandle = EOS_Platform_GetAchievementsInterface(FPlatform::GetPlatformHandle());
     }
-    
+
     void QueryDefinitions();
     void UnlockAchievement(const std::string& AchievementId);
-    
+
     // Callbacks
     static void OnQueryDefinitionsComplete(const EOS_Achievements_OnQueryDefinitionsCompleteCallbackInfo* Data);
     static void OnUnlockComplete(const EOS_Achievements_OnUnlockAchievementsCompleteCallbackInfo* Data);
@@ -616,11 +616,11 @@ void FAchievements::OnLoggedIn(FProductUserId UserId)
 
 ---
 
-## 🏁 **Implementation Roadmap for GodotEpic**
+## 🏁 **Implementation Roadmap for GodotEOS**
 
 ### **Phase 1: Foundation (Days 1-3)**
 1. **Platform Wrapper**: Create EOS platform initialization
-2. **Authentication**: Implement Auth + Connect interfaces  
+2. **Authentication**: Implement Auth + Connect interfaces
 3. **Base Architecture**: Singleton pattern with signal callbacks
 
 ### **Phase 2: Core Services (Days 4-7)**
@@ -664,5 +664,5 @@ void FAchievements::OnLoggedIn(FProductUserId UserId)
 
 ---
 
-**Analysis prepared for GodotEpic development**  
+**Analysis prepared for GodotEOS development**
 *Based on Epic Online Services SDK v1.18.0.4 comprehensive study*

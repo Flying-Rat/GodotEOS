@@ -19,79 +19,79 @@
 using namespace godot;
 
 // Static member definitions
-GodotEpic* GodotEpic::instance = nullptr;
+GodotEOS* GodotEOS::instance = nullptr;
 
-void GodotEpic::_bind_methods() {
-	ClassDB::bind_static_method("GodotEpic", D_METHOD("get_singleton"), &GodotEpic::get_singleton);
-	ClassDB::bind_method(D_METHOD("initialize_platform", "options"), &GodotEpic::initialize_platform);
-	ClassDB::bind_method(D_METHOD("shutdown_platform"), &GodotEpic::shutdown_platform);
-	ClassDB::bind_method(D_METHOD("tick", "delta"), &GodotEpic::tick);
-	ClassDB::bind_method(D_METHOD("is_platform_initialized"), &GodotEpic::is_platform_initialized);
+void GodotEOS::_bind_methods() {
+	ClassDB::bind_static_method("GodotEOS", D_METHOD("get_singleton"), &GodotEOS::get_singleton);
+	ClassDB::bind_method(D_METHOD("initialize_platform", "options"), &GodotEOS::initialize_platform);
+	ClassDB::bind_method(D_METHOD("shutdown_platform"), &GodotEOS::shutdown_platform);
+	ClassDB::bind_method(D_METHOD("tick", "delta"), &GodotEOS::tick);
+	ClassDB::bind_method(D_METHOD("is_platform_initialized"), &GodotEOS::is_platform_initialized);
 
 	// Authentication methods
-	ClassDB::bind_method(D_METHOD("login_with_epic_account", "email", "password"), &GodotEpic::login_with_epic_account);
-	ClassDB::bind_method(D_METHOD("login_with_account_portal"), &GodotEpic::login_with_account_portal);
-	ClassDB::bind_method(D_METHOD("login_with_device_id", "display_name"), &GodotEpic::login_with_device_id);
-	ClassDB::bind_method(D_METHOD("login_with_dev", "display_name"), &GodotEpic::login_with_dev);
-	ClassDB::bind_method(D_METHOD("logout"), &GodotEpic::logout);
-	ClassDB::bind_method(D_METHOD("is_user_logged_in"), &GodotEpic::is_user_logged_in);
-	ClassDB::bind_method(D_METHOD("get_current_username"), &GodotEpic::get_current_username);
-	ClassDB::bind_method(D_METHOD("get_epic_account_id"), &GodotEpic::get_epic_account_id);
-	ClassDB::bind_method(D_METHOD("get_product_user_id"), &GodotEpic::get_product_user_id);
+	ClassDB::bind_method(D_METHOD("login_with_epic_account", "email", "password"), &GodotEOS::login_with_epic_account);
+	ClassDB::bind_method(D_METHOD("login_with_account_portal"), &GodotEOS::login_with_account_portal);
+	ClassDB::bind_method(D_METHOD("login_with_device_id", "display_name"), &GodotEOS::login_with_device_id);
+	ClassDB::bind_method(D_METHOD("login_with_dev", "display_name"), &GodotEOS::login_with_dev);
+	ClassDB::bind_method(D_METHOD("logout"), &GodotEOS::logout);
+	ClassDB::bind_method(D_METHOD("is_user_logged_in"), &GodotEOS::is_user_logged_in);
+	ClassDB::bind_method(D_METHOD("get_current_username"), &GodotEOS::get_current_username);
+	ClassDB::bind_method(D_METHOD("get_epic_account_id"), &GodotEOS::get_epic_account_id);
+	ClassDB::bind_method(D_METHOD("get_product_user_id"), &GodotEOS::get_product_user_id);
 
 	// Friends methods
-	ClassDB::bind_method(D_METHOD("query_friends"), &GodotEpic::query_friends);
-	ClassDB::bind_method(D_METHOD("get_friends_list"), &GodotEpic::get_friends_list);
-	ClassDB::bind_method(D_METHOD("get_friend_info", "friend_id"), &GodotEpic::get_friend_info);
-	ClassDB::bind_method(D_METHOD("query_friend_info", "friend_id"), &GodotEpic::query_friend_info);
-	ClassDB::bind_method(D_METHOD("query_all_friends_info"), &GodotEpic::query_all_friends_info);
+	ClassDB::bind_method(D_METHOD("query_friends"), &GodotEOS::query_friends);
+	ClassDB::bind_method(D_METHOD("get_friends_list"), &GodotEOS::get_friends_list);
+	ClassDB::bind_method(D_METHOD("get_friend_info", "friend_id"), &GodotEOS::get_friend_info);
+	ClassDB::bind_method(D_METHOD("query_friend_info", "friend_id"), &GodotEOS::query_friend_info);
+	ClassDB::bind_method(D_METHOD("query_all_friends_info"), &GodotEOS::query_all_friends_info);
 
 	// Achievements methods
-	ClassDB::bind_method(D_METHOD("query_achievement_definitions"), &GodotEpic::query_achievement_definitions);
-	ClassDB::bind_method(D_METHOD("query_player_achievements"), &GodotEpic::query_player_achievements);
-	ClassDB::bind_method(D_METHOD("unlock_achievement", "achievement_id"), &GodotEpic::unlock_achievement);
-	ClassDB::bind_method(D_METHOD("unlock_achievements", "achievement_ids"), &GodotEpic::unlock_achievements);
-	ClassDB::bind_method(D_METHOD("get_achievement_definitions"), &GodotEpic::get_achievement_definitions);
-	ClassDB::bind_method(D_METHOD("get_player_achievements"), &GodotEpic::get_player_achievements);
-	ClassDB::bind_method(D_METHOD("get_achievement_definition", "achievement_id"), &GodotEpic::get_achievement_definition);
-	ClassDB::bind_method(D_METHOD("get_player_achievement", "achievement_id"), &GodotEpic::get_player_achievement);
+	ClassDB::bind_method(D_METHOD("query_achievement_definitions"), &GodotEOS::query_achievement_definitions);
+	ClassDB::bind_method(D_METHOD("query_player_achievements"), &GodotEOS::query_player_achievements);
+	ClassDB::bind_method(D_METHOD("unlock_achievement", "achievement_id"), &GodotEOS::unlock_achievement);
+	ClassDB::bind_method(D_METHOD("unlock_achievements", "achievement_ids"), &GodotEOS::unlock_achievements);
+	ClassDB::bind_method(D_METHOD("get_achievement_definitions"), &GodotEOS::get_achievement_definitions);
+	ClassDB::bind_method(D_METHOD("get_player_achievements"), &GodotEOS::get_player_achievements);
+	ClassDB::bind_method(D_METHOD("get_achievement_definition", "achievement_id"), &GodotEOS::get_achievement_definition);
+	ClassDB::bind_method(D_METHOD("get_player_achievement", "achievement_id"), &GodotEOS::get_player_achievement);
 
 	// Stats methods (AchievementsSubsystem)
-	ClassDB::bind_method(D_METHOD("ingest_achievement_stat", "stat_name", "amount"), &GodotEpic::ingest_achievement_stat);
-	ClassDB::bind_method(D_METHOD("query_achievement_stats"), &GodotEpic::query_achievement_stats);
-	ClassDB::bind_method(D_METHOD("get_achievement_stats"), &GodotEpic::get_achievement_stats);
-	ClassDB::bind_method(D_METHOD("get_achievement_stat", "stat_name"), &GodotEpic::get_achievement_stat);
+	ClassDB::bind_method(D_METHOD("ingest_achievement_stat", "stat_name", "amount"), &GodotEOS::ingest_achievement_stat);
+	ClassDB::bind_method(D_METHOD("query_achievement_stats"), &GodotEOS::query_achievement_stats);
+	ClassDB::bind_method(D_METHOD("get_achievement_stats"), &GodotEOS::get_achievement_stats);
+	ClassDB::bind_method(D_METHOD("get_achievement_stat", "stat_name"), &GodotEOS::get_achievement_stat);
 
 	// Leaderboards methods
-	ClassDB::bind_method(D_METHOD("query_leaderboard_definitions"), &GodotEpic::query_leaderboard_definitions);
-	ClassDB::bind_method(D_METHOD("query_leaderboard_ranks", "leaderboard_id", "limit"), &GodotEpic::query_leaderboard_ranks);
-	ClassDB::bind_method(D_METHOD("query_leaderboard_user_scores", "leaderboard_id", "user_ids"), &GodotEpic::query_leaderboard_user_scores);
-	ClassDB::bind_method(D_METHOD("ingest_stat", "stat_name", "value"), &GodotEpic::ingest_stat);
-	ClassDB::bind_method(D_METHOD("ingest_stats", "stats"), &GodotEpic::ingest_stats);
-	ClassDB::bind_method(D_METHOD("get_leaderboard_definitions"), &GodotEpic::get_leaderboard_definitions);
-	ClassDB::bind_method(D_METHOD("get_leaderboard_ranks"), &GodotEpic::get_leaderboard_ranks);
-	ClassDB::bind_method(D_METHOD("get_leaderboard_user_scores"), &GodotEpic::get_leaderboard_user_scores);
+	ClassDB::bind_method(D_METHOD("query_leaderboard_definitions"), &GodotEOS::query_leaderboard_definitions);
+	ClassDB::bind_method(D_METHOD("query_leaderboard_ranks", "leaderboard_id", "limit"), &GodotEOS::query_leaderboard_ranks);
+	ClassDB::bind_method(D_METHOD("query_leaderboard_user_scores", "leaderboard_id", "user_ids"), &GodotEOS::query_leaderboard_user_scores);
+	ClassDB::bind_method(D_METHOD("ingest_stat", "stat_name", "value"), &GodotEOS::ingest_stat);
+	ClassDB::bind_method(D_METHOD("ingest_stats", "stats"), &GodotEOS::ingest_stats);
+	ClassDB::bind_method(D_METHOD("get_leaderboard_definitions"), &GodotEOS::get_leaderboard_definitions);
+	ClassDB::bind_method(D_METHOD("get_leaderboard_ranks"), &GodotEOS::get_leaderboard_ranks);
+	ClassDB::bind_method(D_METHOD("get_leaderboard_user_scores"), &GodotEOS::get_leaderboard_user_scores);
 
 	// Authentication callback
-	ClassDB::bind_method(D_METHOD("on_authentication_completed", "success", "user_info"), &GodotEpic::on_authentication_completed);
-	ClassDB::bind_method(D_METHOD("on_logout_completed", "success"), &GodotEpic::on_logout_completed);
+	ClassDB::bind_method(D_METHOD("on_authentication_completed", "success", "user_info"), &GodotEOS::on_authentication_completed);
+	ClassDB::bind_method(D_METHOD("on_logout_completed", "success"), &GodotEOS::on_logout_completed);
 
 	// Achievements callback
-	ClassDB::bind_method(D_METHOD("on_achievement_definitions_completed", "success", "definitions"), &GodotEpic::on_achievement_definitions_completed);
-	ClassDB::bind_method(D_METHOD("on_player_achievements_completed", "success", "achievements"), &GodotEpic::on_player_achievements_completed);
-	ClassDB::bind_method(D_METHOD("on_achievements_unlocked_completed", "success", "unlocked_achievement_ids"), &GodotEpic::on_achievements_unlocked_completed);
+	ClassDB::bind_method(D_METHOD("on_achievement_definitions_completed", "success", "definitions"), &GodotEOS::on_achievement_definitions_completed);
+	ClassDB::bind_method(D_METHOD("on_player_achievements_completed", "success", "achievements"), &GodotEOS::on_player_achievements_completed);
+	ClassDB::bind_method(D_METHOD("on_achievements_unlocked_completed", "success", "unlocked_achievement_ids"), &GodotEOS::on_achievements_unlocked_completed);
 
 	// Stats callback
-	ClassDB::bind_method(D_METHOD("on_achievement_stats_completed", "success", "stats"), &GodotEpic::on_achievement_stats_completed);
+	ClassDB::bind_method(D_METHOD("on_achievement_stats_completed", "success", "stats"), &GodotEOS::on_achievement_stats_completed);
 
 	// Leaderboards callback
-	ClassDB::bind_method(D_METHOD("on_leaderboard_definitions_completed", "success", "definitions"), &GodotEpic::on_leaderboard_definitions_completed);
-	ClassDB::bind_method(D_METHOD("on_leaderboard_ranks_completed", "success", "ranks"), &GodotEpic::on_leaderboard_ranks_completed);
-	ClassDB::bind_method(D_METHOD("on_leaderboard_user_scores_completed", "success", "user_scores"), &GodotEpic::on_leaderboard_user_scores_completed);
+	ClassDB::bind_method(D_METHOD("on_leaderboard_definitions_completed", "success", "definitions"), &GodotEOS::on_leaderboard_definitions_completed);
+	ClassDB::bind_method(D_METHOD("on_leaderboard_ranks_completed", "success", "ranks"), &GodotEOS::on_leaderboard_ranks_completed);
+	ClassDB::bind_method(D_METHOD("on_leaderboard_user_scores_completed", "success", "user_scores"), &GodotEOS::on_leaderboard_user_scores_completed);
 
 	// Friends callbacks
-	ClassDB::bind_method(D_METHOD("on_friends_query_completed", "success", "friends_list"), &GodotEpic::on_friends_query_completed);
-	ClassDB::bind_method(D_METHOD("on_friend_info_query_completed", "success", "friend_info"), &GodotEpic::on_friend_info_query_completed);
+	ClassDB::bind_method(D_METHOD("on_friends_query_completed", "success", "friends_list"), &GodotEOS::on_friends_query_completed);
+	ClassDB::bind_method(D_METHOD("on_friend_info_query_completed", "success", "friend_info"), &GodotEOS::on_friend_info_query_completed);
 
 	// Signals
 	ADD_SIGNAL(MethodInfo("login_completed", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::DICTIONARY, "user_info")));
@@ -109,50 +109,50 @@ void GodotEpic::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("stats_ingested", PropertyInfo(Variant::ARRAY, "stat_names")));
 }
 
-GodotEpic::GodotEpic() {
+GodotEOS::GodotEOS() {
 	// Initialize any variables here.
 	instance = this;
 
 	// Initialize authentication state
 }
 
-GodotEpic::~GodotEpic() {
-	UtilityFunctions::print("GodotEpic: Destructor called");
+GodotEOS::~GodotEOS() {
+	UtilityFunctions::print("GodotEOS: Destructor called");
 
 	// Ensure platform is shutdown on destruction
 	try {
 		shutdown_platform();
 	} catch (...) {
-		UtilityFunctions::printerr("GodotEpic: Exception during shutdown in destructor");
+		UtilityFunctions::printerr("GodotEOS: Exception during shutdown in destructor");
 	}
 
 	if (instance == this) {
 		instance = nullptr;
 	}
 
-	UtilityFunctions::print("GodotEpic: Destructor completed");
+	UtilityFunctions::print("GodotEOS: Destructor completed");
 }
 
-void GodotEpic::on_logout_completed(bool success) {
+void GodotEOS::on_logout_completed(bool success) {
 	if (success) {
-		UtilityFunctions::print("GodotEpic: Logout completed successfully");
+		UtilityFunctions::print("GodotEOS: Logout completed successfully");
 	} else {
-		UtilityFunctions::printerr("GodotEpic: Logout failed");
+		UtilityFunctions::printerr("GodotEOS: Logout failed");
 	}
 
 	emit_signal("logout_completed", success);
 }
 
-GodotEpic* GodotEpic::get_singleton() {
+GodotEOS* GodotEOS::get_singleton() {
 	if (!instance) {
-		instance = memnew(GodotEpic);
+		instance = memnew(GodotEOS);
 	}
 	return instance;
 }
 
-void GodotEpic::cleanup_singleton() {
+void GodotEOS::cleanup_singleton() {
 	if (instance) {
-		UtilityFunctions::print("GodotEpic: Cleaning up singleton instance");
+		UtilityFunctions::print("GodotEOS: Cleaning up singleton instance");
 		// Shutdown platform first to ensure clean resource cleanup
 		instance->shutdown_platform();
 		// Delete the instance
@@ -161,7 +161,7 @@ void GodotEpic::cleanup_singleton() {
 	}
 }
 
-bool GodotEpic::initialize_platform(const Dictionary& options) {
+bool GodotEOS::initialize_platform(const Dictionary& options) {
 	UtilityFunctions::print("Starting EOS Platform initialization");
 
 	// Convert dictionary to init options
@@ -186,32 +186,32 @@ bool GodotEpic::initialize_platform(const Dictionary& options) {
 	return true;
 }
 
-void GodotEpic::shutdown_platform() {
-	UtilityFunctions::print("GodotEpic: Starting platform shutdown...");
+void GodotEOS::shutdown_platform() {
+	UtilityFunctions::print("GodotEOS: Starting platform shutdown...");
 
 	// Shutdown all subsystems - they will handle their own cleanup including logout
 	SubsystemManager* manager = SubsystemManager::GetInstance();
 	manager->ShutdownAll();
 
-	UtilityFunctions::print("GodotEpic: Platform shutdown complete");
-}void GodotEpic::tick(double delta) {
+	UtilityFunctions::print("GodotEOS: Platform shutdown complete");
+}void GodotEOS::tick(double delta) {
 	SubsystemManager* manager = SubsystemManager::GetInstance();
 	const double clamped_delta = delta < 0.0 ? 0.0 : delta;
 	manager->TickAll(static_cast<float>(clamped_delta));
 }
 
-bool GodotEpic::is_platform_initialized() const {
+bool GodotEOS::is_platform_initialized() const {
 	auto platform_subsystem = Get<IPlatformSubsystem>();
 	return platform_subsystem && platform_subsystem->GetPlatformHandle() != nullptr;
 }
 
-EOS_HPlatform GodotEpic::get_platform_handle() const {
+EOS_HPlatform GodotEOS::get_platform_handle() const {
 	auto platform_subsystem = Get<IPlatformSubsystem>();
 	return platform_subsystem ? platform_subsystem->GetPlatformHandle() : nullptr;
 }
 
 // Authentication methods
-void GodotEpic::login_with_epic_account(const String& email, const String& password) {
+void GodotEOS::login_with_epic_account(const String& email, const String& password) {
 	UtilityFunctions::print("Starting Epic account login");
 
 	auto auth = Get<IAuthenticationSubsystem>();
@@ -233,12 +233,12 @@ void GodotEpic::login_with_epic_account(const String& email, const String& passw
 	}
 }
 
-void GodotEpic::login_with_account_portal() {
+void GodotEOS::login_with_account_portal() {
 	UtilityFunctions::print("Starting Account Portal login");
 
 	auto auth = Get<IAuthenticationSubsystem>();
 	if (!auth) {
-		UtilityFunctions::printerr("GodotEpic::login_with_account_portal - AuthenticationSubsystem not available");
+		UtilityFunctions::printerr("GodotEOS::login_with_account_portal - AuthenticationSubsystem not available");
 		on_authentication_completed(false, Dictionary());
 		return;
 	}
@@ -246,12 +246,12 @@ void GodotEpic::login_with_account_portal() {
 	Dictionary credentials; // Empty for account portal login
 
 	if (!auth->Login("account_portal", credentials)) {
-		UtilityFunctions::printerr("GodotEpic::login_with_account_portal - Login call failed");
+		UtilityFunctions::printerr("GodotEOS::login_with_account_portal - Login call failed");
 		on_authentication_completed(false, Dictionary());
 	}
 }
 
-void GodotEpic::login_with_dev(const String& display_name) {
+void GodotEOS::login_with_dev(const String& display_name) {
 	UtilityFunctions::print("Starting dev login");
 
 	auto auth = Get<IAuthenticationSubsystem>();
@@ -273,7 +273,7 @@ void GodotEpic::login_with_dev(const String& display_name) {
 	}
 }
 
-void GodotEpic::login_with_device_id(const String& display_name) {
+void GodotEOS::login_with_device_id(const String& display_name) {
 	UtilityFunctions::print("Starting device ID login");
 
 	auto auth = Get<IAuthenticationSubsystem>();
@@ -291,7 +291,7 @@ void GodotEpic::login_with_device_id(const String& display_name) {
 	}
 }
 
-void GodotEpic::logout() {
+void GodotEOS::logout() {
 	UtilityFunctions::print("Starting logout");
 
 	auto auth = Get<IAuthenticationSubsystem>();
@@ -307,17 +307,17 @@ void GodotEpic::logout() {
 	}
 }
 
-bool GodotEpic::is_user_logged_in() const {
+bool GodotEOS::is_user_logged_in() const {
 	auto auth = Get<IAuthenticationSubsystem>();
 	return auth ? auth->IsLoggedIn() : false;
 }
 
-String GodotEpic::get_current_username() const {
+String GodotEOS::get_current_username() const {
 	auto auth = Get<IAuthenticationSubsystem>();
 	return auth ? auth->GetDisplayName() : "";
 }
 
-String GodotEpic::get_epic_account_id() const {
+String GodotEOS::get_epic_account_id() const {
 	auto auth = Get<IAuthenticationSubsystem>();
 	if (!auth) {
 		UtilityFunctions::push_warning("AuthenticationSubsystem not available");
@@ -330,7 +330,7 @@ String GodotEpic::get_epic_account_id() const {
 	return FAccountHelpers::EpicAccountIDToString(epic_id);
 }
 
-String GodotEpic::get_product_user_id() const {
+String GodotEOS::get_product_user_id() const {
 	auto auth = Get<IAuthenticationSubsystem>();
 	if (!auth) {
 		UtilityFunctions::push_warning("AuthenticationSubsystem not available");
@@ -344,7 +344,7 @@ String GodotEpic::get_product_user_id() const {
 }
 
 // Friends methods
-void GodotEpic::query_friends() {
+void GodotEOS::query_friends() {
 	auto friends = Get<IFriendsSubsystem>();
 	if (!friends) {
 		UtilityFunctions::push_warning("FriendsSubsystem not available");
@@ -360,17 +360,17 @@ void GodotEpic::query_friends() {
 	}
 }
 
-Array GodotEpic::get_friends_list() {
+Array GodotEOS::get_friends_list() {
 	auto friends = Get<IFriendsSubsystem>();
 	return friends ? friends->GetFriendsList() : Array();
 }
 
-Dictionary GodotEpic::get_friend_info(const String& friend_id) {
+Dictionary GodotEOS::get_friend_info(const String& friend_id) {
 	auto friends = Get<IFriendsSubsystem>();
 	return friends ? friends->GetFriendInfo(friend_id) : Dictionary();
 }
 
-void GodotEpic::query_friend_info(const String& friend_id) {
+void GodotEOS::query_friend_info(const String& friend_id) {
 	auto friends = Get<IFriendsSubsystem>();
 	if (!friends) {
 		UtilityFunctions::push_warning("FriendsSubsystem not available");
@@ -390,7 +390,7 @@ void GodotEpic::query_friend_info(const String& friend_id) {
 	}
 }
 
-void GodotEpic::query_all_friends_info() {
+void GodotEOS::query_all_friends_info() {
 	auto friends = Get<IFriendsSubsystem>();
 	if (!friends) {
 		UtilityFunctions::push_warning("FriendsSubsystem not available");
@@ -403,7 +403,7 @@ void GodotEpic::query_all_friends_info() {
 }
 
 // Achievements methods
-void GodotEpic::query_achievement_definitions() {
+void GodotEOS::query_achievement_definitions() {
 	UtilityFunctions::print("Starting achievement definitions query");
 
 	auto achievements = Get<IAchievementsSubsystem>();
@@ -421,8 +421,8 @@ void GodotEpic::query_achievement_definitions() {
 	}
 }
 
-void GodotEpic::query_player_achievements() {
-	UtilityFunctions::print("GodotEpic: Starting player achievements query");
+void GodotEOS::query_player_achievements() {
+	UtilityFunctions::print("GodotEOS: Starting player achievements query");
 
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
@@ -439,14 +439,14 @@ void GodotEpic::query_player_achievements() {
 	}
 }
 
-void GodotEpic::unlock_achievement(const String& achievement_id) {
+void GodotEOS::unlock_achievement(const String& achievement_id) {
 	Array achievement_ids;
 	achievement_ids.push_back(achievement_id);
 	unlock_achievements(achievement_ids);
 }
 
-void GodotEpic::unlock_achievements(const Array& achievement_ids) {
-	UtilityFunctions::print("GodotEpic: Starting achievement unlock for " + String::num_int64(achievement_ids.size()) + " achievements");
+void GodotEOS::unlock_achievements(const Array& achievement_ids) {
+	UtilityFunctions::print("GodotEOS: Starting achievement unlock for " + String::num_int64(achievement_ids.size()) + " achievements");
 
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
@@ -463,29 +463,29 @@ void GodotEpic::unlock_achievements(const Array& achievement_ids) {
 	}
 }
 
-Array GodotEpic::get_achievement_definitions() {
+Array GodotEOS::get_achievement_definitions() {
 	auto achievements = Get<IAchievementsSubsystem>();
 	return achievements ? achievements->GetAchievementDefinitions() : Array();
 }
 
-Array GodotEpic::get_player_achievements() {
+Array GodotEOS::get_player_achievements() {
 	auto achievements = Get<IAchievementsSubsystem>();
 	return achievements ? achievements->GetPlayerAchievements() : Array();
 }
 
-Dictionary GodotEpic::get_achievement_definition(const String& achievement_id) {
+Dictionary GodotEOS::get_achievement_definition(const String& achievement_id) {
 	auto achievements = Get<IAchievementsSubsystem>();
 	return achievements ? achievements->GetAchievementDefinition(achievement_id) : Dictionary();
 }
 
-Dictionary GodotEpic::get_player_achievement(const String& achievement_id) {
+Dictionary GodotEOS::get_player_achievement(const String& achievement_id) {
 	auto achievements = Get<IAchievementsSubsystem>();
 	return achievements ? achievements->GetPlayerAchievement(achievement_id) : Dictionary();
 }
 
 // Achievement Stats methods
-void GodotEpic::ingest_achievement_stat(const String& stat_name, int amount) {
-	UtilityFunctions::print("GodotEpic: Starting stat ingestion: " + stat_name + " = " + String::num_int64(amount));
+void GodotEOS::ingest_achievement_stat(const String& stat_name, int amount) {
+	UtilityFunctions::print("GodotEOS: Starting stat ingestion: " + stat_name + " = " + String::num_int64(amount));
 
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
@@ -502,8 +502,8 @@ void GodotEpic::ingest_achievement_stat(const String& stat_name, int amount) {
 	}
 }
 
-void GodotEpic::query_achievement_stats() {
-	UtilityFunctions::print("GodotEpic: Starting achievement stats query");
+void GodotEOS::query_achievement_stats() {
+	UtilityFunctions::print("GodotEOS: Starting achievement stats query");
 
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
@@ -520,18 +520,18 @@ void GodotEpic::query_achievement_stats() {
 	}
 }
 
-Array GodotEpic::get_achievement_stats() {
+Array GodotEOS::get_achievement_stats() {
 	auto achievements = Get<IAchievementsSubsystem>();
 	return achievements ? achievements->GetStats() : Array();
 }
 
-Dictionary GodotEpic::get_achievement_stat(const String& stat_name) {
+Dictionary GodotEOS::get_achievement_stat(const String& stat_name) {
 	auto achievements = Get<IAchievementsSubsystem>();
 	return achievements ? achievements->GetStat(stat_name) : Dictionary();
 }
 
 // Static logging callback
-void EOS_CALL GodotEpic::logging_callback(const EOS_LogMessage* message) {
+void EOS_CALL GodotEOS::logging_callback(const EOS_LogMessage* message) {
 	if (!message || !message->Message) {
 		return;
 	}
@@ -566,8 +566,8 @@ void EOS_CALL GodotEpic::logging_callback(const EOS_LogMessage* message) {
 }
 
 // Leaderboards methods
-void GodotEpic::query_leaderboard_definitions() {
-	UtilityFunctions::print("GodotEpic: Starting leaderboard definitions query");
+void GodotEOS::query_leaderboard_definitions() {
+	UtilityFunctions::print("GodotEOS: Starting leaderboard definitions query");
 
 	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	if (!leaderboards) {
@@ -584,8 +584,8 @@ void GodotEpic::query_leaderboard_definitions() {
 	}
 }
 
-void GodotEpic::query_leaderboard_ranks(const String& leaderboard_id, int limit) {
-	UtilityFunctions::print("GodotEpic: Starting leaderboard ranks query for: " + leaderboard_id + " (limit: " + String::num_int64(limit) + ")");
+void GodotEOS::query_leaderboard_ranks(const String& leaderboard_id, int limit) {
+	UtilityFunctions::print("GodotEOS: Starting leaderboard ranks query for: " + leaderboard_id + " (limit: " + String::num_int64(limit) + ")");
 
 	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	if (!leaderboards) {
@@ -602,8 +602,8 @@ void GodotEpic::query_leaderboard_ranks(const String& leaderboard_id, int limit)
 	}
 }
 
-void GodotEpic::query_leaderboard_user_scores(const String& leaderboard_id, const Array& user_ids) {
-	UtilityFunctions::print("GodotEpic: Starting leaderboard user scores query for: " + leaderboard_id + " (" + String::num_int64(user_ids.size()) + " users)");
+void GodotEOS::query_leaderboard_user_scores(const String& leaderboard_id, const Array& user_ids) {
+	UtilityFunctions::print("GodotEOS: Starting leaderboard user scores query for: " + leaderboard_id + " (" + String::num_int64(user_ids.size()) + " users)");
 
 	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	if (!leaderboards) {
@@ -620,8 +620,8 @@ void GodotEpic::query_leaderboard_user_scores(const String& leaderboard_id, cons
 	}
 }
 
-void GodotEpic::ingest_stat(const String& stat_name, int value) {
-	UtilityFunctions::print("GodotEpic: Starting stat ingestion: " + stat_name + " = " + String::num_int64(value));
+void GodotEOS::ingest_stat(const String& stat_name, int value) {
+	UtilityFunctions::print("GodotEOS: Starting stat ingestion: " + stat_name + " = " + String::num_int64(value));
 
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
@@ -638,8 +638,8 @@ void GodotEpic::ingest_stat(const String& stat_name, int value) {
 	}
 }
 
-void GodotEpic::ingest_stats(const Dictionary& stats) {
-	UtilityFunctions::print("GodotEpic: Starting bulk stat ingestion for " + String::num_int64(stats.size()) + " stats");
+void GodotEOS::ingest_stats(const Dictionary& stats) {
+	UtilityFunctions::print("GodotEOS: Starting bulk stat ingestion for " + String::num_int64(stats.size()) + " stats");
 
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (!achievements) {
@@ -664,23 +664,23 @@ void GodotEpic::ingest_stats(const Dictionary& stats) {
 	emit_signal("stats_ingested", keys);
 }
 
-Array GodotEpic::get_leaderboard_definitions() {
+Array GodotEOS::get_leaderboard_definitions() {
 	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	return leaderboards ? leaderboards->GetLeaderboardDefinitions() : Array();
 }
 
-Array GodotEpic::get_leaderboard_ranks() {
+Array GodotEOS::get_leaderboard_ranks() {
 	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	return leaderboards ? leaderboards->GetLeaderboardRanks() : Array();
 }
 
-Dictionary GodotEpic::get_leaderboard_user_scores() {
+Dictionary GodotEOS::get_leaderboard_user_scores() {
 	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	return leaderboards ? leaderboards->GetLeaderboardUserScores() : Dictionary();
 }
 
 // Helper methods
-EpicInitOptions GodotEpic::_dict_to_init_options(const Dictionary& options_dict) {
+EpicInitOptions GodotEOS::_dict_to_init_options(const Dictionary& options_dict) {
 	EpicInitOptions options;
 
 	// Use values from dictionary if provided, otherwise use SampleConstants as fallback
@@ -734,7 +734,7 @@ EpicInitOptions GodotEpic::_dict_to_init_options(const Dictionary& options_dict)
 	return options;
 }
 
-bool GodotEpic::_validate_init_options(const EpicInitOptions& options) {
+bool GodotEOS::_validate_init_options(const EpicInitOptions& options) {
 	Array required_fields;
 	required_fields.append("product_id");
 	required_fields.append("sandbox_id");
@@ -772,7 +772,7 @@ bool GodotEpic::_validate_init_options(const EpicInitOptions& options) {
 	return valid;
 }
 
-bool GodotEpic::initialize_subsystems(const EpicInitOptions& init_options) {
+bool GodotEOS::initialize_subsystems(const EpicInitOptions& init_options) {
 	// Check for reinitialization
 	SubsystemManager* manager = SubsystemManager::GetInstance();
 	if (manager->IsHealthy()) {
@@ -826,7 +826,7 @@ bool GodotEpic::initialize_subsystems(const EpicInitOptions& init_options) {
 	return true;
 }
 
-void GodotEpic::setup_authentication_callback() {
+void GodotEOS::setup_authentication_callback() {
 	auto auth = Get<IAuthenticationSubsystem>();
 	if (auth) {
 		Callable login_callback = Callable(this, "on_authentication_completed");
@@ -839,7 +839,7 @@ void GodotEpic::setup_authentication_callback() {
 	}
 }
 
-void GodotEpic::setup_achievements_callbacks() {
+void GodotEOS::setup_achievements_callbacks() {
 	auto achievements = Get<IAchievementsSubsystem>();
 	if (achievements) {
 		// Create callables that bind to our instance methods
@@ -859,7 +859,7 @@ void GodotEpic::setup_achievements_callbacks() {
 	}
 }
 
-void GodotEpic::setup_leaderboards_callbacks() {
+void GodotEOS::setup_leaderboards_callbacks() {
 	auto leaderboards = Get<ILeaderboardsSubsystem>();
 	if (leaderboards) {
 		// Create callables that bind to our instance methods
@@ -876,7 +876,7 @@ void GodotEpic::setup_leaderboards_callbacks() {
 	}
 }
 
-void GodotEpic::setup_friends_callbacks() {
+void GodotEOS::setup_friends_callbacks() {
 	auto friends = Get<IFriendsSubsystem>();
 	if (friends) {
 		// Create callables that bind to our instance methods
@@ -890,137 +890,137 @@ void GodotEpic::setup_friends_callbacks() {
 	}
 }
 
-void GodotEpic::on_authentication_completed(bool success, const Dictionary& user_info) {
-	UtilityFunctions::printerr("GodotEpic: Authentication completed - success: " + String(success ? "true" : "false"));
+void GodotEOS::on_authentication_completed(bool success, const Dictionary& user_info) {
+	UtilityFunctions::printerr("GodotEOS: Authentication completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
 		String display_name = user_info.get("display_name", "Unknown User");
 		String epic_account_id = user_info.get("epic_account_id", "");
 		String product_user_id = user_info.get("product_user_id", "");
 
-		UtilityFunctions::printerr("GodotEpic: Login successful for user: " + display_name);
-		UtilityFunctions::printerr("GodotEpic: Epic Account ID: " + epic_account_id);
-		UtilityFunctions::printerr("GodotEpic: Product User ID: " + product_user_id);
+		UtilityFunctions::printerr("GodotEOS: Login successful for user: " + display_name);
+		UtilityFunctions::printerr("GodotEOS: Epic Account ID: " + epic_account_id);
+		UtilityFunctions::printerr("GodotEOS: Product User ID: " + product_user_id);
 	} else {
-		UtilityFunctions::printerr("GodotEpic: Login failed");
+		UtilityFunctions::printerr("GodotEOS: Login failed");
 	}
 
 	// Emit the login_completed signal
 	emit_signal("login_completed", success, user_info);
 }
 
-void GodotEpic::on_achievement_definitions_completed(bool success, const Array& definitions) {
-	UtilityFunctions::printerr("GodotEpic: Achievement definitions query completed - success: " + String(success ? "true" : "false"));
+void GodotEOS::on_achievement_definitions_completed(bool success, const Array& definitions) {
+	UtilityFunctions::printerr("GodotEOS: Achievement definitions query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		UtilityFunctions::printerr("GodotEpic: Achievement definitions updated (" + String::num_int64(definitions.size()) + " definitions)");
+		UtilityFunctions::printerr("GodotEOS: Achievement definitions updated (" + String::num_int64(definitions.size()) + " definitions)");
 	} else {
-		UtilityFunctions::printerr("GodotEpic: Achievement definitions query failed");
+		UtilityFunctions::printerr("GodotEOS: Achievement definitions query failed");
 	}
 
 	// Emit the achievement_definitions_updated signal
 	emit_signal("achievement_definitions_updated", definitions);
 }
 
-void GodotEpic::on_player_achievements_completed(bool success, const Array& achievements) {
-	UtilityFunctions::printerr("GodotEpic: Player achievements query completed - success: " + String(success ? "true" : "false"));
+void GodotEOS::on_player_achievements_completed(bool success, const Array& achievements) {
+	UtilityFunctions::printerr("GodotEOS: Player achievements query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		UtilityFunctions::printerr("GodotEpic: Player achievements updated (" + String::num_int64(achievements.size()) + " achievements)");
+		UtilityFunctions::printerr("GodotEOS: Player achievements updated (" + String::num_int64(achievements.size()) + " achievements)");
 	} else {
-		UtilityFunctions::printerr("GodotEpic: Player achievements query failed");
+		UtilityFunctions::printerr("GodotEOS: Player achievements query failed");
 	}
 
 	// Emit the player_achievements_updated signal
 	emit_signal("player_achievements_updated", achievements);
 }
 
-void GodotEpic::on_achievements_unlocked_completed(bool success, const Array& unlocked_achievement_ids) {
-	UtilityFunctions::printerr("GodotEpic: Achievements unlock completed - success: " + String(success ? "true" : "false"));
+void GodotEOS::on_achievements_unlocked_completed(bool success, const Array& unlocked_achievement_ids) {
+	UtilityFunctions::printerr("GodotEOS: Achievements unlock completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		UtilityFunctions::printerr("GodotEpic: Achievements unlocked successfully");
+		UtilityFunctions::printerr("GodotEOS: Achievements unlocked successfully");
 	} else {
-		UtilityFunctions::printerr("GodotEpic: Achievements unlock failed");
+		UtilityFunctions::printerr("GodotEOS: Achievements unlock failed");
 	}
 
 	// Emit the achievements_unlocked signal
 	emit_signal("achievements_unlocked", unlocked_achievement_ids);
 }
 
-void GodotEpic::on_achievement_stats_completed(bool success, const Array& stats) {
-	UtilityFunctions::printerr("GodotEpic: Achievement stats query completed - success: " + String(success ? "true" : "false"));
+void GodotEOS::on_achievement_stats_completed(bool success, const Array& stats) {
+	UtilityFunctions::printerr("GodotEOS: Achievement stats query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		UtilityFunctions::printerr("GodotEpic: Achievement stats updated (" + String::num_int64(stats.size()) + " stats)");
+		UtilityFunctions::printerr("GodotEOS: Achievement stats updated (" + String::num_int64(stats.size()) + " stats)");
 	} else {
-		UtilityFunctions::printerr("GodotEpic: Achievement stats query failed");
+		UtilityFunctions::printerr("GodotEOS: Achievement stats query failed");
 	}
 
 	// Emit the achievement_stats_updated signal
 	emit_signal("achievement_stats_updated", success, stats);
 }
 
-void GodotEpic::on_leaderboard_definitions_completed(bool success, const Array& definitions) {
-	UtilityFunctions::printerr("GodotEpic: Leaderboard definitions query completed - success: " + String(success ? "true" : "false"));
+void GodotEOS::on_leaderboard_definitions_completed(bool success, const Array& definitions) {
+	UtilityFunctions::printerr("GodotEOS: Leaderboard definitions query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		UtilityFunctions::printerr("GodotEpic: Leaderboard definitions updated (" + String::num_int64(definitions.size()) + " definitions)");
+		UtilityFunctions::printerr("GodotEOS: Leaderboard definitions updated (" + String::num_int64(definitions.size()) + " definitions)");
 	} else {
-		UtilityFunctions::printerr("GodotEpic: Leaderboard definitions query failed");
+		UtilityFunctions::printerr("GodotEOS: Leaderboard definitions query failed");
 	}
 
 	// Emit the leaderboard_definitions_updated signal
 	emit_signal("leaderboard_definitions_updated", definitions);
 }
 
-void GodotEpic::on_leaderboard_ranks_completed(bool success, const Array& ranks) {
-	UtilityFunctions::printerr("GodotEpic: Leaderboard ranks query completed - success: " + String(success ? "true" : "false"));
+void GodotEOS::on_leaderboard_ranks_completed(bool success, const Array& ranks) {
+	UtilityFunctions::printerr("GodotEOS: Leaderboard ranks query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		UtilityFunctions::printerr("GodotEpic: Leaderboard ranks updated (" + String::num_int64(ranks.size()) + " ranks)");
+		UtilityFunctions::printerr("GodotEOS: Leaderboard ranks updated (" + String::num_int64(ranks.size()) + " ranks)");
 	} else {
-		UtilityFunctions::printerr("GodotEpic: Leaderboard ranks query failed");
+		UtilityFunctions::printerr("GodotEOS: Leaderboard ranks query failed");
 	}
 
 	// Emit the leaderboard_ranks_updated signal
 	emit_signal("leaderboard_ranks_updated", ranks);
 }
 
-void GodotEpic::on_leaderboard_user_scores_completed(bool success, const Dictionary& user_scores) {
-	UtilityFunctions::printerr("GodotEpic: Leaderboard user scores query completed - success: " + String(success ? "true" : "false"));
+void GodotEOS::on_leaderboard_user_scores_completed(bool success, const Dictionary& user_scores) {
+	UtilityFunctions::printerr("GodotEOS: Leaderboard user scores query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		UtilityFunctions::printerr("GodotEpic: Leaderboard user scores updated (" + String::num_int64(user_scores.size()) + " user scores)");
+		UtilityFunctions::printerr("GodotEOS: Leaderboard user scores updated (" + String::num_int64(user_scores.size()) + " user scores)");
 	} else {
-		UtilityFunctions::printerr("GodotEpic: Leaderboard user scores query failed");
+		UtilityFunctions::printerr("GodotEOS: Leaderboard user scores query failed");
 	}
 
 	// Emit the leaderboard_user_scores_updated signal
 	emit_signal("leaderboard_user_scores_updated", user_scores);
 }
 
-void GodotEpic::on_friends_query_completed(bool success, const Array& friends_list) {
-	UtilityFunctions::printerr("GodotEpic: Friends query completed - success: " + String(success ? "true" : "false"));
+void GodotEOS::on_friends_query_completed(bool success, const Array& friends_list) {
+	UtilityFunctions::printerr("GodotEOS: Friends query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		UtilityFunctions::printerr("GodotEpic: Friends list updated (" + String::num_int64(friends_list.size()) + " friends)");
+		UtilityFunctions::printerr("GodotEOS: Friends list updated (" + String::num_int64(friends_list.size()) + " friends)");
 	} else {
-		UtilityFunctions::printerr("GodotEpic: Friends query failed");
+		UtilityFunctions::printerr("GodotEOS: Friends query failed");
 	}
 
 	// Emit the friends_updated signal
 	emit_signal("friends_updated", success, friends_list);
 }
 
-void GodotEpic::on_friend_info_query_completed(bool success, const Dictionary& friend_info) {
-	UtilityFunctions::printerr("GodotEpic: Friend info query completed - success: " + String(success ? "true" : "false"));
+void GodotEOS::on_friend_info_query_completed(bool success, const Dictionary& friend_info) {
+	UtilityFunctions::printerr("GodotEOS: Friend info query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
 		String friend_id = friend_info.get("id", "unknown");
-		UtilityFunctions::printerr("GodotEpic: Friend info updated for: " + friend_id);
+		UtilityFunctions::printerr("GodotEOS: Friend info updated for: " + friend_id);
 	} else {
-		UtilityFunctions::printerr("GodotEpic: Friend info query failed");
+		UtilityFunctions::printerr("GodotEOS: Friend info query failed");
 	}
 
 	// Emit the friend_info_updated signal

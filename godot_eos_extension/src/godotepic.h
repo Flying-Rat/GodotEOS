@@ -1,5 +1,5 @@
-#ifndef GODOTEPIC_H
-#define GODOTEPIC_H
+#ifndef GODOTEOS_H
+#define GODOTEOS_H
 
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/variant/string.hpp>
@@ -19,11 +19,11 @@
 
 namespace godot {
 
-class GodotEpic : public Object {
-	GDCLASS(GodotEpic, Object)
+class GodotEOS : public Object {
+	GDCLASS(GodotEOS, Object)
 
 private:
-	static GodotEpic* instance;
+	static GodotEOS* instance;
 
 	// EOS logging callback
 	static void EOS_CALL logging_callback(const EOS_LogMessage* message);
@@ -32,11 +32,11 @@ protected:
 	static void _bind_methods();
 
 public:
-	GodotEpic();
-	~GodotEpic();
+	GodotEOS();
+	~GodotEOS();
 
 	// Singleton access
-	static GodotEpic* get_singleton();
+	static GodotEOS* get_singleton();
 	static void cleanup_singleton();
 
 	// Platform management
@@ -97,7 +97,7 @@ private:
 	EpicInitOptions _dict_to_init_options(const Dictionary& options_dict);
 	bool _validate_init_options(const EpicInitOptions& options);
 	bool initialize_subsystems(const EpicInitOptions& init_options);
-	
+
 	void setup_authentication_callback();
 	void setup_achievements_callbacks();
 	void setup_leaderboards_callbacks();
@@ -118,4 +118,4 @@ private:
 
 }
 
-#endif // GODOTEPIC_H
+#endif // GODOTEOS_H

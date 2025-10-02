@@ -60,7 +60,7 @@ if env["target"] in ["editor", "template_debug"]:
 
 if env["platform"] == "macos":
     library = env.SharedLibrary(
-        "demo/bin/libgodotepic.{}.{}.framework/libgodotepic.{}.{}".format(
+        "demo/bin/libgodoteos.{}.{}.framework/libgodoteos.{}.{}".format(
             env["platform"], env["target"], env["platform"], env["target"]
         ),
         source=sources,
@@ -68,21 +68,21 @@ if env["platform"] == "macos":
 elif env["platform"] == "ios":
     if env["ios_simulator"]:
         library = env.StaticLibrary(
-            "demo/bin/libgodotepic.{}.{}.simulator.a".format(env["platform"], env["target"]),
+            "demo/bin/libgodoteos.{}.{}.simulator.a".format(env["platform"], env["target"]),
             source=sources,
         )
     else:
         library = env.StaticLibrary(
-            "demo/bin/libgodotepic.{}.{}.a".format(env["platform"], env["target"]),
+            "demo/bin/libgodoteos.{}.{}.a".format(env["platform"], env["target"]),
             source=sources,
         )
 else:
     library = env.SharedLibrary(
-        "demo/bin/libgodotepic{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
+        "demo/bin/libgodoteos{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
         source=sources,
     )
 
-# Copy EOSSDK libraries and build artifacts to both demo/bin and addons/godot_epic/bin
+# Copy EOSSDK libraries and build artifacts to both demo/bin and addons/godoteos/bin
 import shutil
 
 def copy_build_artifacts(target, source, env):
@@ -90,7 +90,7 @@ def copy_build_artifacts(target, source, env):
 
     # Define destination directories
     demo_bin_dir = os.path.join("demo", "bin")
-    addon_bin_dir = os.path.join("..", "addons", "godot_epic", "bin")
+    addon_bin_dir = os.path.join("..", "addons", "godoteos", "bin")
 
     # Ensure destination directories exist
     os.makedirs(demo_bin_dir, exist_ok=True)
@@ -116,10 +116,10 @@ def copy_build_artifacts(target, source, env):
         shutil.copy2(eos_lib_src, demo_eos_dst)
         print(f"Copied {eos_lib_name} to demo/bin/")
 
-        # Copy to addons/godot_epic/bin
+        # Copy to addons/godoteos/bin
         addon_eos_dst = os.path.join(addon_bin_dir, eos_lib_name)
         shutil.copy2(eos_lib_src, addon_eos_dst)
-        print(f"Copied {eos_lib_name} to addons/godot_epic/bin/")
+        print(f"Copied {eos_lib_name} to addons/godoteos/bin/")
     elif eos_lib_src:
         print(f"Warning: {eos_lib_name} not found at {eos_lib_src}")
 
@@ -128,13 +128,13 @@ def copy_build_artifacts(target, source, env):
     built_lib_name = os.path.basename(built_lib_path)
 
     if os.path.exists(built_lib_path):
-        # Copy to addons/godot_epic/bin
+        # Copy to addons/godoteos/bin
         addon_lib_dst = os.path.join(addon_bin_dir, built_lib_name)
         shutil.copy2(built_lib_path, addon_lib_dst)
-        print(f"Copied {built_lib_name} to addons/godot_epic/bin/")
+        print(f"Copied {built_lib_name} to addons/godoteos/bin/")
 
         # For macOS frameworks, copy the entire framework directory
-        if platform == "macos" and built_lib_path.endswith(".framework/libgodotepic.macos.template_debug") or built_lib_path.endswith(".framework/libgodotepic.macos.template_release"):
+        if platform == "macos" and built_lib_path.endswith(".framework/libgodoteos.macos.template_debug") or built_lib_path.endswith(".framework/libgodoteos.macos.template_release"):
             framework_dir = os.path.dirname(built_lib_path)
             framework_name = os.path.basename(framework_dir)
             addon_framework_dst = os.path.join(addon_bin_dir, framework_name)
@@ -142,7 +142,7 @@ def copy_build_artifacts(target, source, env):
                 if os.path.exists(addon_framework_dst):
                     shutil.rmtree(addon_framework_dst)
                 shutil.copytree(framework_dir, addon_framework_dst)
-                print(f"Copied framework {framework_name} to addons/godot_epic/bin/")
+                print(f"Copied framework {framework_name} to addons/godoteos/bin/")
     else:
         print(f"Warning: Built library {built_lib_path} not found")
 

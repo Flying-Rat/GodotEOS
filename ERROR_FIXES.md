@@ -1,4 +1,4 @@
-# GodotEpic Error Code 10 & Connect Login Fix
+# GodotEOS Error Code 10 & Connect Login Fix
 
 ## Summary of Changes
 

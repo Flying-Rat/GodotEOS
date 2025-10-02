@@ -1,6 +1,6 @@
-# GodotEpic Setup Guide
+# GodotEOS Setup Guide
 
-A comprehensive guide to set up and use the GodotEpic GDExtension for Epic Online Services (EOS) integration in Godot 4.x.
+A comprehensive guide to set up and use the GodotEOS GDExtension for Epic Online Services (EOS) integration in Godot 4.x.
 
 ## Prerequisites
 
@@ -18,8 +18,8 @@ A comprehensive guide to set up and use the GodotEpic GDExtension for Epic Onlin
 ### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/Flying-Rat/GodotEpic.git
-cd GodotEpic
+git clone https://github.com/Flying-Rat/GodotEOS.git
+cd GodotEOS
 ```
 
 ### Step 2: Set Up EOS SDK
@@ -28,7 +28,7 @@ cd GodotEpic
 2. Extract the SDK and copy the contents to the `eos_sdk` directory:
 
 ```
-GodotEpic/
+GodotEOS/
 ├── eos_sdk/                    # ← Create this directory
 │   ├── Bin/                   # EOS SDK binaries
 │   ├── Include/               # EOS SDK headers
@@ -108,7 +108,7 @@ YourGodotProject/
 
 1. Open your Godot project
 2. Go to **Project → Project Settings → Plugins**
-3. Find "GodotEpic" and enable it
+3. Find "GodotEOS" and enable it
 
 ### Step 3: Create EOS Autoload Script
 
@@ -117,24 +117,24 @@ Create an autoload script (e.g., `epic_manager.gd`) to handle EOS initialization
 ```gdscript
 extends Node
 
-var epic: GodotEpic
+var epic: GodotEOS
 
 func _ready():
-    # Get the GodotEpic singleton
-    epic = GodotEpic.get_singleton()
-    
+    # Get the GodotEOS singleton
+    epic = GodotEOS.get_singleton()
+
     # Initialize EOS with your configuration
     var init_options = {
         "product_name": "YourGameName",
         "product_version": "1.0.0",
         "product_id": "your_epic_product_id",
-        "sandbox_id": "your_sandbox_id", 
+        "sandbox_id": "your_sandbox_id",
         "deployment_id": "your_deployment_id",
         "client_id": "your_client_id",
         "client_secret": "your_client_secret",
         # "encryption_key": "optional_64_char_hex_key"
     }
-    
+
     if epic.initialize_platform(init_options):
         print("✅ EOS Platform initialized successfully")
     else:
@@ -175,7 +175,7 @@ The `initialize_platform()` method accepts a dictionary with these options:
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
-| `product_name` | String | No | Display name for your product (default: "GodotEpic") |
+| `product_name` | String | No | Display name for your product (default: "GodotEOS") |
 | `product_version` | String | No | Version string (default: "1.0.0") |
 | `product_id` | String | **Yes** | Epic product ID from Developer Portal |
 | `sandbox_id` | String | **Yes** | Sandbox ID for development |
@@ -192,15 +192,15 @@ The `initialize_platform()` method accepts a dictionary with these options:
 extends Node
 
 func _ready():
-    var epic = GodotEpic.get_singleton()
-    
+    var epic = GodotEOS.get_singleton()
+
     # Check if EOS is initialized
     if epic.is_platform_initialized():
         print("EOS is ready!")
-        
+
         # Your EOS-specific code here
         # - User authentication
-        # - Friends management  
+        # - Friends management
         # - Achievements
         # - Leaderboards
         # - etc.
@@ -212,16 +212,16 @@ func _ready():
 
 ```gdscript
 func initialize_eos():
-    var epic = GodotEpic.get_singleton()
-    
+    var epic = GodotEOS.get_singleton()
+
     var options = {
         "product_id": "your_product_id",
         "sandbox_id": "your_sandbox_id",
-        "deployment_id": "your_deployment_id", 
+        "deployment_id": "your_deployment_id",
         "client_id": "your_client_id",
         "client_secret": "your_client_secret"
     }
-    
+
     if not epic.initialize_platform(options):
         print("❌ EOS initialization failed!")
         # Handle initialization failure
@@ -229,7 +229,7 @@ func initialize_eos():
         # - Disable online features
         # - Fall back to offline mode
         return false
-    
+
     print("✅ EOS initialized successfully")
     return true
 ```
@@ -239,7 +239,7 @@ func initialize_eos():
 ### Common Issues
 
 #### 1. Extension Not Loading
-**Problem**: "GodotEpic" doesn't appear in plugins list
+**Problem**: "GodotEOS" doesn't appear in plugins list
 
 **Solutions**:
 - Ensure the `.gdextension` file is in the correct location
@@ -276,19 +276,19 @@ func initialize_eos():
 
 The extension includes detailed logging. Check Godot's output console for:
 - `✅` Success messages
-- `❌` Error messages  
+- `❌` Error messages
 - `[EOS LOG]` EOS SDK log messages
 
 ### Getting Help
 
 1. Check the [Epic Online Services Documentation](https://dev.epicgames.com/docs/epic-online-services)
 2. Review Godot console output for error messages
-3. Create an issue on the [GitHub repository](https://github.com/Flying-Rat/GodotEpic/issues)
+3. Create an issue on the [GitHub repository](https://github.com/Flying-Rat/GodotEOS/issues)
 
 ## File Structure Reference
 
 ```
-GodotEpic/
+GodotEOS/
 ├── README.md
 ├── GUIDE.md                          # This file
 ├── LICENSE
@@ -319,12 +319,12 @@ GodotEpic/
 ## Next Steps
 
 1. **Authentication**: Implement user login with Epic accounts
-2. **Friends System**: Add friends list and social features  
+2. **Friends System**: Add friends list and social features
 3. **Achievements**: Set up achievement tracking
 4. **Leaderboards**: Create competitive features
 5. **Lobbies**: Add multiplayer lobby support
 
-For advanced features, refer to the [Epic Online Services documentation](https://dev.epicgames.com/docs/epic-online-services) and extend the GodotEpic class with additional EOS SDK functionality.
+For advanced features, refer to the [Epic Online Services documentation](https://dev.epicgames.com/docs/epic-online-services) and extend the GodotEOS class with additional EOS SDK functionality.
 
 ---
 

@@ -10,14 +10,14 @@
 namespace godot {
 
 /**
- * @brief Singleton manager for all subsystems in the GodotEpic extension.
- * 
+ * @brief Singleton manager for all subsystems in the GodotEOS extension.
+ *
  * The SubsystemManager handles the lifecycle of all subsystems:
  * - Registration of subsystem implementations
  * - Initialization in registration order
  * - Regular ticking of all initialized subsystems
  * - Shutdown in reverse initialization order
- * 
+ *
  * Subsystems are identified by their interface type using std::type_index.
  * This allows for type-safe Get<T>() calls throughout the codebase.
  */
@@ -44,7 +44,7 @@ public:
     /**
      * @brief Get the singleton instance of the SubsystemManager.
      * @return Pointer to the SubsystemManager instance.
-     * 
+     *
      * Uses lazy initialization - creates the instance on first access.
      */
     static SubsystemManager* GetInstance();
@@ -54,10 +54,10 @@ public:
      * @tparam InterfaceType The subsystem interface class (must inherit from ISubsystem).
      * @tparam ImplType The concrete implementation class (must inherit from InterfaceType).
      * @param name Human-readable name for the subsystem (used for logging).
-     * 
+     *
      * Registers a subsystem by creating an instance of ImplType and associating it
      * with InterfaceType. The subsystem will be initialized when InitializeAll() is called.
-     * 
+     *
      * Example: RegisterSubsystem<IPlatform, Platform>("Platform");
      */
     template<typename InterfaceType, typename ImplType>
@@ -83,10 +83,10 @@ public:
      * @brief Get a subsystem instance by its interface type.
      * @tparam T The subsystem interface type to retrieve.
      * @return Pointer to the subsystem instance, or nullptr if not registered.
-     * 
+     *
      * Returns a typed pointer to the requested subsystem. Returns nullptr
      * if the subsystem is not registered or not of the requested type.
-     * 
+     *
      * Example: GetSubsystem<IPlatform>() returns IPlatform*
      */
     template<typename T>
@@ -105,10 +105,10 @@ public:
      * @brief Get a subsystem instance by its interface type (const version).
      * @tparam T The subsystem interface type to retrieve.
      * @return Pointer to the subsystem instance, or nullptr if not registered.
-     * 
+     *
      * Returns a typed pointer to the requested subsystem. Returns nullptr
      * if the subsystem is not registered or not of the requested type.
-     * 
+     *
      * Example: GetSubsystem<IPlatform>() returns IPlatform*
      */
     template<typename T>
@@ -126,7 +126,7 @@ public:
     /**
      * @brief Initialize all registered subsystems.
      * @return true if all subsystems initialized successfully, false otherwise.
-     * 
+     *
      * Calls Init() on each registered subsystem in registration order.
      * If any subsystem fails to initialize, stops and shuts down all
      * previously initialized subsystems, then returns false.
@@ -136,7 +136,7 @@ public:
     /**
      * @brief Tick all initialized subsystems.
      * @param delta_time Time elapsed since last tick in seconds.
-     * 
+     *
      * Calls Tick() on each initialized subsystem. Does nothing if
      * subsystems are not initialized.
      */
@@ -144,7 +144,7 @@ public:
 
     /**
      * @brief Shutdown all subsystems.
-     * 
+     *
      * Calls Shutdown() on all subsystems in reverse initialization order,
      * then clears the initialized state. Safe to call multiple times.
      */
@@ -170,7 +170,7 @@ public:
 
     /**
      * @brief Reset the subsystem manager for reinitialization if unhealthy.
-     * 
+     *
      * If the manager is initialized but unhealthy, shuts down all subsystems
      * to prepare for reinitialization. Does nothing if not initialized or healthy.
      */
@@ -182,10 +182,10 @@ public:
  * @brief Global function to get a subsystem instance.
  * @tparam T The subsystem interface type to retrieve.
  * @return Pointer to the subsystem instance, or nullptr if not registered.
- * 
+ *
  * Convenience function that forwards to SubsystemManager::GetInstance()->GetSubsystem<T>().
  * Can be used anywhere in the codebase for easy subsystem access.
- * 
+ *
  * Example: Get<IPlatform>()->IsOnline();
  */
 template<typename T>

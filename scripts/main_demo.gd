@@ -40,7 +40,7 @@ func _ready():
 	EpicOS.initialize()
 
 	update_ui_state()
-	_add_output("GodotEpic Demo Started")
+	_add_output("GodotEOS Demo Started")
 	_add_output("Initialize EOS and try logging in!")
 
 func update_ui_state():

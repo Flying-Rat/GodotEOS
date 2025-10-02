@@ -6,7 +6,7 @@ namespace godot {
 
 // Configuration structure for EOS initialization
 struct EpicInitOptions {
-    String product_name = "GodotEpic";
+    String product_name = "GodotEOS";
     String product_version = "1.0.0";
     String product_id = "";
     String sandbox_id = "";

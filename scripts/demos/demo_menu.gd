@@ -36,7 +36,7 @@ func _ready():
 	# Initial status update
 	_update_status()
 
-	print("GodotEpic Demo Menu initialized successfully!")
+	print("GodotEOS Demo Menu initialized successfully!")
 
 func _on_auth_button_pressed():
 	print("Opening Authentication Demo...")
@@ -160,7 +160,7 @@ func _input(event):
 
 # Show helpful information on startup
 func _show_startup_info():
-	print("=== GodotEpic Demo Suite ===")
+	print("=== GodotEOS Demo Suite ===")
 	print("Welcome to the Epic Online Services demonstration!")
 	print("")
 	print("Available demos:")
@@ -188,7 +188,7 @@ func _show_startup_info():
 			print("User needs to log in - use Authentication Demo")
 	else:
 		print("WARNING: EpicOS singleton not found!")
-		print("Make sure the GodotEpic extension is properly installed")
+		print("Make sure the GodotEOS extension is properly installed")
 
 func _notification(what):
 	if what == NOTIFICATION_READY:

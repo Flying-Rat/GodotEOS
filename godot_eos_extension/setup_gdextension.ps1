@@ -1,7 +1,7 @@
 # Initial setup script for Godot Epic GDExtension (PowerShell)
 # Dumps extension API, builds godot-cpp, then builds the GDExtension
 
-Write-Host "=== GodotEpic GDExtension Setup ===" -ForegroundColor Cyan
+Write-Host "=== GodotEOS GDExtension Setup ===" -ForegroundColor Cyan
 
 # Check if Godot is available
 if (-not (Get-Command godot -ErrorAction SilentlyContinue)) {
@@ -22,7 +22,7 @@ if (-not (Test-Path $eosIncludePath) -or -not (Get-ChildItem -Path $eosIncludePa
     Write-Host "" -ForegroundColor Red
     Write-Host "The Epic Online Services SDK is required but not found." -ForegroundColor Yellow
     Write-Host "Please download and extract the EOS SDK to the eos_sdk directory." -ForegroundColor Yellow
-    Write-Host "" 
+    Write-Host ""
     Write-Host "Instructions:" -ForegroundColor Cyan
     Write-Host "1. Visit https://dev.epicgames.com/" -ForegroundColor White
     Write-Host "2. Create/login to Epic Games Developer account" -ForegroundColor White
@@ -82,7 +82,7 @@ scons platform=windows target=template_debug
 if ($?) {
     Write-Host ""
     Write-Host "🎉 Setup complete!" -ForegroundColor Green
-    Write-Host "✅ GodotEpic extension built successfully" -ForegroundColor Green
+    Write-Host "✅ GodotEOS extension built successfully" -ForegroundColor Green
     Write-Host ""
     Write-Host "Next steps:" -ForegroundColor Cyan
     Write-Host "1. Copy the built extension to your Godot project" -ForegroundColor White

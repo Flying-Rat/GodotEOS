@@ -1,0 +1,579 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="GodotEOS" inherits="Object" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Epic Online Services (EOS) integration for Godot.
+	</brief_description>
+	<description>
+		GodotEOS provides a comprehensive interface to Epic Online Services SDK, enabling authentication, achievements, leaderboards, friends management, and user information features in Godot games.
+		This singleton class manages the EOS platform lifecycle and provides access to various EOS subsystems through a unified API.
+		[b]Note:[/b] The platform must be initialized with [method initialize_platform] before using any other functionality, and [method tick] must be called regularly (typically in [code]_process[/code]) to process EOS callbacks.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_achievement_definition">
+			<return type="Dictionary" />
+			<param index="0" name="achievement_id" type="String" />
+			<description>
+				Returns the cached definition for a specific achievement by ID.
+				The dictionary contains achievement metadata including ID, title, description, unlock requirements, and hidden status.
+				Returns an empty dictionary if the achievement is not found. Call [method query_achievement_definitions] first to populate the cache.
+			</description>
+		</method>
+		<method name="get_achievement_definitions">
+			<return type="Array" />
+			<description>
+				Returns an array of all cached achievement definitions.
+				Each element is a dictionary containing achievement metadata. The cache is populated by calling [method query_achievement_definitions].
+				Returns an empty array if no definitions have been queried yet.
+			</description>
+		</method>
+		<method name="get_achievement_stat">
+			<return type="Dictionary" />
+			<param index="0" name="stat_name" type="String" />
+			<description>
+				Returns the cached stat data for a specific stat name.
+				The dictionary contains the stat name and current value. Returns an empty dictionary if the stat is not found.
+				Call [method query_achievement_stats] first to populate the cache.
+			</description>
+		</method>
+		<method name="get_achievement_stats">
+			<return type="Array" />
+			<description>
+				Returns an array of all cached achievement stat data.
+				Each element is a dictionary containing stat name and value. The cache is populated by calling [method query_achievement_stats].
+				Returns an empty array if no stats have been queried yet.
+			</description>
+		</method>
+		<method name="get_current_username" qualifiers="const">
+			<return type="String" />
+			<description>
+				Returns the display name of the currently logged-in user.
+				Returns an empty string if no user is logged in. This is the name shown to other players.
+			</description>
+		</method>
+		<method name="get_epic_account_id" qualifiers="const">
+			<return type="String" />
+			<description>
+				Returns the Epic Account ID of the currently logged-in user as a string.
+				The Epic Account ID is used for Epic Account services like friends lists.
+				Returns an empty string if no user is logged in or the Epic Account ID is invalid.
+			</description>
+		</method>
+		<method name="get_friend_info">
+			<return type="Dictionary" />
+			<param index="0" name="friend_id" type="String" />
+			<description>
+				Returns cached information about a specific friend by their Epic Account ID.
+				The dictionary contains friend details like ID, display name, and status.
+				Returns an empty dictionary if the friend is not found. Call [method query_friend_info] or [method query_all_friends_info] to update the cache.
+			</description>
+		</method>
+		<method name="get_friends_list">
+			<return type="Array" />
+			<description>
+				Returns an array of Epic Account IDs for all friends of the currently logged-in user.
+				The array contains string representations of Epic Account IDs. Call [method query_friends] first to populate the list.
+				Returns an empty array if no friends have been queried or the user is not logged in.
+			</description>
+		</method>
+		<method name="get_leaderboard_definitions">
+			<return type="Array" />
+			<description>
+				Returns an array of all cached leaderboard definitions.
+				Each element is a dictionary containing leaderboard metadata including ID, name, and aggregation method.
+				Call [method query_leaderboard_definitions] first to populate the cache. Returns an empty array if no definitions have been queried.
+			</description>
+		</method>
+		<method name="get_leaderboard_ranks">
+			<return type="Array" />
+			<description>
+				Returns an array of cached leaderboard rank entries from the last query.
+				Each element is a dictionary containing rank, score, and user information.
+				Call [method query_leaderboard_ranks] first to populate the cache. Returns an empty array if no ranks have been queried.
+			</description>
+		</method>
+		<method name="get_leaderboard_user_scores">
+			<return type="Dictionary" />
+			<description>
+				Returns a dictionary of cached user scores from the last query.
+				Keys are user IDs and values are dictionaries containing score and rank information.
+				Call [method query_leaderboard_user_scores] first to populate the cache. Returns an empty dictionary if no user scores have been queried.
+			</description>
+		</method>
+		<method name="get_player_achievement">
+			<return type="Dictionary" />
+			<param index="0" name="achievement_id" type="String" />
+			<description>
+				Returns the cached player progress for a specific achievement by ID.
+				The dictionary contains achievement ID, unlock status, unlock time, and progress information.
+				Returns an empty dictionary if the achievement is not found. Call [method query_player_achievements] first to populate the cache.
+			</description>
+		</method>
+		<method name="get_player_achievements">
+			<return type="Array" />
+			<description>
+				Returns an array of all cached player achievement progress data.
+				Each element is a dictionary containing achievement ID, unlock status, and progress.
+				Call [method query_player_achievements] first to populate the cache. Returns an empty array if no player achievements have been queried.
+			</description>
+		</method>
+		<method name="get_product_user_id" qualifiers="const">
+			<return type="String" />
+			<description>
+				Returns the Product User ID of the currently logged-in user as a string.
+				The Product User ID is used for game-specific services like achievements and leaderboards.
+				Returns an empty string if no user is logged in or the Product User ID is invalid.
+			</description>
+		</method>
+		<method name="get_singleton" qualifiers="static">
+			<return type="GodotEOS" />
+			<description>
+				Returns the singleton instance of GodotEOS. Creates the instance if it doesn't exist.
+				This is the primary way to access the EOS API from GDScript.
+			</description>
+		</method>
+		<method name="ingest_achievement_stat">
+			<return type="void" />
+			<param index="0" name="stat_name" type="String" />
+			<param index="1" name="amount" type="int" />
+			<description>
+				Increments an achievement-related stat by the specified amount on the EOS backend.
+				Stats can be used to track progress toward achievements. The operation is asynchronous.
+				[b]Note:[/b] The user must be logged in before calling this method.
+			</description>
+		</method>
+		<method name="ingest_stat">
+			<return type="void" />
+			<param index="0" name="stat_name" type="String" />
+			<param index="1" name="value" type="int" />
+			<description>
+				Ingests a stat value to the EOS backend. This is typically used for leaderboard stats.
+				The operation is asynchronous and the stat will be submitted to all associated leaderboards.
+				[b]Note:[/b] The user must be logged in before calling this method.
+			</description>
+		</method>
+		<method name="ingest_stats">
+			<return type="void" />
+			<param index="0" name="stats" type="Dictionary" />
+			<description>
+				Ingests multiple stats to the EOS backend in bulk.
+				The dictionary should contain stat names as keys and integer values as values (e.g., [code]{"kills": 10, "deaths": 5}[/code]).
+				Emits [signal stats_ingested] with an array of successfully ingested stat names when complete.
+				[b]Note:[/b] The user must be logged in before calling this method.
+			</description>
+		</method>
+		<method name="initialize_platform">
+			<return type="bool" />
+			<param index="0" name="options" type="Dictionary" />
+			<description>
+				Initializes the EOS platform with the provided configuration options.
+				The options dictionary must contain: [code]product_id[/code], [code]sandbox_id[/code], [code]deployment_id[/code], [code]client_id[/code], and [code]client_secret[/code].
+				Optional fields include: [code]product_name[/code], [code]product_version[/code], and [code]encryption_key[/code].
+				Returns [code]true[/code] if initialization succeeds, [code]false[/code] otherwise. Must be called before using any EOS functionality.
+			</description>
+		</method>
+		<method name="is_platform_initialized" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Returns [code]true[/code] if the EOS platform has been successfully initialized and has a valid platform handle.
+				Returns [code]false[/code] otherwise.
+			</description>
+		</method>
+		<method name="is_user_logged_in" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Returns [code]true[/code] if a user is currently logged in to EOS.
+				Returns [code]false[/code] if no user is logged in.
+			</description>
+		</method>
+		<method name="login_with_account_portal">
+			<return type="void" />
+			<description>
+				Initiates login using the Epic Account Portal in a web browser.
+				This opens the Epic Games login page in the user's default browser, where they can authenticate using their Epic account credentials.
+				Emits [signal login_completed] when the login process finishes (success or failure).
+			</description>
+		</method>
+		<method name="login_with_dev">
+			<return type="void" />
+			<param index="0" name="display_name" type="String" />
+			<description>
+				Initiates login using the Developer Authentication Tool (DevAuthTool).
+				This is intended for development and testing only. The [code]display_name[/code] parameter sets the user's display name (defaults to "TestUser" if empty).
+				DevAuthTool must be running on localhost:7777 for this to work. Emits [signal login_completed] when complete.
+				[b]Note:[/b] This method should only be used during development, not in production builds.
+			</description>
+		</method>
+		<method name="login_with_device_id">
+			<return type="void" />
+			<param index="0" name="display_name" type="String" />
+			<description>
+				Initiates login using a persistent device ID.
+				This creates or reuses a device-specific account without requiring explicit user credentials.
+				The [code]display_name[/code] parameter is currently not used by the implementation.
+				Emits [signal login_completed] when the login process finishes.
+			</description>
+		</method>
+		<method name="login_with_epic_account">
+			<return type="void" />
+			<param index="0" name="email" type="String" />
+			<param index="1" name="password" type="String" />
+			<description>
+				Initiates login using Epic Account credentials (email and password).
+				This method is primarily for development/testing as most production games should use other authentication methods.
+				Emits [signal login_completed] when the login process finishes (success or failure).
+				[b]Note:[/b] Direct password authentication may not be available for all applications in production.
+			</description>
+		</method>
+		<method name="logout">
+			<return type="void" />
+			<description>
+				Logs out the currently authenticated user from EOS.
+				This clears the authentication session and user data. Emits [signal logout_completed] when the logout process finishes.
+				Does nothing if no user is currently logged in.
+			</description>
+		</method>
+		<method name="on_achievement_definitions_completed">
+			<return type="void" />
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="definitions" type="Array" />
+			<description>
+				Internal callback method invoked when achievement definitions query completes.
+				Emits [signal achievement_definitions_updated] with the definitions array.
+				[b]Note:[/b] This is an internal method and should not be called directly by user code.
+			</description>
+		</method>
+		<method name="on_achievement_stats_completed">
+			<return type="void" />
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="stats" type="Array" />
+			<description>
+				Internal callback method invoked when achievement stats query completes.
+				Emits [signal achievement_stats_updated] with the success status and stats array.
+				[b]Note:[/b] This is an internal method and should not be called directly by user code.
+			</description>
+		</method>
+		<method name="on_achievements_unlocked_completed">
+			<return type="void" />
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="unlocked_achievement_ids" type="Array" />
+			<description>
+				Internal callback method invoked when achievement unlock operation completes.
+				Emits [signal achievements_unlocked] with the array of unlocked achievement IDs.
+				[b]Note:[/b] This is an internal method and should not be called directly by user code.
+			</description>
+		</method>
+		<method name="on_authentication_completed">
+			<return type="void" />
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="user_info" type="Dictionary" />
+			<description>
+				Internal callback method invoked when authentication (login) completes.
+				Emits [signal login_completed] with the success status and user information dictionary.
+				[b]Note:[/b] This is an internal method and should not be called directly by user code.
+			</description>
+		</method>
+		<method name="on_friend_info_query_completed">
+			<return type="void" />
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="friend_info" type="Dictionary" />
+			<description>
+				Internal callback method invoked when a friend info query completes.
+				Emits [signal friend_info_updated] with the friend information dictionary.
+				[b]Note:[/b] This is an internal method and should not be called directly by user code.
+			</description>
+		</method>
+		<method name="on_friends_query_completed">
+			<return type="void" />
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="friends_list" type="Array" />
+			<description>
+				Internal callback method invoked when friends list query completes.
+				Emits [signal friends_updated] with the success status and friends list array.
+				[b]Note:[/b] This is an internal method and should not be called directly by user code.
+			</description>
+		</method>
+		<method name="on_leaderboard_definitions_completed">
+			<return type="void" />
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="definitions" type="Array" />
+			<description>
+				Internal callback method invoked when leaderboard definitions query completes.
+				Emits [signal leaderboard_definitions_updated] with the definitions array.
+				[b]Note:[/b] This is an internal method and should not be called directly by user code.
+			</description>
+		</method>
+		<method name="on_leaderboard_ranks_completed">
+			<return type="void" />
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="ranks" type="Array" />
+			<description>
+				Internal callback method invoked when leaderboard ranks query completes.
+				Emits [signal leaderboard_ranks_updated] with the ranks array.
+				[b]Note:[/b] This is an internal method and should not be called directly by user code.
+			</description>
+		</method>
+		<method name="on_leaderboard_user_scores_completed">
+			<return type="void" />
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="user_scores" type="Dictionary" />
+			<description>
+				Internal callback method invoked when leaderboard user scores query completes.
+				Emits [signal leaderboard_user_scores_updated] with the user scores dictionary.
+				[b]Note:[/b] This is an internal method and should not be called directly by user code.
+			</description>
+		</method>
+		<method name="on_logout_completed">
+			<return type="void" />
+			<param index="0" name="success" type="bool" />
+			<description>
+				Internal callback method invoked when logout completes.
+				Emits [signal logout_completed] with the success status.
+				[b]Note:[/b] This is an internal method and should not be called directly by user code.
+			</description>
+		</method>
+		<method name="on_player_achievements_completed">
+			<return type="void" />
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="achievements" type="Array" />
+			<description>
+				Internal callback method invoked when player achievements query completes.
+				Emits [signal player_achievements_updated] with the achievements array.
+				[b]Note:[/b] This is an internal method and should not be called directly by user code.
+			</description>
+		</method>
+		<method name="query_achievement_definitions">
+			<return type="void" />
+			<description>
+				Queries all achievement definitions from the EOS backend.
+				This retrieves metadata for all achievements configured in the Epic Games Developer Portal.
+				Results are cached and can be accessed with [method get_achievement_definitions]. Emits [signal achievement_definitions_updated] when complete.
+				[b]Note:[/b] The user must be logged in before calling this method.
+			</description>
+		</method>
+		<method name="query_achievement_stats">
+			<return type="void" />
+			<description>
+				Queries the current player's achievement-related stats from the EOS backend.
+				Results are cached and can be accessed with [method get_achievement_stats]. Emits [signal achievement_stats_updated] when complete.
+				[b]Note:[/b] The user must be logged in before calling this method.
+			</description>
+		</method>
+		<method name="query_all_friends_info">
+			<return type="void" />
+			<description>
+				Queries detailed information for all friends in the current user's friends list.
+				This fetches display names and other user info for each friend. Results are cached and accessible via [method get_friend_info].
+				[b]Note:[/b] Call [method query_friends] first to populate the friends list, then call this method to get detailed info for all friends.
+			</description>
+		</method>
+		<method name="query_friend_info">
+			<return type="void" />
+			<param index="0" name="friend_id" type="String" />
+			<description>
+				Queries detailed information for a specific friend by their Epic Account ID.
+				This fetches the friend's display name and other user info. Results are cached and accessible via [method get_friend_info].
+				Emits [signal friend_info_updated] when complete.
+				[b]Note:[/b] The user must be logged in before calling this method.
+			</description>
+		</method>
+		<method name="query_friends">
+			<return type="void" />
+			<description>
+				Queries the friends list for the currently logged-in user.
+				This retrieves Epic Account IDs of all friends. Results are cached and accessible via [method get_friends_list].
+				Emits [signal friends_updated] when complete. Use [method query_friend_info] or [method query_all_friends_info] to get detailed friend information.
+				[b]Note:[/b] The user must be logged in before calling this method.
+			</description>
+		</method>
+		<method name="query_leaderboard_definitions">
+			<return type="void" />
+			<description>
+				Queries all leaderboard definitions from the EOS backend.
+				This retrieves metadata for all leaderboards configured in the Epic Games Developer Portal.
+				Results are cached and accessible via [method get_leaderboard_definitions]. Emits [signal leaderboard_definitions_updated] when complete.
+				[b]Note:[/b] The user must be logged in before calling this method.
+			</description>
+		</method>
+		<method name="query_leaderboard_ranks">
+			<return type="void" />
+			<param index="0" name="leaderboard_id" type="String" />
+			<param index="1" name="limit" type="int" />
+			<description>
+				Queries the top ranked entries for a specific leaderboard.
+				The [code]limit[/code] parameter specifies the maximum number of entries to retrieve (default is 100).
+				Results are cached and accessible via [method get_leaderboard_ranks]. Emits [signal leaderboard_ranks_updated] when complete.
+				[b]Note:[/b] The user must be logged in before calling this method.
+			</description>
+		</method>
+		<method name="query_leaderboard_user_scores">
+			<return type="void" />
+			<param index="0" name="leaderboard_id" type="String" />
+			<param index="1" name="user_ids" type="Array" />
+			<description>
+				Queries scores for specific users on a leaderboard.
+				The [code]user_ids[/code] array should contain Product User ID strings of the users to query.
+				Results are cached and accessible via [method get_leaderboard_user_scores]. Emits [signal leaderboard_user_scores_updated] when complete.
+				[b]Note:[/b] The user must be logged in before calling this method.
+			</description>
+		</method>
+		<method name="query_player_achievements">
+			<return type="void" />
+			<description>
+				Queries the current player's achievement progress from the EOS backend.
+				This retrieves unlock status and progress for all achievements.
+				Results are cached and accessible via [method get_player_achievements]. Emits [signal player_achievements_updated] when complete.
+				[b]Note:[/b] The user must be logged in before calling this method.
+			</description>
+		</method>
+		<method name="shutdown_platform">
+			<return type="void" />
+			<description>
+				Shuts down the EOS platform and all subsystems.
+				This performs cleanup of all EOS resources, logs out any authenticated user, and releases the platform handle.
+				Should be called before the application exits. Called automatically by the destructor if not called manually.
+			</description>
+		</method>
+		<method name="tick">
+			<return type="void" />
+			<param index="0" name="delta" type="float" />
+			<description>
+				Processes EOS platform callbacks and updates all subsystems.
+				This method must be called regularly (typically every frame in [code]_process[/code]) for EOS to function properly.
+				The [code]delta[/code] parameter is the time elapsed since the last tick in seconds. Negative values are clamped to 0.
+			</description>
+		</method>
+		<method name="unlock_achievement">
+			<return type="void" />
+			<param index="0" name="achievement_id" type="String" />
+			<description>
+				Unlocks a single achievement for the current player.
+				This is a convenience method that calls [method unlock_achievements] with a single-element array.
+				Emits [signal achievements_unlocked] when complete.
+				[b]Note:[/b] The user must be logged in before calling this method.
+			</description>
+		</method>
+		<method name="unlock_achievements">
+			<return type="void" />
+			<param index="0" name="achievement_ids" type="Array" />
+			<description>
+				Unlocks multiple achievements for the current player.
+				The [code]achievement_ids[/code] array should contain achievement ID strings.
+				Emits [signal achievements_unlocked] with the array of successfully unlocked achievement IDs when complete.
+				[b]Note:[/b] The user must be logged in before calling this method.
+			</description>
+		</method>
+	</methods>
+	<signals>
+		<signal name="achievement_definitions_updated">
+			<param index="0" name="definitions" type="Array" />
+			<description>
+				Emitted when achievement definitions query completes successfully.
+				The [code]definitions[/code] array contains dictionaries with achievement metadata including ID, title, description, and unlock requirements.
+				This signal is triggered by [method query_achievement_definitions].
+			</description>
+		</signal>
+		<signal name="achievement_stats_updated">
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="stats" type="Array" />
+			<description>
+				Emitted when achievement stats query completes.
+				The [code]success[/code] parameter indicates if the query succeeded.
+				The [code]stats[/code] array contains dictionaries with stat names and current values.
+				This signal is triggered by [method query_achievement_stats].
+			</description>
+		</signal>
+		<signal name="achievement_unlocked">
+			<param index="0" name="achievement_id" type="String" />
+			<param index="1" name="unlock_time" type="int" />
+			<description>
+				Emitted when a single achievement is unlocked.
+				The [code]achievement_id[/code] is the ID of the unlocked achievement.
+				The [code]unlock_time[/code] is a Unix timestamp indicating when the achievement was unlocked.
+			</description>
+		</signal>
+		<signal name="achievements_unlocked">
+			<param index="0" name="unlocked_achievement_ids" type="Array" />
+			<description>
+				Emitted when one or more achievements are unlocked via [method unlock_achievement] or [method unlock_achievements].
+				The [code]unlocked_achievement_ids[/code] array contains the IDs of all successfully unlocked achievements.
+			</description>
+		</signal>
+		<signal name="friend_info_updated">
+			<param index="0" name="friend_info" type="Dictionary" />
+			<description>
+				Emitted when friend info query completes for a specific friend.
+				The [code]friend_info[/code] dictionary contains the friend's Epic Account ID, display name, and other user info.
+				This signal is triggered by [method query_friend_info] or [method query_all_friends_info].
+			</description>
+		</signal>
+		<signal name="friends_updated">
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="friends_list" type="Array" />
+			<description>
+				Emitted when the friends list query completes.
+				The [code]success[/code] parameter indicates if the query succeeded.
+				The [code]friends_list[/code] array contains Epic Account ID strings for all friends.
+				This signal is triggered by [method query_friends].
+			</description>
+		</signal>
+		<signal name="leaderboard_definitions_updated">
+			<param index="0" name="definitions" type="Array" />
+			<description>
+				Emitted when leaderboard definitions query completes successfully.
+				The [code]definitions[/code] array contains dictionaries with leaderboard metadata including ID, name, and aggregation method.
+				This signal is triggered by [method query_leaderboard_definitions].
+			</description>
+		</signal>
+		<signal name="leaderboard_ranks_updated">
+			<param index="0" name="ranks" type="Array" />
+			<description>
+				Emitted when leaderboard ranks query completes successfully.
+				The [code]ranks[/code] array contains dictionaries with rank entries including position, score, and user information.
+				This signal is triggered by [method query_leaderboard_ranks].
+			</description>
+		</signal>
+		<signal name="leaderboard_user_scores_updated">
+			<param index="0" name="user_scores" type="Dictionary" />
+			<description>
+				Emitted when leaderboard user scores query completes successfully.
+				The [code]user_scores[/code] dictionary maps user IDs to their score information (score and rank).
+				This signal is triggered by [method query_leaderboard_user_scores].
+			</description>
+		</signal>
+		<signal name="login_completed">
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="user_info" type="Dictionary" />
+			<description>
+				Emitted when a login attempt completes.
+				The [code]success[/code] parameter indicates if login was successful.
+				The [code]user_info[/code] dictionary contains user data including [code]display_name[/code], [code]epic_account_id[/code], and [code]product_user_id[/code] on success.
+				This signal is triggered by any of the login methods ([method login_with_epic_account], [method login_with_account_portal], [method login_with_dev], [method login_with_device_id]).
+			</description>
+		</signal>
+		<signal name="logout_completed">
+			<param index="0" name="success" type="bool" />
+			<description>
+				Emitted when logout completes.
+				The [code]success[/code] parameter indicates if logout was successful.
+				This signal is triggered by [method logout].
+			</description>
+		</signal>
+		<signal name="player_achievements_updated">
+			<param index="0" name="achievements" type="Array" />
+			<description>
+				Emitted when player achievements query completes successfully.
+				The [code]achievements[/code] array contains dictionaries with the player's achievement progress including unlock status and progress values.
+				This signal is triggered by [method query_player_achievements].
+			</description>
+		</signal>
+		<signal name="stats_ingested">
+			<param index="0" name="stat_names" type="Array" />
+			<description>
+				Emitted when bulk stat ingestion completes via [method ingest_stats].
+				The [code]stat_names[/code] array contains the names of all stats that were successfully ingested.
+			</description>
+		</signal>
+	</signals>
+</class>
