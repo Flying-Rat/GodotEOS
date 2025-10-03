@@ -54,61 +54,58 @@ layout_mode = 2
 size_flags_vertical = 0
 theme_override_constants/separation = 10
 
-[node name="QuickActionsPanel" type="PanelContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox"]
+[node name="QuickActionsPanel" type="MarginContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox"]
 custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 size_flags_horizontal = 0
-
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel"]
-layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel"]
 layout_mode = 2
 theme_override_constants/separation = 5
 
-[node name="QuickActionsGrid" type="GridContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer"]
+[node name="QuickActionsGrid" type="GridContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_constants/v_separation = 10
 
-[node name="QueryDefinitionsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
+[node name="QueryDefinitionsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/VBoxContainer/QuickActionsGrid"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 text = "Query Definitions"
 
-[node name="QueryPlayerAchievementsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
+[node name="QueryPlayerAchievementsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/VBoxContainer/QuickActionsGrid"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 text = "Query Player Achievements"
 
-[node name="QueryStatsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
+[node name="QueryStatsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/VBoxContainer/QuickActionsGrid"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 text = "Query Stats"
 
-[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/VBoxContainer/QuickActionsGrid"]
 layout_mode = 2
 
-[node name="GetDefinitionsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
+[node name="GetDefinitionsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/VBoxContainer/QuickActionsGrid"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 text = "Get Definitions"
 
-[node name="GetPlayerAchievementsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
+[node name="GetPlayerAchievementsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/VBoxContainer/QuickActionsGrid"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 text = "Get Player Achievements"
 
-[node name="GetStatsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
+[node name="GetStatsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/VBoxContainer/QuickActionsGrid"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
@@ -254,47 +251,44 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Ingest Stat"
 
-[node name="OutputPanel" type="PanelContainer" parent="MarginContainer/VBoxContainer"]
+[node name="OutputPanel" type="MarginContainer" parent="MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 250)
-layout_mode = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/OutputPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/OutputPanel/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/OutputPanel"]
 layout_mode = 2
 theme_override_constants/separation = 5
 
-[node name="OutputHeaderHBox" type="HBoxContainer" parent="MarginContainer/VBoxContainer/OutputPanel/MarginContainer/VBoxContainer"]
+[node name="OutputHeaderHBox" type="HBoxContainer" parent="MarginContainer/VBoxContainer/OutputPanel/VBoxContainer"]
 layout_mode = 2
 
-[node name="OutputLabel" type="Label" parent="MarginContainer/VBoxContainer/OutputPanel/MarginContainer/VBoxContainer/OutputHeaderHBox"]
+[node name="OutputLabel" type="Label" parent="MarginContainer/VBoxContainer/OutputPanel/VBoxContainer/OutputHeaderHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 16
 text = "Output Log"
 
-[node name="AutoScrollCheckbox" type="CheckButton" parent="MarginContainer/VBoxContainer/OutputPanel/MarginContainer/VBoxContainer/OutputHeaderHBox"]
+[node name="AutoScrollCheckbox" type="CheckButton" parent="MarginContainer/VBoxContainer/OutputPanel/VBoxContainer/OutputHeaderHBox"]
 unique_name_in_owner = true
 layout_mode = 2
 button_pressed = true
 text = "Auto-scroll"
 
-[node name="ClearLogButton" type="Button" parent="MarginContainer/VBoxContainer/OutputPanel/MarginContainer/VBoxContainer/OutputHeaderHBox"]
+[node name="ClearLogButton" type="Button" parent="MarginContainer/VBoxContainer/OutputPanel/VBoxContainer/OutputHeaderHBox"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Clear Log"
 
-[node name="OutputScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer/OutputPanel/MarginContainer/VBoxContainer"]
+[node name="OutputScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer/OutputPanel/VBoxContainer"]
 clip_contents = false
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="OutputText" type="RichTextLabel" parent="MarginContainer/VBoxContainer/OutputPanel/MarginContainer/VBoxContainer/OutputScrollContainer"]
+[node name="OutputText" type="RichTextLabel" parent="MarginContainer/VBoxContainer/OutputPanel/VBoxContainer/OutputScrollContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
