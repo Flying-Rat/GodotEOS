@@ -19,7 +19,7 @@ FriendsSubsystem::~FriendsSubsystem() {
 }
 
 bool FriendsSubsystem::Init() {
-    UtilityFunctions::printerr("FriendsSubsystem: Initializing");
+    UtilityFunctions::print("FriendsSubsystem: Initializing");
     friends_list.clear();
     friends_cached = false;
     return true;
@@ -30,7 +30,7 @@ void FriendsSubsystem::Tick(float delta_time) {
 }
 
 void FriendsSubsystem::Shutdown() {
-    UtilityFunctions::printerr("FriendsSubsystem: Shutting down");
+    UtilityFunctions::print("FriendsSubsystem: Shutting down");
     friends_list.clear();
     friends_cached = false;
     friends_query_callback = Callable();
@@ -102,11 +102,11 @@ Dictionary FriendsSubsystem::GetFriendInfo(const String& friend_id) const {
     if (userinfo) {
         // Get display name using convenience method
         String display_name = userinfo->GetUserDisplayName(auth->GetEpicAccountId(), target_user_id);
-        
+
         if (!display_name.is_empty()) {
             friend_info["id"] = friend_id;
             friend_info["display_name"] = display_name;
-            
+
             // Get additional user info if needed
             Dictionary user_info = userinfo->GetCachedUserInfo(auth->GetEpicAccountId(), target_user_id);
             if (user_info.has("country")) {

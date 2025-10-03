@@ -513,7 +513,7 @@ void EOS_CALL AuthenticationSubsystem::logging_callback(const EOS_LogMessage* me
 		default:
 			{
 				String log_msg = String("[") + category + "] " + log_text;
-				UtilityFunctions::printerr(log_msg);
+				UtilityFunctions::print(log_msg);
 			}
 			break;
 	}
@@ -547,7 +547,7 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 		// Set user data
 		instance->epic_account_id = UserId.AccountId;
 		instance->is_logged_in = true;
-		
+
 		// Query user info to get the real display name using UserInfo subsystem
 		auto userinfo = Get<IUserInfoSubsystem>();
 		if (userinfo) {
@@ -617,7 +617,7 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 			} else {
 				UtilityFunctions::printerr("AuthenticationSubsystem: login_callback is not valid");
 			}
-		}	
+		}
 	} else {
 		// Handle specific error cases with helpful messages
 		String error_msg = "AuthenticationSubsystem: auth_login_callback - Login failed with error: " + String::num_int64(static_cast<int64_t>(data->ResultCode));

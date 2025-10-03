@@ -559,7 +559,7 @@ void EOS_CALL GodotEOS::logging_callback(const EOS_LogMessage* message) {
 		default:
 			{
 				String log_msg = String("[") + category + "] " + log_text;
-				UtilityFunctions::printerr(log_msg);
+				UtilityFunctions::print(log_msg);
 			}
 			break;
 	}
@@ -898,9 +898,9 @@ void GodotEOS::on_authentication_completed(bool success, const Dictionary& user_
 		String epic_account_id = user_info.get("epic_account_id", "");
 		String product_user_id = user_info.get("product_user_id", "");
 
-		UtilityFunctions::printerr("GodotEOS: Login successful for user: " + display_name);
-		UtilityFunctions::printerr("GodotEOS: Epic Account ID: " + epic_account_id);
-		UtilityFunctions::printerr("GodotEOS: Product User ID: " + product_user_id);
+		UtilityFunctions::print("GodotEOS: Login successful for user: " + display_name);
+		UtilityFunctions::print("GodotEOS: Epic Account ID: " + epic_account_id);
+		UtilityFunctions::print("GodotEOS: Product User ID: " + product_user_id);
 	} else {
 		UtilityFunctions::printerr("GodotEOS: Login failed");
 	}
@@ -910,10 +910,10 @@ void GodotEOS::on_authentication_completed(bool success, const Dictionary& user_
 }
 
 void GodotEOS::on_achievement_definitions_completed(bool success, const Array& definitions) {
-	UtilityFunctions::printerr("GodotEOS: Achievement definitions query completed - success: " + String(success ? "true" : "false"));
+	UtilityFunctions::print("GodotEOS: Achievement definitions query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		UtilityFunctions::printerr("GodotEOS: Achievement definitions updated (" + String::num_int64(definitions.size()) + " definitions)");
+		UtilityFunctions::print("GodotEOS: Achievement definitions updated (" + String::num_int64(definitions.size()) + " definitions)");
 	} else {
 		UtilityFunctions::printerr("GodotEOS: Achievement definitions query failed");
 	}
@@ -923,10 +923,10 @@ void GodotEOS::on_achievement_definitions_completed(bool success, const Array& d
 }
 
 void GodotEOS::on_player_achievements_completed(bool success, const Array& achievements) {
-	UtilityFunctions::printerr("GodotEOS: Player achievements query completed - success: " + String(success ? "true" : "false"));
+	UtilityFunctions::print("GodotEOS: Player achievements query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		UtilityFunctions::printerr("GodotEOS: Player achievements updated (" + String::num_int64(achievements.size()) + " achievements)");
+		UtilityFunctions::print("GodotEOS: Player achievements updated (" + String::num_int64(achievements.size()) + " achievements)");
 	} else {
 		UtilityFunctions::printerr("GodotEOS: Player achievements query failed");
 	}
@@ -936,10 +936,10 @@ void GodotEOS::on_player_achievements_completed(bool success, const Array& achie
 }
 
 void GodotEOS::on_achievements_unlocked_completed(bool success, const Array& unlocked_achievement_ids) {
-	UtilityFunctions::printerr("GodotEOS: Achievements unlock completed - success: " + String(success ? "true" : "false"));
+	UtilityFunctions::print("GodotEOS: Achievements unlock completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		UtilityFunctions::printerr("GodotEOS: Achievements unlocked successfully");
+		UtilityFunctions::print("GodotEOS: Achievements unlocked successfully");
 	} else {
 		UtilityFunctions::printerr("GodotEOS: Achievements unlock failed");
 	}
@@ -949,10 +949,10 @@ void GodotEOS::on_achievements_unlocked_completed(bool success, const Array& unl
 }
 
 void GodotEOS::on_achievement_stats_completed(bool success, const Array& stats) {
-	UtilityFunctions::printerr("GodotEOS: Achievement stats query completed - success: " + String(success ? "true" : "false"));
+	UtilityFunctions::print("GodotEOS: Achievement stats query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		UtilityFunctions::printerr("GodotEOS: Achievement stats updated (" + String::num_int64(stats.size()) + " stats)");
+		UtilityFunctions::print("GodotEOS: Achievement stats updated (" + String::num_int64(stats.size()) + " stats)");
 	} else {
 		UtilityFunctions::printerr("GodotEOS: Achievement stats query failed");
 	}
@@ -962,10 +962,10 @@ void GodotEOS::on_achievement_stats_completed(bool success, const Array& stats) 
 }
 
 void GodotEOS::on_leaderboard_definitions_completed(bool success, const Array& definitions) {
-	UtilityFunctions::printerr("GodotEOS: Leaderboard definitions query completed - success: " + String(success ? "true" : "false"));
+	UtilityFunctions::print("GodotEOS: Leaderboard definitions query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		UtilityFunctions::printerr("GodotEOS: Leaderboard definitions updated (" + String::num_int64(definitions.size()) + " definitions)");
+		UtilityFunctions::print("GodotEOS: Leaderboard definitions updated (" + String::num_int64(definitions.size()) + " definitions)");
 	} else {
 		UtilityFunctions::printerr("GodotEOS: Leaderboard definitions query failed");
 	}
@@ -975,10 +975,10 @@ void GodotEOS::on_leaderboard_definitions_completed(bool success, const Array& d
 }
 
 void GodotEOS::on_leaderboard_ranks_completed(bool success, const Array& ranks) {
-	UtilityFunctions::printerr("GodotEOS: Leaderboard ranks query completed - success: " + String(success ? "true" : "false"));
+	UtilityFunctions::print("GodotEOS: Leaderboard ranks query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		UtilityFunctions::printerr("GodotEOS: Leaderboard ranks updated (" + String::num_int64(ranks.size()) + " ranks)");
+		UtilityFunctions::print("GodotEOS: Leaderboard ranks updated (" + String::num_int64(ranks.size()) + " ranks)");
 	} else {
 		UtilityFunctions::printerr("GodotEOS: Leaderboard ranks query failed");
 	}
@@ -988,10 +988,10 @@ void GodotEOS::on_leaderboard_ranks_completed(bool success, const Array& ranks) 
 }
 
 void GodotEOS::on_leaderboard_user_scores_completed(bool success, const Dictionary& user_scores) {
-	UtilityFunctions::printerr("GodotEOS: Leaderboard user scores query completed - success: " + String(success ? "true" : "false"));
+	UtilityFunctions::print("GodotEOS: Leaderboard user scores query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		UtilityFunctions::printerr("GodotEOS: Leaderboard user scores updated (" + String::num_int64(user_scores.size()) + " user scores)");
+		UtilityFunctions::print("GodotEOS: Leaderboard user scores updated (" + String::num_int64(user_scores.size()) + " user scores)");
 	} else {
 		UtilityFunctions::printerr("GodotEOS: Leaderboard user scores query failed");
 	}
@@ -1001,10 +1001,10 @@ void GodotEOS::on_leaderboard_user_scores_completed(bool success, const Dictiona
 }
 
 void GodotEOS::on_friends_query_completed(bool success, const Array& friends_list) {
-	UtilityFunctions::printerr("GodotEOS: Friends query completed - success: " + String(success ? "true" : "false"));
+	UtilityFunctions::print("GodotEOS: Friends query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
-		UtilityFunctions::printerr("GodotEOS: Friends list updated (" + String::num_int64(friends_list.size()) + " friends)");
+		UtilityFunctions::print("GodotEOS: Friends list updated (" + String::num_int64(friends_list.size()) + " friends)");
 	} else {
 		UtilityFunctions::printerr("GodotEOS: Friends query failed");
 	}
@@ -1014,11 +1014,11 @@ void GodotEOS::on_friends_query_completed(bool success, const Array& friends_lis
 }
 
 void GodotEOS::on_friend_info_query_completed(bool success, const Dictionary& friend_info) {
-	UtilityFunctions::printerr("GodotEOS: Friend info query completed - success: " + String(success ? "true" : "false"));
+	UtilityFunctions::print("GodotEOS: Friend info query completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
 		String friend_id = friend_info.get("id", "unknown");
-		UtilityFunctions::printerr("GodotEOS: Friend info updated for: " + friend_id);
+		UtilityFunctions::print("GodotEOS: Friend info updated for: " + friend_id);
 	} else {
 		UtilityFunctions::printerr("GodotEOS: Friend info query failed");
 	}
