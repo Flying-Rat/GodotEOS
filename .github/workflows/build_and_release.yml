@@ -14,8 +14,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Init submodules
-        run: git submodule update --init --recursive
+        with:
+          submodules: recursive
       - name: Cache godot-cpp build
         uses: actions/cache@v4
         with:
@@ -55,8 +55,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Init submodules
-        run: git submodule update --init --recursive
+        with:
+          submodules: recursive
       - name: Cache godot-cpp build
         uses: actions/cache@v4
         with:
@@ -93,8 +93,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Init submodules
-        run: git submodule update --init --recursive
+        with:
+          submodules: recursive
       - name: Cache godot-cpp build
         uses: actions/cache@v4
         with:
