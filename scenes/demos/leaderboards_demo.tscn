@@ -118,6 +118,11 @@ layout_mode = 2
 disabled = true
 text = "Query Ranks"
 
+[node name="QueryUserScoresButton" type="Button" parent="VBoxContainer/RanksQuerySection"]
+layout_mode = 2
+disabled = true
+text = "Query User Scores"
+
 [node name="QuerySpecificHBoxContainer" type="HBoxContainer" parent="VBoxContainer/RanksQuerySection"]
 layout_mode = 2
 size_flags_horizontal = 10

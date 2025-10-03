@@ -18,6 +18,7 @@ extends Control
 # Ranks Query Section
 @onready var query_definitions_button: Button = $VBoxContainer/RanksQuerySection/QueryDefinitionsButton
 @onready var query_ranks_button: Button = $VBoxContainer/RanksQuerySection/QueryRanksButton
+@onready var query_user_scores_button: Button = $VBoxContainer/RanksQuerySection/QueryUserScoresButton
 @onready var leaderboard_input: LineEdit = $VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer/LeaderboardInput
 @onready var limit_input: SpinBox = $VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer/LimitInput
 @onready var query_specific_ranks_button: Button = $VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer/QuerySpecificRanksButton
@@ -55,6 +56,7 @@ func _ready():
 	# Connect button signals
 	query_definitions_button.pressed.connect(_on_query_definitions_button_pressed)
 	query_ranks_button.pressed.connect(_on_query_ranks_button_pressed)
+	query_user_scores_button.pressed.connect(_on_query_user_scores_button_pressed)
 	refresh_button.pressed.connect(_on_refresh_button_pressed)
 	query_specific_ranks_button.pressed.connect(_on_query_specific_ranks_button_pressed)
 
@@ -111,6 +113,36 @@ func _on_query_ranks_button_pressed():
 		EpicOS.query_leaderboard_ranks(leaderboard_id, 10)
 	else:
 		_log_message("[color=red]EpicOS not available![/color]")
+
+func _on_query_user_scores_button_pressed():
+	if cached_definitions.is_empty():
+		_log_message("[color=red]No leaderboard definitions available. Query definitions first![/color]")
+		return
+
+	# Query user scores for the first available leaderboard
+	var first_leaderboard = cached_definitions[0]
+	var leaderboard_id = str(first_leaderboard.get("leaderboard_id", ""))
+
+	if leaderboard_id.is_empty():
+		_log_message("[color=red]Invalid leaderboard definition![/color]")
+		return
+
+	# Get current user ID from EpicOS
+	if not EpicOS:
+		_log_message("[color=red]EpicOS not available![/color]")
+		return
+
+	var current_user_id = EpicOS.get_product_user_id()
+	if current_user_id.is_empty():
+		_log_message("[color=red]Unable to get current user ID. Make sure you're logged in![/color]")
+		return
+
+	# Query scores for the current user
+	var user_ids = [current_user_id]
+	_log_message("[color=yellow]Querying user scores for leaderboard: " + leaderboard_id + "[/color]")
+	_log_message("[color=yellow]User ID: " + current_user_id + "[/color]")
+
+	EpicOS.query_leaderboard_user_scores(leaderboard_id, user_ids)
 
 func _on_refresh_button_pressed():
 	_log_message("[color=yellow]Refreshing display from cache...[/color]")
@@ -324,7 +356,7 @@ func _refresh_ranks_display():
 		var display_name = str(rank_entry.get("display_name", ""))
 		var score = rank_entry.get("score", 0)
 
-		var display_text = "#" + str(rank) + " - " + display_name + ": " + str(score) + " - " + user_id 
+		var display_text = "#" + str(rank) + " - " + display_name + ": " + str(score) + " - " + user_id
 		ranks_list.add_item(display_text)
 
 	_log_message("[color=cyan]Refreshed ranks display with " + str(cached_ranks.size()) + " entries[/color]")
@@ -366,6 +398,7 @@ func _update_ui_state():
 	var leaderboards_available = platform_initialized and is_logged_in
 	query_definitions_button.disabled = not leaderboards_available
 	query_ranks_button.disabled = not leaderboards_available
+	query_user_scores_button.disabled = not leaderboards_available
 	query_specific_ranks_button.disabled = not leaderboards_available
 	ingest_stat_button.disabled = not leaderboards_available
 	test_stats_button.disabled = not leaderboards_available
