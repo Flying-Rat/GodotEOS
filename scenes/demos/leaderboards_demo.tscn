@@ -54,44 +54,7 @@ size_flags_horizontal = 8
 text = "← Back to Menu"
 
 [node name="HSeparator7" type="HSeparator" parent="VBoxContainer"]
-custom_minimum_size = Vector2(0, 5)
-layout_mode = 2
-
-[node name="RanksQuerySection" type="HBoxContainer" parent="VBoxContainer"]
-layout_mode = 2
-
-[node name="RanksQueryLabel" type="Label" parent="VBoxContainer/RanksQuerySection"]
-layout_mode = 2
-text = "Query Specific Leaderboard:"
-
-[node name="LeaderboardInput" type="LineEdit" parent="VBoxContainer/RanksQuerySection"]
-layout_mode = 2
-size_flags_horizontal = 3
-placeholder_text = "Leaderboard ID"
-
-[node name="LimitInput" type="SpinBox" parent="VBoxContainer/RanksQuerySection"]
-layout_mode = 2
-min_value = 1.0
-max_value = 1000.0
-value = 10.0
-
-[node name="QueryRanksButton" type="Button" parent="VBoxContainer/RanksQuerySection"]
-layout_mode = 2
-disabled = true
-text = "Query Ranks"
-
-[node name="QueryDefinitionsButton" type="Button" parent="VBoxContainer/RanksQuerySection"]
-layout_mode = 2
-disabled = true
-text = "Query Definitions"
-
-[node name="QuerySpecificRanksButton" type="Button" parent="VBoxContainer/RanksQuerySection"]
-layout_mode = 2
-disabled = true
-text = "Query Specific Ranks"
-
-[node name="HSeparator6" type="HSeparator" parent="VBoxContainer"]
-custom_minimum_size = Vector2(0, 5)
+custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 
 [node name="StatsSection" type="HBoxContainer" parent="VBoxContainer"]
@@ -138,8 +101,53 @@ size_flags_horizontal = 8
 disabled = true
 text = "Submit Single Stat"
 
+[node name="HSeparator6" type="HSeparator" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="RanksQuerySection" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="QueryDefinitionsButton" type="Button" parent="VBoxContainer/RanksQuerySection"]
+layout_mode = 2
+disabled = true
+text = "Query Definitions"
+
+[node name="QueryRanksButton" type="Button" parent="VBoxContainer/RanksQuerySection"]
+layout_mode = 2
+disabled = true
+text = "Query Ranks"
+
+[node name="QuerySpecificHBoxContainer" type="HBoxContainer" parent="VBoxContainer/RanksQuerySection"]
+layout_mode = 2
+size_flags_horizontal = 10
+
+[node name="RanksQueryLabel" type="Label" parent="VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 8
+text = "Query Specific Leaderboard:"
+
+[node name="LeaderboardInput" type="LineEdit" parent="VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 8
+placeholder_text = "Leaderboard ID"
+
+[node name="LimitInput" type="SpinBox" parent="VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+min_value = 1.0
+max_value = 1000.0
+value = 10.0
+
+[node name="QuerySpecificRanksButton" type="Button" parent="VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+disabled = true
+text = "Query Specific Ranks"
+
 [node name="HSeparator5" type="HSeparator" parent="VBoxContainer"]
-custom_minimum_size = Vector2(0, 5)
+custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 
 [node name="DataSection" type="HBoxContainer" parent="VBoxContainer"]

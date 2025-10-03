@@ -3,27 +3,32 @@ extends Control
 # Leaderboards Demo Script
 # Demonstrates how to use the EpicOS leaderboards features
 
+# Status Section
 @onready var status_label: Label = $VBoxContainer/StatusContainer/StatusPanel/StatusLabel
-@onready var query_definitions_button: Button = $VBoxContainer/RanksQuerySection/QueryDefinitionsButton
-@onready var query_ranks_button: Button = $VBoxContainer/RanksQuerySection/QueryRanksButton
 @onready var refresh_button: Button = $VBoxContainer/StatusContainer/RefreshButton
+@onready var back_button: Button = $VBoxContainer/StatusContainer/BackButton
 
-@onready var leaderboard_input: LineEdit = $VBoxContainer/RanksQuerySection/LeaderboardInput
-@onready var limit_input: SpinBox = $VBoxContainer/RanksQuerySection/LimitInput
-@onready var query_specific_ranks_button: Button = $VBoxContainer/RanksQuerySection/QuerySpecificRanksButton
-
+# Stats Section
+@onready var test_stats_button: Button = $VBoxContainer/StatsSection/HBoxContainer/TestStatsButton
+@onready var random_score_button: Button = $VBoxContainer/StatsSection/HBoxContainer/RandomScoreButton
 @onready var stat_name_input: LineEdit = $VBoxContainer/StatsSection/HBoxContainer/StatNameInput
 @onready var stat_value_input: SpinBox = $VBoxContainer/StatsSection/HBoxContainer/StatValueInput
 @onready var ingest_stat_button: Button = $VBoxContainer/StatsSection/HBoxContainer/IngestStatButton
-@onready var test_stats_button: Button = $VBoxContainer/StatsSection/HBoxContainer/TestStatsButton
-@onready var random_score_button: Button = $VBoxContainer/StatsSection/HBoxContainer/RandomScoreButton
 
+# Ranks Query Section
+@onready var query_definitions_button: Button = $VBoxContainer/RanksQuerySection/QueryDefinitionsButton
+@onready var query_ranks_button: Button = $VBoxContainer/RanksQuerySection/QueryRanksButton
+@onready var leaderboard_input: LineEdit = $VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer/LeaderboardInput
+@onready var limit_input: SpinBox = $VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer/LimitInput
+@onready var query_specific_ranks_button: Button = $VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer/QuerySpecificRanksButton
+
+# Leadeboards Lists
 @onready var definitions_list: ItemList = $VBoxContainer/DataSection/DefinitionsPanel/DefinitionsContainer/DefinitionsList
 @onready var ranks_list: ItemList = $VBoxContainer/DataSection/RanksPanel/RanksContainer/RanksList
 @onready var user_scores_list: ItemList = $VBoxContainer/DataSection/UserScoresPanel/UserScoresContainer/UserScoresList
 
+# Output Log Section
 @onready var output_text: RichTextLabel = $VBoxContainer/OutputSection/OutputText
-@onready var back_button: Button = $VBoxContainer/StatusContainer/BackButton
 
 var cached_definitions: Array = []
 var cached_ranks: Array = []
@@ -316,9 +321,10 @@ func _refresh_ranks_display():
 		var rank_entry = cached_ranks[i]
 		var rank = rank_entry.get("rank", i + 1)
 		var user_id = str(rank_entry.get("user_id", "Unknown User"))
+		var display_name = str(rank_entry.get("display_name", ""))
 		var score = rank_entry.get("score", 0)
 
-		var display_text = "#" + str(rank) + " - " + user_id + ": " + str(score)
+		var display_text = "#" + str(rank) + " - " + display_name + ": " + str(score) + " - " + user_id 
 		ranks_list.add_item(display_text)
 
 	_log_message("[color=cyan]Refreshed ranks display with " + str(cached_ranks.size()) + " entries[/color]")
