@@ -21,6 +21,9 @@ extends Control
 # Achievement Display
 @onready var achievement_cards_container: VBoxContainer = %AchievementCardsContainer
 
+# Stats Display
+@onready var stats_container: VBoxContainer = %StatsContainer
+
 # Manual Controls
 @onready var achievement_input: LineEdit = %AchievementIDLineEdit
 @onready var unlock_button: Button = %UnlockAchievementButton
@@ -224,7 +227,7 @@ func _on_query_stats_button_pressed():
 func _on_get_stats_button_pressed():
 	_log_message("[color=yellow]📊 GetStats() - Getting cached player statistics...[/color]")
 	if EpicOS:
-		var stats = EpicOS.get_stats()
+		var stats = EpicOS.get_achievement_stats()
 		_log_message("[color=green]✓ Retrieved " + str(stats.size()) + " cached statistics[/color]")
 		
 		# Print detailed information for each stat
@@ -242,6 +245,9 @@ func _on_get_stats_button_pressed():
 		else:
 			_log_message("[color=yellow]  No cached statistics available[/color]")
 			_log_message("[color=gray]  Try 'Query Stats' first to fetch from EOS[/color]")
+		
+		# Refresh the stats display
+		_refresh_stats_display()
 	else:
 		_log_message("[color=red]✗ EpicOS not available[/color]")
 
@@ -391,6 +397,7 @@ func _on_logout_status_changed(success: bool):
 
 func _refresh_all_displays():
 	_refresh_achievements_display()
+	_refresh_stats_display()
 
 func _refresh_definitions_display():
 	# UI element not present in current scene - function kept for potential future use
@@ -401,8 +408,16 @@ func _refresh_player_display():
 	pass
 
 func _refresh_stats_display():
-	# UI element not present in current scene - function kept for potential future use
-	pass
+	# Clear existing stat items
+	for child in stats_container.get_children():
+		child.queue_free()
+	
+	# Wait a frame for the queued deletions to complete
+	await get_tree().process_frame
+	
+	# Create stat items
+	for stat in cached_stats:
+		_create_stat_item(stat)
 
 func _refresh_achievements_display():
 	# Clear existing cards
@@ -489,10 +504,13 @@ func _create_achievement_card(definition: Dictionary, player_data: Dictionary):
 	margin.add_child(hbox)
 	
 	# Achievement name
-	var name_label = Label.new()
+	var name_label = RichTextLabel.new()
 	name_label.text = display_name
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_label.add_theme_font_size_override("font_size", 14)
+	name_label.add_theme_font_size_override("normal_font_size", 14)
+	name_label.add_theme_font_size_override("bold_font_size", 14)
+	name_label.scroll_active = false
+	name_label.selection_enabled = true
 	if is_unlocked:
 		name_label.modulate = Color.WHITE
 	else:
@@ -512,13 +530,49 @@ func _create_achievement_card(definition: Dictionary, player_data: Dictionary):
 	# Add the item to the container
 	achievement_cards_container.add_child(item)
 
-func _update_featured_stat_display_from_cache():
-	# UI elements not present in current scene - function kept for potential future use
-	pass
-
-func _set_featured_stat(stat_name: String, value: int):
-	# UI elements not present in current scene - function kept for potential future use
-	pass
+func _create_stat_item(stat: Dictionary):
+	"""Create a simple stat item"""
+	var stat_name := str(stat.get("name", "Unknown"))
+	var stat_value := str(stat.get("value", "0"))
+	
+	# Create simple item container
+	var item = PanelContainer.new()
+	item.custom_minimum_size = Vector2(0, 40)
+	item.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	
+	# Add minimal margin
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_top", 4)
+	margin.add_theme_constant_override("margin_bottom", 4)
+	item.add_child(margin)
+	
+	# Simple horizontal layout
+	var hbox = HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 10)
+	margin.add_child(hbox)
+	
+	# Stat name
+	var name_label = RichTextLabel.new()
+	name_label.text = stat_name
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.add_theme_font_size_override("normal_font_size", 14)
+	name_label.add_theme_font_size_override("bold_font_size", 14)
+	name_label.scroll_active = false
+	name_label.selection_enabled = true
+	name_label.modulate = Color.WHITE
+	hbox.add_child(name_label)
+	
+	# Value display
+	var value_label = Label.new()
+	value_label.text = stat_value
+	value_label.add_theme_font_size_override("font_size", 14)
+	value_label.modulate = Color.YELLOW
+	hbox.add_child(value_label)
+	
+	# Add the item to the container
+	stats_container.add_child(item)
 
 # ============================================================================
 # UI STATE MANAGEMENT
@@ -590,3 +644,11 @@ func _on_auto_scroll_toggled(button_pressed: bool):
 
 func _on_back_button_pressed():
 	get_tree().change_scene_to_file("res://scenes/demos/demo_menu.tscn")
+
+func _update_featured_stat_display_from_cache():
+	# UI elements not present in current scene - function kept for potential future use
+	pass
+
+func _set_featured_stat(stat_name: String, value: int):
+	# UI elements not present in current scene - function kept for potential future use
+	pass
