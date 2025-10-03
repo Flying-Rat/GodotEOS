@@ -67,7 +67,7 @@ func _on_refresh_button_pressed():
 	print("Refreshing status...")
 	_update_status()
 
-func _on_login_status_changed(success: bool, user_info: Dictionary):
+func _on_login_status_changed(success: bool, _user_info: Dictionary):
 	if success:
 		print("User logged in - updating menu status")
 	_update_status()
@@ -90,7 +90,6 @@ func _update_status():
 	# Update platform status
 	if platform_initialized:
 		platform_status.text = "Platform: ✅ Initialized"
-		platform_status.modulate = Color.GREEN
 	else:
 		platform_status.text = "Platform: ❌ Not Initialized"
 		platform_status.modulate = Color.ORANGE
@@ -98,8 +97,7 @@ func _update_status():
 	# Update user status
 	if user_logged_in:
 		var display_name = username if not username.is_empty() else "User"
-		user_status.text = "User: ✅ Logged In (" + display_name + ")"
-		user_status.modulate = Color.GREEN
+		user_status.text = "User: ✅ Logged In (" + display_name + ")"		
 	else:
 		user_status.text = "User: ❌ Not Logged In"
 		user_status.modulate = Color.ORANGE
