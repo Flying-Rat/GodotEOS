@@ -16,6 +16,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Verify submodules
+        run: |
+          ls -la godot_eos_extension/
+          ls -la godot_eos_extension/godot-cpp/ || echo "godot-cpp directory not found"
+          if [ ! -f "godot_eos_extension/godot-cpp/SConstruct" ]; then
+            echo "SConstruct not found, reinitializing submodules..."
+            git submodule update --init --recursive --force
+          fi
       - name: Cache godot-cpp build
         uses: actions/cache@v4
         with:
@@ -57,6 +65,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Verify submodules
+        run: |
+          ls -la godot_eos_extension/
+          ls -la godot_eos_extension/godot-cpp/ || echo "godot-cpp directory not found"
+          if [ ! -f "godot_eos_extension/godot-cpp/SConstruct" ]; then
+            echo "SConstruct not found, reinitializing submodules..."
+            git submodule update --init --recursive --force
+          fi
       - name: Cache godot-cpp build
         uses: actions/cache@v4
         with:
@@ -95,6 +111,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Verify submodules
+        shell: pwsh
+        run: |
+          Get-ChildItem godot_eos_extension/
+          Get-ChildItem godot_eos_extension/godot-cpp/ -ErrorAction SilentlyContinue
+          if (-not (Test-Path "godot_eos_extension/godot-cpp/SConstruct")) {
+            Write-Host "SConstruct not found, reinitializing submodules..."
+            git submodule update --init --recursive --force
+          }
       - name: Cache godot-cpp build
         uses: actions/cache@v4
         with:
