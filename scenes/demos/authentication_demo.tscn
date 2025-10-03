@@ -149,6 +149,7 @@ layout_mode = 2
 [node name="DevInput" type="LineEdit" parent="VBoxContainer/LoginVBoxContainer/EpicAccountContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel#OtherMethodsContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel_OtherMethodsContainer#DevContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
+text = "TestUser123"
 placeholder_text = "Dev Display Name"
 
 [node name="DevLoginButton" type="Button" parent="VBoxContainer/LoginVBoxContainer/EpicAccountContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel#OtherMethodsContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel_OtherMethodsContainer#DevContainer"]
