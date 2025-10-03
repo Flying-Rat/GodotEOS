@@ -57,7 +57,6 @@ func _ready():
 
 	_setup_signal_connections()
 	_update_ui_state()
-	_set_featured_stat("", 0)
 
 	_log_message("[color=cyan]═══════════════════════════════════════[/color]")
 	_log_message("[color=cyan]Achievements Demo Initialized[/color]")
@@ -96,10 +95,7 @@ func _setup_signal_connections():
 		auto_scroll_toggle.toggled.connect(_on_auto_scroll_toggled)
 	if back_button:
 		back_button.pressed.connect(_on_back_button_pressed)
-
-	if stat_name_input:
-		stat_name_input.text_submitted.connect(func(_text): _update_featured_stat_display_from_cache())
-
+		
 	if EpicOS:
 		EpicOS.achievement_definitions_completed.connect(_on_achievement_definitions_completed)
 		EpicOS.player_achievements_completed.connect(_on_player_achievements_completed)
@@ -644,11 +640,3 @@ func _on_auto_scroll_toggled(button_pressed: bool):
 
 func _on_back_button_pressed():
 	get_tree().change_scene_to_file("res://scenes/demos/demo_menu.tscn")
-
-func _update_featured_stat_display_from_cache():
-	# UI elements not present in current scene - function kept for potential future use
-	pass
-
-func _set_featured_stat(stat_name: String, value: int):
-	# UI elements not present in current scene - function kept for potential future use
-	pass
