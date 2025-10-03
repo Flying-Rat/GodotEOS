@@ -11,23 +11,15 @@ extends Control
 @onready var status_label: Label = %StatusLabel
 
 # Quick Actions
-@onready var quick_increment_ten_button: Button = %QueryAllAchievementsButton
-@onready var quick_refresh_all_button: Button = %QueryAllStatsButton
+@onready var query_definitions_button: Button = %QueryDefinitionsButton
+@onready var query_player_achievements_button: Button = %QueryPlayerAchievementsButton
+@onready var get_definitions_button: Button = %GetDefinitionsButton
+@onready var get_player_achievements_button: Button = %GetPlayerAchievementsButton
+@onready var query_stats_button: Button = %QueryStatsButton
+@onready var get_stats_button: Button = %GetStatsButton
 
 # Achievement Display
 @onready var achievement_cards_container: VBoxContainer = %AchievementCardsContainer
-@onready var definitions_list: ItemList # Not available in current scene
-@onready var player_list: ItemList # Not available in current scene
-@onready var refresh_achievements_button: Button = %RefreshAchievementsButton
-
-# Statistics Display (removed from UI but keeping references for potential future use)
-@onready var stats_list: ItemList # Removed from scene
-@onready var featured_stat_name_label: Label # Removed from scene
-@onready var featured_stat_value_label: Label # Removed from scene
-@onready var featured_increment_one_button: Button # Removed from scene
-@onready var featured_increment_five_button: Button # Removed from scene
-@onready var featured_increment_ten_button: Button # Removed from scene
-@onready var refresh_stats_button: Button # Removed from scene
 
 # Manual Controls
 @onready var achievement_input: LineEdit = %AchievementIDLineEdit
@@ -35,9 +27,6 @@ extends Control
 @onready var stat_name_input: LineEdit = %StatNameLineEdit
 @onready var stat_amount_input: SpinBox = %StatAmountSpinBox
 @onready var ingest_stat_button: Button = %IngestStatButton
-@onready var query_definitions_button: Button = %QueryDefinitionsButton
-@onready var query_player_button: Button = %QueryPlayerButton
-@onready var query_stats_button: Button # Not available in current scene
 
 # Output & Navigation
 @onready var output_text: RichTextLabel = %OutputText
@@ -72,50 +61,30 @@ func _ready():
 	_log_message("[color=cyan]═══════════════════════════════════════[/color]")
 
 	if EpicOS and EpicOS.is_user_logged_in():
-		_log_message("[color=yellow]Auto-loading achievement data...[/color]")
-		_on_refresh_all_pressed()
+		_log_message("[color=yellow]Please use the buttons above to test achievement functions[/color]")
 	else:
 		_log_message("[color=yellow]Please login first (use Authentication Demo)[/color]")
 
 func _setup_signal_connections():
-	# Quick action buttons in the scene are mapped differently
-	if quick_increment_ten_button:
-		quick_increment_ten_button.pressed.connect(_on_refresh_all_pressed)
-	if quick_refresh_all_button:
-		quick_refresh_all_button.pressed.connect(_on_query_stats_pressed)
-
-	# Featured stat buttons
-	if featured_increment_one_button:
-		featured_increment_one_button.pressed.connect(func(): _increment_stat_from_input(1))
-	if featured_increment_five_button:
-		featured_increment_five_button.pressed.connect(func(): _increment_stat_from_input(5))
-	if featured_increment_ten_button:
-		featured_increment_ten_button.pressed.connect(func(): _increment_stat_from_input(10))
-
-	# Refresh button
-	if refresh_achievements_button:
-		refresh_achievements_button.pressed.connect(func():
-			_log_message("[color=yellow]Refreshing achievement details...[/color]")
-			_on_query_definitions_pressed()
-			_on_query_player_pressed()
-		)
-	
-	# Refresh stats button
-	if refresh_stats_button:
-		refresh_stats_button.pressed.connect(_on_query_stats_pressed)
+	# New Function Buttons
+	if query_definitions_button:
+		query_definitions_button.pressed.connect(_on_query_definitions_button_pressed)
+	if query_player_achievements_button:
+		query_player_achievements_button.pressed.connect(_on_query_player_achievements_button_pressed)
+	if get_definitions_button:
+		get_definitions_button.pressed.connect(_on_get_definitions_button_pressed)
+	if get_player_achievements_button:
+		get_player_achievements_button.pressed.connect(_on_get_player_achievements_button_pressed)
+	if query_stats_button:
+		query_stats_button.pressed.connect(_on_query_stats_button_pressed)
+	if get_stats_button:
+		get_stats_button.pressed.connect(_on_get_stats_button_pressed)
 
 	# Manual controls
 	if unlock_button:
 		unlock_button.pressed.connect(_trigger_unlock_from_input)
 	if ingest_stat_button:
 		ingest_stat_button.pressed.connect(_on_ingest_stat_button_pressed)
-
-	if query_definitions_button:
-		query_definitions_button.pressed.connect(_on_query_definitions_pressed)
-	if query_player_button:
-		query_player_button.pressed.connect(_on_query_player_pressed)
-	if query_stats_button:
-		query_stats_button.pressed.connect(_on_query_stats_pressed)
 
 	# Output controls
 	if clear_log_button:
@@ -124,14 +93,6 @@ func _setup_signal_connections():
 		auto_scroll_toggle.toggled.connect(_on_auto_scroll_toggled)
 	if back_button:
 		back_button.pressed.connect(_on_back_button_pressed)
-
-	# Lists (only if they exist)
-	if definitions_list:
-		definitions_list.item_selected.connect(_on_definitions_list_item_selected)
-	if player_list:
-		player_list.item_selected.connect(_on_player_list_item_selected)
-	if stats_list:
-		stats_list.item_selected.connect(_on_stats_list_item_selected)
 
 	if stat_name_input:
 		stat_name_input.text_submitted.connect(func(_text): _update_featured_stat_display_from_cache())
@@ -145,9 +106,7 @@ func _setup_signal_connections():
 			EpicOS.achievement_unlocked.connect(_on_achievement_unlocked)
 		EpicOS.achievement_stats_completed.connect(_on_achievement_stats_completed)
 		EpicOS.login_completed.connect(_on_login_status_changed)
-		EpicOS.logout_completed.connect(_on_logout_status_changed)
-
-# ============================================================================
+		EpicOS.logout_completed.connect(_on_logout_status_changed)# ============================================================================
 # QUICK ACTION HELPERS
 # ============================================================================
 
@@ -166,11 +125,6 @@ func _unlock_achievement(achievement_id: String):
 	else:
 		_log_message("[color=red]✗ EpicOS not available[/color]")
 
-func _increment_stat_from_input(amount: int):
-	var stat_name := stat_name_input.text.strip_edges()
-	stat_amount_input.value = amount
-	_ingest_stat(stat_name, amount)
-
 func _on_ingest_stat_button_pressed():
 	var stat_name := stat_name_input.text.strip_edges()
 	var amount := int(stat_amount_input.value)
@@ -188,77 +142,108 @@ func _ingest_stat(stat_name: String, amount: int):
 		_log_message("[color=red]✗ EpicOS not available[/color]")
 
 # ============================================================================
-# DATA QUERY FUNCTIONS
+# NEW FUNCTION BUTTON HANDLERS
 # ============================================================================
 
-func _on_refresh_all_pressed():
-	EpicOS.set_debug_mode(true)  # Enable detailed logging for debugging
-	_log_message("[color=yellow]🔄 Refreshing all achievement data...[/color]")
-	if EpicOS:
-		EpicOS.query_achievement_definitions()
-		EpicOS.query_player_achievements()
-		EpicOS.query_achievement_stats()
-	else:
-		_log_message("[color=red]✗ EpicOS not available[/color]")
-
-func _on_query_definitions_pressed():
-	_log_message("[color=yellow]Querying achievement definitions...[/color]")
+func _on_query_definitions_button_pressed():
+	_log_message("[color=yellow]🔍 QueryAchievementDefinitions() - Fetching achievement definitions from EOS...[/color]")
 	if EpicOS:
 		EpicOS.query_achievement_definitions()
 	else:
 		_log_message("[color=red]✗ EpicOS not available[/color]")
 
-func _on_query_player_pressed():
-	_log_message("[color=yellow]Querying player achievements...[/color]")
+func _on_query_player_achievements_button_pressed():
+	_log_message("[color=yellow]🔍 QueryPlayerAchievements() - Fetching player achievement progress from EOS...[/color]")
 	if EpicOS:
 		EpicOS.query_player_achievements()
 	else:
 		_log_message("[color=red]✗ EpicOS not available[/color]")
 
-func _on_query_stats_pressed():
-	_log_message("[color=yellow]Querying achievement stats...[/color]")
+func _on_get_definitions_button_pressed():
+	_log_message("[color=yellow]📚 GetAchievementDefinitions() - Getting cached achievement definitions...[/color]")
+	if EpicOS:
+		var definitions = EpicOS.get_achievement_definitions()
+		_log_message("[color=green]✓ Retrieved " + str(definitions.size()) + " cached achievement definitions[/color]")
+		
+		# Print detailed information for each achievement definition
+		if definitions.size() > 0:
+			_log_message("[color=cyan]📋 Achievement Definitions Details (from cache):[/color]")
+			for i in range(definitions.size()):
+				var def = definitions[i]
+				_log_message("[color=white]─── Achievement " + str(i + 1) + " ──────────────────────────────────[/color]")
+				_log_message("[color=light_blue]achievement_id:[/color] " + str(def.get("achievement_id", "N/A")))
+				_log_message("[color=light_blue]unlocked_display_name:[/color] " + str(def.get("unlocked_display_name", "N/A")))
+				_log_message("[color=light_blue]unlocked_description:[/color] " + str(def.get("unlocked_description", "N/A")))
+				_log_message("[color=light_blue]locked_display_name:[/color] " + str(def.get("locked_display_name", "N/A")))
+				_log_message("[color=light_blue]locked_description:[/color] " + str(def.get("locked_description", "N/A")))
+				_log_message("[color=light_blue]flavor_text:[/color] " + str(def.get("flavor_text", "N/A")))
+				_log_message("[color=light_blue]unlocked_icon_url:[/color] " + str(def.get("unlocked_icon_url", "N/A")))
+				_log_message("[color=light_blue]locked_icon_url:[/color] " + str(def.get("locked_icon_url", "N/A")))
+				_log_message("[color=light_blue]is_hidden:[/color] " + str(def.get("is_hidden", "N/A")))
+				_log_message("")  # Empty line for readability
+		else:
+			_log_message("[color=yellow]  No cached achievement definitions available[/color]")
+			_log_message("[color=gray]  Try 'Query Definitions' first to fetch from EOS[/color]")
+	else:
+		_log_message("[color=red]✗ EpicOS not available[/color]")
+
+func _on_get_player_achievements_button_pressed():
+	_log_message("[color=yellow]🏆 GetPlayerAchievements() - Getting cached player achievement progress...[/color]")
+	if EpicOS:
+		var achievements = EpicOS.get_player_achievements()
+		_log_message("[color=green]✓ Retrieved " + str(achievements.size()) + " cached player achievements[/color]")
+		
+		# Print detailed information for each player achievement
+		if achievements.size() > 0:
+			_log_message("[color=cyan]🏆 Player Achievements Details (from cache):[/color]")
+			for i in range(achievements.size()):
+				var achievement = achievements[i]
+				_log_message("[color=white]─── Player Achievement " + str(i + 1) + " ──────────────────────[/color]")
+				_log_message("[color=light_green]achievement_id:[/color] " + str(achievement.get("achievement_id", "N/A")))
+				_log_message("[color=light_green]progress:[/color] " + str(achievement.get("progress", "N/A")))
+				_log_message("[color=light_green]unlock_time:[/color] " + str(achievement.get("unlock_time", "N/A")))
+				_log_message("[color=light_green]is_unlocked:[/color] " + str(achievement.get("is_unlocked", "N/A")))
+				_log_message("[color=light_green]display_name:[/color] " + str(achievement.get("display_name", "N/A")))
+				_log_message("[color=light_green]description:[/color] " + str(achievement.get("description", "N/A")))
+				_log_message("[color=light_green]icon_url:[/color] " + str(achievement.get("icon_url", "N/A")))
+				_log_message("[color=light_green]flavor_text:[/color] " + str(achievement.get("flavor_text", "N/A")))
+				_log_message("")  # Empty line for readability
+		else:
+			_log_message("[color=yellow]  No cached player achievements available[/color]")
+			_log_message("[color=gray]  Try 'Query Player Achievements' first to fetch from EOS[/color]")
+	else:
+		_log_message("[color=red]✗ EpicOS not available[/color]")
+
+func _on_query_stats_button_pressed():
+	_log_message("[color=yellow]📊 QueryStats() - Fetching player statistics from EOS...[/color]")
 	if EpicOS:
 		EpicOS.query_achievement_stats()
 	else:
 		_log_message("[color=red]✗ EpicOS not available[/color]")
 
-# ============================================================================
-# LIST SELECTION HANDLERS
-# ============================================================================
-
-func _on_definitions_list_item_selected(index: int):
-	if not definitions_list or index < 0 or index >= cached_definitions.size():
-		return
+func _on_get_stats_button_pressed():
+	_log_message("[color=yellow]📊 GetStats() - Getting cached player statistics...[/color]")
+	if EpicOS:
+		var stats = EpicOS.get_stats()
+		_log_message("[color=green]✓ Retrieved " + str(stats.size()) + " cached statistics[/color]")
 		
-	var definition: Dictionary = cached_definitions[index]
-	var achievement_id := str(definition.get("achievement_id", ""))
-	if achievement_input:
-		achievement_input.text = achievement_id
-	_log_message("[color=cyan]Selected definition: " + achievement_id + "[/color]")
-
-func _on_player_list_item_selected(index: int):
-	if not player_list or index < 0 or index >= cached_player_achievements.size():
-		return
-		
-	var achievement: Dictionary = cached_player_achievements[index]
-	var achievement_id := str(achievement.get("achievement_id", "Unknown"))
-	var unlocked: bool = achievement.get("is_unlocked", false)
-	var progress: float = achievement.get("progress", 0.0)
-	_log_message("[color=cyan]Selected: " + achievement_id + " - Unlocked: " + str(unlocked) + " - Progress: " + str(progress) + "%[/color]")
-
-func _on_stats_list_item_selected(index: int):
-	if not stats_list or index < 0 or index >= cached_stats.size():
-		return
-		
-	var stat: Dictionary = cached_stats[index]
-	var stat_name := str(stat.get("name", ""))
-	var stat_value: int = stat.get("value", 0)
-	if stat_name_input:
-		stat_name_input.text = stat_name
-	if stat_amount_input:
-		stat_amount_input.value = float(stat_value)
-	_set_featured_stat(stat_name, stat_value)
-	_log_message("[color=cyan]Selected stat: " + stat_name + " = " + str(stat_value) + "[/color]")
+		# Print detailed information for each stat
+		if stats.size() > 0:
+			_log_message("[color=cyan]📊 Statistics Details (from cache):[/color]")
+			_log_message("[color=gray]Note: EpicOS only returns stats that have been initialized/touched[/color]")
+			for i in range(stats.size()):
+				var stat = stats[i]
+				_log_message("[color=white]─── Statistic " + str(i + 1) + " ───────────────────────────────────[/color]")
+				_log_message("[color=yellow]name:[/color] " + str(stat.get("name", "N/A")))
+				_log_message("[color=yellow]value:[/color] " + str(stat.get("value", "N/A")))
+				_log_message("[color=yellow]start_time:[/color] " + str(stat.get("start_time", "N/A")))
+				_log_message("[color=yellow]end_time:[/color] " + str(stat.get("end_time", "N/A")))
+				_log_message("")  # Empty line for readability
+		else:
+			_log_message("[color=yellow]  No cached statistics available[/color]")
+			_log_message("[color=gray]  Try 'Query Stats' first to fetch from EOS[/color]")
+	else:
+		_log_message("[color=red]✗ EpicOS not available[/color]")
 
 # ============================================================================
 # EPICOS SIGNAL HANDLERS
@@ -270,6 +255,23 @@ func _on_achievement_definitions_completed(success: bool, definitions: Array):
 		_refresh_definitions_display()
 		_refresh_achievements_display()
 		_log_message("[color=green]✓ Loaded " + str(definitions.size()) + " achievement definitions[/color]")
+		
+		# Print detailed information for each achievement definition
+		if definitions.size() > 0:
+			_log_message("[color=cyan]📋 Achievement Definitions Details:[/color]")
+			for i in range(definitions.size()):
+				var def = definitions[i]
+				_log_message("[color=white]─── Achievement " + str(i + 1) + " ──────────────────────────────────[/color]")
+				_log_message("[color=light_blue]achievement_id:[/color] " + str(def.get("achievement_id", "N/A")))
+				_log_message("[color=light_blue]unlocked_display_name:[/color] " + str(def.get("unlocked_display_name", "N/A")))
+				_log_message("[color=light_blue]unlocked_description:[/color] " + str(def.get("unlocked_description", "N/A")))
+				_log_message("[color=light_blue]locked_display_name:[/color] " + str(def.get("locked_display_name", "N/A")))
+				_log_message("[color=light_blue]locked_description:[/color] " + str(def.get("locked_description", "N/A")))
+				_log_message("[color=light_blue]flavor_text:[/color] " + str(def.get("flavor_text", "N/A")))
+				_log_message("[color=light_blue]unlocked_icon_url:[/color] " + str(def.get("unlocked_icon_url", "N/A")))
+				_log_message("[color=light_blue]locked_icon_url:[/color] " + str(def.get("locked_icon_url", "N/A")))
+				_log_message("[color=light_blue]is_hidden:[/color] " + str(def.get("is_hidden", "N/A")))
+				_log_message("")  # Empty line for readability
 	else:
 		_log_message("[color=red]✗ Failed to load achievement definitions[/color]")
 
@@ -280,11 +282,21 @@ func _on_player_achievements_completed(success: bool, achievements: Array):
 		_refresh_achievements_display()
 		_log_message("[color=green]✓ Loaded " + str(achievements.size()) + " player achievements[/color]")
 		
-		# Simple print of achievement names and unlock status
-		for achievement in achievements:
-			var achievement_name = achievement.get("display_name", "Unknown")
-			var is_unlocked = achievement.get("is_unlocked", false)
-			print("Achievement: ", achievement_name, " - is_unlocked: ", is_unlocked)
+		# Print detailed information for each player achievement
+		if achievements.size() > 0:
+			_log_message("[color=cyan]🏆 Player Achievements Details:[/color]")
+			for i in range(achievements.size()):
+				var achievement = achievements[i]
+				_log_message("[color=white]─── Player Achievement " + str(i + 1) + " ──────────────────────[/color]")
+				_log_message("[color=light_green]achievement_id:[/color] " + str(achievement.get("achievement_id", "N/A")))
+				_log_message("[color=light_green]progress:[/color] " + str(achievement.get("progress", "N/A")))
+				_log_message("[color=light_green]unlock_time:[/color] " + str(achievement.get("unlock_time", "N/A")))
+				_log_message("[color=light_green]is_unlocked:[/color] " + str(achievement.get("is_unlocked", "N/A")))
+				_log_message("[color=light_green]display_name:[/color] " + str(achievement.get("display_name", "N/A")))
+				_log_message("[color=light_green]description:[/color] " + str(achievement.get("description", "N/A")))
+				_log_message("[color=light_green]icon_url:[/color] " + str(achievement.get("icon_url", "N/A")))
+				_log_message("[color=light_green]flavor_text:[/color] " + str(achievement.get("flavor_text", "N/A")))
+				_log_message("")  # Empty line for readability
 	else:
 		_log_message("[color=red]✗ Failed to load player achievements[/color]")
 
@@ -307,10 +319,23 @@ func _on_achievement_unlocked(achievement_id: String, unlock_time: int):
 	if EpicOS:
 		var definition: Dictionary = EpicOS.get_achievement_definition(achievement_id)
 		if not definition.is_empty():
-			title = definition.get("display_name", achievement_id)
-			description = definition.get("description", "")
+			title = definition.get("unlocked_display_name", achievement_id)
+			description = definition.get("unlocked_description", "")
+			
+			# Show all definition fields for the unlocked achievement
+			_log_message("[color=cyan]📋 Achievement Definition Details:[/color]")
+			_log_message("[color=light_blue]achievement_id:[/color] " + str(definition.get("achievement_id", "N/A")))
+			_log_message("[color=light_blue]unlocked_display_name:[/color] " + str(definition.get("unlocked_display_name", "N/A")))
+			_log_message("[color=light_blue]unlocked_description:[/color] " + str(definition.get("unlocked_description", "N/A")))
+			_log_message("[color=light_blue]locked_display_name:[/color] " + str(definition.get("locked_display_name", "N/A")))
+			_log_message("[color=light_blue]locked_description:[/color] " + str(definition.get("locked_description", "N/A")))
+			_log_message("[color=light_blue]flavor_text:[/color] " + str(definition.get("flavor_text", "N/A")))
+			_log_message("[color=light_blue]unlocked_icon_url:[/color] " + str(definition.get("unlocked_icon_url", "N/A")))
+			_log_message("[color=light_blue]locked_icon_url:[/color] " + str(definition.get("locked_icon_url", "N/A")))
+			_log_message("[color=light_blue]is_hidden:[/color] " + str(definition.get("is_hidden", "N/A")))
+			_log_message("")
 
-	_log_message("[color=yellow]" + title + "[/color]")
+	_log_message("[color=yellow]🎉 " + title + "[/color]")
 	if not description.is_empty():
 		_log_message("[color=white]" + description + "[/color]")
 	_log_message("[color=cyan]Achievement ID: " + achievement_id + "[/color]")
@@ -327,49 +352,29 @@ func _on_achievement_stats_completed(success: bool, stats: Array):
 		_refresh_stats_display()
 		_log_message("[color=green]✓ Loaded " + str(stats.size()) + " achievement stats[/color]")
 		
-		# Log individual stats to output since we don't have a stats panel
+		# Print detailed information for each stat
 		if stats.size() > 0:
-			_log_message("[color=cyan]📊 Achievement Statistics (active stats only):[/color]")
+			_log_message("[color=cyan]📊 Achievement Statistics Details:[/color]")
 			_log_message("[color=gray]Note: EpicOS only returns stats that have been initialized/touched[/color]")
-			for stat in stats:
-				var stat_name := str(stat.get("name", "Unknown"))
-				var stat_value: int = stat.get("value", 0)
-				_log_message("[color=white]  • " + stat_name + ": " + str(stat_value) + "[/color]")
-			
-			# Also show any stat names that might be referenced in achievement definitions
-			_show_potential_unused_stats()
+			for i in range(stats.size()):
+				var stat = stats[i]
+				_log_message("[color=white]─── Statistic " + str(i + 1) + " ───────────────────────────────────[/color]")
+				_log_message("[color=yellow]name:[/color] " + str(stat.get("name", "N/A")))
+				_log_message("[color=yellow]value:[/color] " + str(stat.get("value", "N/A")))
+				_log_message("[color=yellow]start_time:[/color] " + str(stat.get("start_time", "N/A")))
+				_log_message("[color=yellow]end_time:[/color] " + str(stat.get("end_time", "N/A")))
+				_log_message("")  # Empty line for readability
 		else:
 			_log_message("[color=yellow]  No achievement stats found (no stats have been initialized yet)[/color]")
 			_log_message("[color=gray]  Try using 'Increment Stat' in Manual Testing to initialize some stats[/color]")
 	else:
 		_log_message("[color=red]✗ Failed to load achievement stats[/color]")
 
-func _show_potential_unused_stats():
-	"""Check achievement definitions for stat references that might not be in active stats"""
-	if cached_definitions.is_empty():
-		return
-		
-	var active_stat_names = []
-	for stat in cached_stats:
-		active_stat_names.append(str(stat.get("name", "")))
-	
-	# Look for stat references in achievement definitions
-	var potential_stats = []
-	for definition in cached_definitions:
-		var def_text = str(definition)
-		# Look for common stat patterns (this is basic pattern matching)
-		if "stat" in def_text.to_lower():
-			_log_message("[color=gray]  Achievement '" + str(definition.get("display_name", "Unknown")) + "' may reference stats[/color]")
-	
-	if potential_stats.size() == 0 and active_stat_names.size() > 0:
-		_log_message("[color=gray]  All available stats from EpicOS are shown above[/color]")
-
 func _on_login_status_changed(success: bool, user_info: Dictionary):
 	if success:
 		var username: String = user_info.get("display_name", "Unknown")
 		_log_message("[color=green]✓ Logged in as " + username + "[/color]")
 		_update_ui_state()
-		_on_refresh_all_pressed()
 
 func _on_logout_status_changed(success: bool):
 	if success:
@@ -378,7 +383,6 @@ func _on_logout_status_changed(success: bool):
 		cached_player_achievements.clear()
 		cached_stats.clear()
 		_refresh_all_displays()
-		_set_featured_stat("", 0)
 	_update_ui_state()
 
 # ============================================================================
@@ -386,79 +390,19 @@ func _on_logout_status_changed(success: bool):
 # ============================================================================
 
 func _refresh_all_displays():
-	_refresh_definitions_display()
-	_refresh_player_display()
-	_refresh_stats_display()
 	_refresh_achievements_display()
 
 func _refresh_definitions_display():
-	if not definitions_list:
-		_log_message("[color=yellow]Definitions list not available in current UI[/color]")
-		return
-		
-	definitions_list.clear()
-
-	if cached_definitions.is_empty():
-		return
-
-	for definition in cached_definitions:
-		var display_name := str(definition.get("display_name", "Unknown"))
-		var achievement_id := str(definition.get("achievement_id", ""))
-		var description := str(definition.get("description", ""))
-
-		var display_text := display_name
-		if not achievement_id.is_empty():
-			display_text += " [" + achievement_id + "]"
-
-		definitions_list.add_item(display_text)
-		var item_index := definitions_list.get_item_count() - 1
-		definitions_list.set_item_tooltip(item_index, description)
+	# UI element not present in current scene - function kept for potential future use
+	pass
 
 func _refresh_player_display():
-	if not player_list:
-		_log_message("[color=yellow]Player achievements list not available in current UI[/color]")
-		return
-		
-	player_list.clear()
-
-	if cached_player_achievements.is_empty():
-		return
-
-	for achievement in cached_player_achievements:
-		var achievement_id := str(achievement.get("achievement_id", "Unknown"))
-		var unlocked: bool = achievement.get("is_unlocked", false)
-		var progress: float = achievement.get("progress", 0.0)
-		var unlock_time: int = achievement.get("unlock_time", 0)
-
-		var display_text := ""
-
-		if unlocked:
-			var date_str := ""
-			if unlock_time > 0:
-				var datetime: Dictionary = Time.get_datetime_dict_from_unix_time(unlock_time)
-				date_str = " (%d-%02d-%02d)" % [datetime.year, datetime.month, datetime.day]
-			display_text = "✓ " + achievement_id + date_str
-		else:
-			display_text = "⏳ " + achievement_id + " (" + str(progress) + "%)"
-
-		player_list.add_item(display_text)
+	# UI element not present in current scene - function kept for potential future use
+	pass
 
 func _refresh_stats_display():
-	if stats_list:
-		stats_list.clear()
-
-	if cached_stats.is_empty():
-		_update_featured_stat_display_from_cache()
-		return
-
-	if stats_list:
-		for stat in cached_stats:
-			var name := str(stat.get("name", "Unknown"))
-			var value: int = stat.get("value", 0)
-			var display_text := name + ": " + str(value)
-			stats_list.add_item(display_text)
-
-	_update_featured_stat_display_from_cache()
+	# UI element not present in current scene - function kept for potential future use
+	pass
 
 func _refresh_achievements_display():
 	# Clear existing cards
@@ -507,7 +451,7 @@ func _create_placeholder_card():
 	item.add_child(margin)
 	
 	var label = Label.new()
-	label.text = "Loading achievements... Please wait or click 'Refresh Achievements'"
+	label.text = "Loading achievements... Please use the buttons above to fetch data"
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 14)
@@ -569,34 +513,12 @@ func _create_achievement_card(definition: Dictionary, player_data: Dictionary):
 	achievement_cards_container.add_child(item)
 
 func _update_featured_stat_display_from_cache():
-	if not stat_name_input:
-		return
-		
-	var target_name := stat_name_input.text.strip_edges()
-
-	if target_name.is_empty():
-		if cached_stats.is_empty():
-			_set_featured_stat("", 0)
-			return
-
-		var first_stat: Dictionary = cached_stats[0]
-		_set_featured_stat(str(first_stat.get("name", "")), int(first_stat.get("value", 0)))
-		return
-
-	for stat in cached_stats:
-		var stat_name := str(stat.get("name", ""))
-		if stat_name == target_name:
-			_set_featured_stat(stat_name, int(stat.get("value", 0)))
-			return
-
-	_set_featured_stat(target_name, 0)
+	# UI elements not present in current scene - function kept for potential future use
+	pass
 
 func _set_featured_stat(stat_name: String, value: int):
-	var display_name := stat_name if not stat_name.is_empty() else "Selected Stat"
-	if featured_stat_name_label:
-		featured_stat_name_label.text = display_name
-	if featured_stat_value_label:
-		featured_stat_value_label.text = str(value)
+	# UI elements not present in current scene - function kept for potential future use
+	pass
 
 # ============================================================================
 # UI STATE MANAGEMENT
@@ -623,18 +545,14 @@ func _update_ui_state():
 
 	var controls_enabled := platform_initialized and is_logged_in
 	var buttons_to_disable = [
-		quick_increment_ten_button,
-		quick_refresh_all_button,
-		refresh_achievements_button,
-		refresh_stats_button,
-		unlock_button,
-		ingest_stat_button,
 		query_definitions_button,
-		query_player_button,
+		query_player_achievements_button,
+		get_definitions_button,
+		get_player_achievements_button,
 		query_stats_button,
-		featured_increment_one_button,
-		featured_increment_five_button,
-		featured_increment_ten_button
+		get_stats_button,
+		unlock_button,
+		ingest_stat_button
 	]
 	
 	for button in buttons_to_disable:

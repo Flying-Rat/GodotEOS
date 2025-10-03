@@ -1,13 +1,13 @@
 [gd_scene load_steps=2 format=3 uid="uid://6cf02yugmud1"]
 
-[ext_resource type="Script" uid="uid://dqkwmnfa3x2yi" path="res://scripts/demos/achievements_demo.gd" id="1"]
+[ext_resource type="Script" uid="uid://celk6djk4uj3s" path="res://scripts/demos/achievements_demo.gd" id="1"]
 
 [node name="AchievementsDemo" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_bottom = 164.375
+offset_bottom = -6.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1")
@@ -75,35 +75,41 @@ layout_mode = 2
 size_flags_horizontal = 4
 theme_override_constants/v_separation = 10
 
-[node name="QueryAllAchievementsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(150, 0)
-layout_mode = 2
-text = "Query All Achievements"
-
-[node name="QueryAllStatsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(150, 0)
-layout_mode = 2
-text = "Query All Stats"
-
-[node name="RefreshAchievementsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(150, 0)
-layout_mode = 2
-text = "Refresh Achievements"
-
 [node name="QueryDefinitionsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 text = "Query Definitions"
 
-[node name="QueryPlayerButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
+[node name="GetDefinitionsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
-text = "Query Player Progress"
+text = "Get Definitions"
+
+[node name="QueryPlayerAchievementsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "Query Player Achievements"
+
+[node name="GetPlayerAchievementsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "Get Player Achievements"
+
+[node name="QueryStatsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "Query Stats"
+
+[node name="GetStatsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/MarginContainer/VBoxContainer/QuickActionsGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "Get Stats"
 
 [node name="MainContentHBox" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox"]
 layout_mode = 2
@@ -152,12 +158,7 @@ theme_override_constants/margin_bottom = 10
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ManualTestingPanel/MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="TestingLabel" type="Label" parent="MarginContainer/VBoxContainer/ManualTestingPanel/MarginContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "Manual Testing Tools"
+theme_override_constants/separation = 20
 
 [node name="ControlsHBox" type="HBoxContainer" parent="MarginContainer/VBoxContainer/ManualTestingPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -166,7 +167,7 @@ theme_override_constants/separation = 20
 [node name="AchievementControlSection" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ManualTestingPanel/MarginContainer/VBoxContainer/ControlsHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 5
+theme_override_constants/separation = 10
 
 [node name="AchievementSectionLabel" type="Label" parent="MarginContainer/VBoxContainer/ManualTestingPanel/MarginContainer/VBoxContainer/ControlsHBox/AchievementControlSection"]
 layout_mode = 2
@@ -185,7 +186,7 @@ text = "Unlock Achievement"
 [node name="StatControlSection" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ManualTestingPanel/MarginContainer/VBoxContainer/ControlsHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 5
+theme_override_constants/separation = 10
 
 [node name="StatSectionLabel" type="Label" parent="MarginContainer/VBoxContainer/ManualTestingPanel/MarginContainer/VBoxContainer/ControlsHBox/StatControlSection"]
 layout_mode = 2
