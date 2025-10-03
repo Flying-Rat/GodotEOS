@@ -93,20 +93,25 @@ void GodotEOS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("on_friends_query_completed", "success", "friends_list"), &GodotEOS::on_friends_query_completed);
 	ClassDB::bind_method(D_METHOD("on_friend_info_query_completed", "success", "friend_info"), &GodotEOS::on_friend_info_query_completed);
 
-	// Signals
+	// Authentication signals
 	ADD_SIGNAL(MethodInfo("login_completed", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::DICTIONARY, "user_info")));
 	ADD_SIGNAL(MethodInfo("logout_completed", PropertyInfo(Variant::BOOL, "success")));
 	ADD_SIGNAL(MethodInfo("friends_updated", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::ARRAY, "friends_list")));
 	ADD_SIGNAL(MethodInfo("friend_info_updated", PropertyInfo(Variant::DICTIONARY, "friend_info")));
-	ADD_SIGNAL(MethodInfo("achievement_definitions_updated", PropertyInfo(Variant::ARRAY, "definitions")));
-	ADD_SIGNAL(MethodInfo("player_achievements_updated", PropertyInfo(Variant::ARRAY, "achievements")));
-	ADD_SIGNAL(MethodInfo("achievements_unlocked", PropertyInfo(Variant::ARRAY, "unlocked_achievement_ids")));
+	// Achievements signals
+	ADD_SIGNAL(MethodInfo("achievement_definitions_updated", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::ARRAY, "definitions")));
+	ADD_SIGNAL(MethodInfo("player_achievements_updated", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::ARRAY, "achievements")));
+	ADD_SIGNAL(MethodInfo("achievements_unlocked", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::ARRAY, "unlocked_achievement_ids")));
 	ADD_SIGNAL(MethodInfo("achievement_unlocked", PropertyInfo(Variant::STRING, "achievement_id"), PropertyInfo(Variant::INT, "unlock_time")));
 	ADD_SIGNAL(MethodInfo("achievement_stats_updated", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::ARRAY, "stats")));
+
+	// Leaderboards signals
 	ADD_SIGNAL(MethodInfo("leaderboard_definitions_updated", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::ARRAY, "definitions")));
 	ADD_SIGNAL(MethodInfo("leaderboard_ranks_updated", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::ARRAY, "ranks")));
 	ADD_SIGNAL(MethodInfo("leaderboard_user_scores_updated", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::DICTIONARY, "user_scores")));
-	ADD_SIGNAL(MethodInfo("stats_ingested", PropertyInfo(Variant::ARRAY, "stat_names")));
+
+	// Stats signals
+	ADD_SIGNAL(MethodInfo("stats_ingested", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::ARRAY, "stat_names")));
 }
 
 GodotEOS::GodotEOS() {
@@ -410,14 +415,14 @@ void GodotEOS::query_achievement_definitions() {
 	if (!achievements) {
 		UtilityFunctions::push_warning("AchievementsSubsystem not available");
 		Array empty_definitions;
-		emit_signal("achievement_definitions_updated", empty_definitions);
+		emit_signal("achievement_definitions_updated", false, empty_definitions);
 		return;
 	}
 
 	if (!achievements->QueryAchievementDefinitions()) {
 		UtilityFunctions::printerr("AchievementsSubsystem query definitions failed");
 		Array empty_definitions;
-		emit_signal("achievement_definitions_updated", empty_definitions);
+		emit_signal("achievement_definitions_updated", false, empty_definitions);
 	}
 }
 
@@ -428,14 +433,14 @@ void GodotEOS::query_player_achievements() {
 	if (!achievements) {
 		UtilityFunctions::printerr("AchievementsSubsystem not available");
 		Array empty_achievements;
-		emit_signal("player_achievements_updated", empty_achievements);
+		emit_signal("player_achievements_updated", false, empty_achievements);
 		return;
 	}
 
 	if (!achievements->QueryPlayerAchievements()) {
 		UtilityFunctions::printerr("AchievementsSubsystem query player achievements failed");
 		Array empty_achievements;
-		emit_signal("player_achievements_updated", empty_achievements);
+		emit_signal("player_achievements_updated", false, empty_achievements);
 	}
 }
 
@@ -452,14 +457,14 @@ void GodotEOS::unlock_achievements(const Array& achievement_ids) {
 	if (!achievements) {
 		UtilityFunctions::printerr("AchievementsSubsystem not available");
 		Array empty_unlocked;
-		emit_signal("achievements_unlocked", empty_unlocked);
+		emit_signal("achievements_unlocked", false, empty_unlocked);
 		return;
 	}
 
 	if (!achievements->UnlockAchievements(achievement_ids)) {
 		UtilityFunctions::printerr("AchievementsSubsystem unlock achievements failed");
 		Array empty_unlocked;
-		emit_signal("achievements_unlocked", empty_unlocked);
+		emit_signal("achievements_unlocked", false, empty_unlocked);
 	}
 }
 
@@ -627,14 +632,14 @@ void GodotEOS::ingest_stat(const String& stat_name, int value) {
 	if (!achievements) {
 		UtilityFunctions::printerr("AchievementsSubsystem not available");
 		Array empty_stats;
-		emit_signal("stats_ingested", empty_stats);
+		emit_signal("stats_ingested", false, empty_stats);
 		return;
 	}
 
 	if (!achievements->IngestStat(stat_name, value)) {
 		UtilityFunctions::printerr("AchievementsSubsystem ingest stat failed");
 		Array empty_stats;
-		emit_signal("stats_ingested", empty_stats);
+		emit_signal("stats_ingested", false, empty_stats);
 	}
 }
 
@@ -645,7 +650,7 @@ void GodotEOS::ingest_stats(const Dictionary& stats) {
 	if (!achievements) {
 		UtilityFunctions::printerr("AchievementsSubsystem not available");
 		Array empty_stats;
-		emit_signal("stats_ingested", empty_stats);
+		emit_signal("stats_ingested", false, empty_stats);
 		return;
 	}
 
@@ -661,7 +666,7 @@ void GodotEOS::ingest_stats(const Dictionary& stats) {
 		}
 	}
 	// Emit signal with the stat names that were ingested
-	emit_signal("stats_ingested", keys);
+	emit_signal("stats_ingested", true, keys);
 }
 
 Array GodotEOS::get_leaderboard_definitions() {
@@ -919,7 +924,7 @@ void GodotEOS::on_achievement_definitions_completed(bool success, const Array& d
 	}
 
 	// Emit the achievement_definitions_updated signal
-	emit_signal("achievement_definitions_updated", definitions);
+	emit_signal("achievement_definitions_updated", true, definitions);
 }
 
 void GodotEOS::on_player_achievements_completed(bool success, const Array& achievements) {
@@ -932,7 +937,7 @@ void GodotEOS::on_player_achievements_completed(bool success, const Array& achie
 	}
 
 	// Emit the player_achievements_updated signal
-	emit_signal("player_achievements_updated", achievements);
+	emit_signal("player_achievements_updated", true, achievements);
 }
 
 void GodotEOS::on_achievements_unlocked_completed(bool success, const Array& unlocked_achievement_ids) {
@@ -945,7 +950,7 @@ void GodotEOS::on_achievements_unlocked_completed(bool success, const Array& unl
 	}
 
 	// Emit the achievements_unlocked signal
-	emit_signal("achievements_unlocked", unlocked_achievement_ids);
+	emit_signal("achievements_unlocked", true, unlocked_achievement_ids);
 }
 
 void GodotEOS::on_achievement_stats_completed(bool success, const Array& stats) {

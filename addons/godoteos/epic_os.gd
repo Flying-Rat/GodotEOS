@@ -12,6 +12,7 @@ signal achievement_definitions_completed(success: bool, definitions: Array)
 signal player_achievements_completed(success: bool, achievements: Array)
 signal achievements_unlocked_completed(success: bool, unlocked_achievement_ids: Array)
 signal achievement_stats_completed(success: bool, stats: Array)
+signal stats_ingested(success: bool, stat_names: Array)
 
 # Leaderboard signals
 signal leaderboard_definitions_completed(success: bool, definitions: Array)
@@ -50,6 +51,7 @@ func _setup_signal_connections():
 		_godot_epic.connect("player_achievements_updated", _on_player_achievements_completed)
 		_godot_epic.connect("achievements_unlocked", _on_achievements_unlocked_completed)
 		_godot_epic.connect("achievement_stats_updated", _on_achievement_stats_completed)
+		_godot_epic.connect("stats_ingested", _on_stats_ingested)
 
 		# Connect leaderboard signals
 		_godot_epic.connect("leaderboard_definitions_updated", _on_leaderboard_definitions_completed)
@@ -496,6 +498,12 @@ func _on_achievement_stats_completed(success: bool, stats: Array):
 	if _debug_mode:
 		print("EpicOS: Achievement stats completed - Success: ", success, " Count: ", stats.size())
 	achievement_stats_completed.emit(success, stats)
+
+func _on_stats_ingested(success: bool, stat_names: Array):
+	"""Handle stat ingestion completion"""
+	if _debug_mode:
+		print("EpicOS: Stats ingested - Success: ", success, " Stats: ", stat_names)
+	stats_ingested.emit(success, stat_names)
 
 func _on_leaderboard_definitions_completed(success: bool, definitions: Array):
 	"""Handle leaderboard definitions query completion"""
