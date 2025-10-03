@@ -255,7 +255,7 @@ layout_mode = 2
 text = "Ingest Stat"
 
 [node name="OutputPanel" type="PanelContainer" parent="MarginContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 200)
+custom_minimum_size = Vector2(0, 250)
 layout_mode = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/OutputPanel"]
