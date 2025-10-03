@@ -97,7 +97,7 @@ func _update_status():
 	# Update user status
 	if user_logged_in:
 		var display_name = username if not username.is_empty() else "User"
-		user_status.text = "User: ✅ Logged In (" + display_name + ")"		
+		user_status.text = "User: ✅ Logged In (" + display_name + ")"
 	else:
 		user_status.text = "User: ❌ Not Logged In"
 		user_status.modulate = Color.ORANGE
@@ -178,15 +178,15 @@ func _show_startup_info():
 		if EpicOS.is_platform_initialized():
 			print("Platform is already initialized")
 		else:
-			print("Platform needs initialization - use Authentication Demo")
+			print_rich("[color=yellow]Platform needs initialization - use Authentication Demo[/color]")
 
 		if EpicOS.is_user_logged_in():
 			print("User is already logged in")
 		else:
-			print("User needs to log in - use Authentication Demo")
+			print_rich("[color=yellow]User needs to log in - use Authentication Demo[/color]")
 	else:
-		print("WARNING: EpicOS singleton not found!")
-		print("Make sure the GodotEOS extension is properly installed")
+		print_rich("[color=yellow]WARNING: EpicOS singleton not found![/color]")
+		print_rich("[color=yellow]Make sure the GodotEOS extension is properly installed[/color]")
 
 func _notification(what):
 	if what == NOTIFICATION_READY:

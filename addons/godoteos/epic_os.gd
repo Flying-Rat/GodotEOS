@@ -100,9 +100,9 @@ func initialize(config: Dictionary = {}) -> bool:
 	_initialized = _godot_epic.initialize_platform(default_config)
 
 	if _initialized:
-		print("EpicOS: EOS SDK initialized successfully")
+		print_rich("[color=green]EpicOS: EOS SDK initialized successfully[/color]")
 	else:
-		print("EpicOS: ERROR - Failed to initialize EOS SDK")
+		print_rich("[color=red]EpicOS: ERROR - Failed to initialize EOS SDK[/color]")
 
 	return _initialized
 

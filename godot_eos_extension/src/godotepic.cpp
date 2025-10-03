@@ -891,7 +891,7 @@ void GodotEOS::setup_friends_callbacks() {
 }
 
 void GodotEOS::on_authentication_completed(bool success, const Dictionary& user_info) {
-	UtilityFunctions::printerr("GodotEOS: Authentication completed - success: " + String(success ? "true" : "false"));
+	UtilityFunctions::print("GodotEOS: Authentication completed - success: " + String(success ? "true" : "false"));
 
 	if (success) {
 		String display_name = user_info.get("display_name", "Unknown User");

@@ -14,7 +14,6 @@ extends Control
 @onready var password_input: LineEdit = $"VBoxContainer/LoginVBoxContainer/EpicAccountContainer/HBoxContainer/VBoxContainer/PasswordInput"
 @onready var epic_login_button: Button = $"VBoxContainer/LoginVBoxContainer/EpicAccountContainer/HBoxContainer/EpicLoginButton"
 @onready var portal_login_button: Button = $"VBoxContainer/LoginVBoxContainer/EpicAccountContainer/HBoxContainer/PortalLoginButton"
-@onready var device_input: LineEdit = $"VBoxContainer/LoginVBoxContainer/EpicAccountContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel#OtherMethodsContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel_OtherMethodsContainer#DeviceContainer/DeviceInput"
 @onready var dev_input: LineEdit = $"VBoxContainer/LoginVBoxContainer/EpicAccountContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel#OtherMethodsContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel_OtherMethodsContainer#DevContainer/DevInput"
 @onready var dev_login_button: Button = $"VBoxContainer/LoginVBoxContainer/EpicAccountContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel#OtherMethodsContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel_OtherMethodsContainer#DevContainer/DevLoginButton"
 @onready var logout_button: Button = $VBoxContainer/HBoxContainer/VBoxContainer/LogoutButton
