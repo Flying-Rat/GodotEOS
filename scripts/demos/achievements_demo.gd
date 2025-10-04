@@ -63,6 +63,11 @@ func _ready():
 	_log_message("[color=cyan]═══════════════════════════════════════[/color]")
 
 	if EpicOS and EpicOS.is_user_logged_in():
+		_log_message("[color=yellow]📋 INSTRUCTIONS:[/color]")
+		_log_message("[color=white]1. Click 'Query Definitions' to cache achievement definitions[/color]")
+		_log_message("[color=white]2. Click 'Query Player Achievements' to load your achievement progress[/color]")
+		_log_message("[color=white]3. Use other buttons to test achievement functions[/color]")
+		_log_message("")
 		_log_message("[color=yellow]Please use the buttons above to test achievement functions[/color]")
 	else:
 		_log_message("[color=yellow]Please login first (use Authentication Demo)[/color]")
@@ -564,7 +569,7 @@ func _create_stat_item(stat: Dictionary):
 	var value_label = Label.new()
 	value_label.text = stat_value
 	value_label.add_theme_font_size_override("font_size", 14)
-	value_label.modulate = Color.YELLOW
+	value_label.modulate = Color.GREEN
 	hbox.add_child(value_label)
 	
 	# Add the item to the container
