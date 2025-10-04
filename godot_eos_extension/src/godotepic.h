@@ -58,12 +58,11 @@ public:
 	// Friends methods
 	void query_friends();
 	Array get_friends_list();
-	Dictionary get_friend_info(const String& friend_id);
-	void query_friend_info(const String& friend_id);
 	void query_all_friends_info();
 
 	// User Info methods
 	void query_user_info(const String& target_user_id);
+	Dictionary get_user_info(const String& target_user_id);
 
 	// Achievements methods
 	void query_achievement_definitions();
@@ -117,7 +116,6 @@ private:
 	void on_leaderboard_ranks_completed(bool success, const Array& ranks);
 	void on_leaderboard_user_scores_completed(bool success, const Dictionary& user_scores);
 	void on_friends_query_completed(bool success, const Array& friends_list);
-	void on_friend_info_query_completed(bool success, const Dictionary& friend_info);
 	void on_user_info_query_completed(bool success, const Dictionary& user_info);
 };
 

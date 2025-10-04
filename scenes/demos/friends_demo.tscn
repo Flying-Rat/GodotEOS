@@ -51,10 +51,6 @@ layout_mode = 2
 size_flags_vertical = 6
 text = "Status: Not Logged In (Friends require authentication)"
 
-[node name="RefreshButton" type="Button" parent="VBoxContainer/HeaderContainer"]
-layout_mode = 2
-text = "Refresh Display"
-
 [node name="BackButton" type="Button" parent="VBoxContainer/HeaderContainer"]
 layout_mode = 2
 size_flags_horizontal = 8
@@ -75,17 +71,12 @@ text = "Friends Actions:"
 [node name="QueryFriendsButton" type="Button" parent="VBoxContainer/ActionsSection"]
 layout_mode = 2
 disabled = true
-text = "Query Friends List"
-
-[node name="QueryAllInfoButton" type="Button" parent="VBoxContainer/ActionsSection"]
-layout_mode = 2
-disabled = true
-text = "Query All Friends Info"
+text = "1. Query Friends List"
 
 [node name="QueryFriendInfoButton" type="Button" parent="VBoxContainer/ActionsSection"]
 layout_mode = 2
 disabled = true
-text = "Query Selected Friend Info"
+text = "2. Query Selected Friend Info"
 
 [node name="HSeparator3" type="HSeparator" parent="VBoxContainer"]
 layout_mode = 2

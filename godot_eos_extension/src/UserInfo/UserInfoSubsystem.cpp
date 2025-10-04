@@ -110,7 +110,7 @@ String UserInfoSubsystem::GetUserDisplayName(EOS_EpicAccountId local_user_id, EO
     Dictionary user_info = GetCachedUserInfo(local_user_id, target_user_id);
     
     if (user_info.is_empty()) {
-        return "Fetching...";
+        return "Unknown";
     }
 
     // Try display name first
@@ -125,7 +125,7 @@ String UserInfoSubsystem::GetUserDisplayName(EOS_EpicAccountId local_user_id, EO
         return nickname;
     }
 
-    return "Fetching...";
+    return "Unknown";
 }
 
 bool UserInfoSubsystem::IsUserInfoCached(EOS_EpicAccountId local_user_id, EOS_EpicAccountId target_user_id) {

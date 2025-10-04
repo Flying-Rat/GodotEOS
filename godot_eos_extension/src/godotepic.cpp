@@ -42,12 +42,11 @@ void GodotEOS::_bind_methods() {
 	// Friends methods
 	ClassDB::bind_method(D_METHOD("query_friends"), &GodotEOS::query_friends);
 	ClassDB::bind_method(D_METHOD("get_friends_list"), &GodotEOS::get_friends_list);
-	ClassDB::bind_method(D_METHOD("get_friend_info", "friend_id"), &GodotEOS::get_friend_info);
-	ClassDB::bind_method(D_METHOD("query_friend_info", "friend_id"), &GodotEOS::query_friend_info);
 	ClassDB::bind_method(D_METHOD("query_all_friends_info"), &GodotEOS::query_all_friends_info);
 
 	//WIP: User Info methods
 	ClassDB::bind_method(D_METHOD("query_user_info", "target_user_id"), &GodotEOS::query_user_info);
+	ClassDB::bind_method(D_METHOD("get_user_info", "target_user_id"), &GodotEOS::get_user_info);
 
 	// Achievements methods
 	ClassDB::bind_method(D_METHOD("query_achievement_definitions"), &GodotEOS::query_achievement_definitions);
@@ -94,7 +93,6 @@ void GodotEOS::_bind_methods() {
 
 	// Friends callbacks
 	ClassDB::bind_method(D_METHOD("on_friends_query_completed", "success", "friends_list"), &GodotEOS::on_friends_query_completed);
-	ClassDB::bind_method(D_METHOD("on_friend_info_query_completed", "success", "friend_info"), &GodotEOS::on_friend_info_query_completed);
 
 	// User Info callback
 	ClassDB::bind_method(D_METHOD("on_user_info_query_completed", "success", "user_info"), &GodotEOS::on_user_info_query_completed);
@@ -102,8 +100,7 @@ void GodotEOS::_bind_methods() {
 	// Authentication signals
 	ADD_SIGNAL(MethodInfo("login_completed", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::DICTIONARY, "user_info")));
 	ADD_SIGNAL(MethodInfo("logout_completed", PropertyInfo(Variant::BOOL, "success")));
-	ADD_SIGNAL(MethodInfo("friends_updated", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::ARRAY, "friends_list")));
-	ADD_SIGNAL(MethodInfo("friend_info_updated", PropertyInfo(Variant::DICTIONARY, "friend_info")));
+	ADD_SIGNAL(MethodInfo("friends_query_completed", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::ARRAY, "friends_list")));
 	// Achievements signals
 	ADD_SIGNAL(MethodInfo("achievement_definitions_updated", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::ARRAY, "definitions")));
 	ADD_SIGNAL(MethodInfo("player_achievements_updated", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::ARRAY, "achievements")));
@@ -363,45 +360,20 @@ void GodotEOS::query_friends() {
 	if (!friends) {
 		UtilityFunctions::push_warning("FriendsSubsystem not available");
 		Array empty_friends;
-		emit_signal("friends_updated", false, empty_friends);
+		emit_signal("friends_query_completed", false, empty_friends);
 		return;
 	}
 
 	if (!friends->QueryFriends()) {
 		UtilityFunctions::printerr("FriendsSubsystem query friends failed");
 		Array empty_friends;
-		emit_signal("friends_updated", false, empty_friends);
+		emit_signal("friends_query_completed", false, empty_friends);
 	}
 }
 
 Array GodotEOS::get_friends_list() {
 	auto friends = Get<IFriendsSubsystem>();
 	return friends ? friends->GetFriendsList() : Array();
-}
-
-Dictionary GodotEOS::get_friend_info(const String& friend_id) {
-	auto friends = Get<IFriendsSubsystem>();
-	return friends ? friends->GetFriendInfo(friend_id) : Dictionary();
-}
-
-void GodotEOS::query_friend_info(const String& friend_id) {
-	auto friends = Get<IFriendsSubsystem>();
-	if (!friends) {
-		UtilityFunctions::push_warning("FriendsSubsystem not available");
-		Dictionary empty_info;
-		empty_info["id"] = friend_id;
-		empty_info["error"] = "Subsystem not available";
-		emit_signal("friend_info_updated", empty_info);
-		return;
-	}
-
-	if (!friends->QueryFriendInfo(friend_id)) {
-		UtilityFunctions::printerr("FriendsSubsystem query friend info failed");
-		Dictionary empty_info;
-		empty_info["id"] = friend_id;
-		empty_info["error"] = "Query failed";
-		emit_signal("friend_info_updated", empty_info);
-	}
 }
 
 void GodotEOS::query_all_friends_info() {
@@ -443,6 +415,26 @@ void GodotEOS::query_user_info(const String& target_user_id) {
 		Dictionary empty_info;
 		on_user_info_query_completed(false, empty_info);
 	}
+}
+
+Dictionary GodotEOS::get_user_info(const String& target_user_id) {
+	auto user_info = Get<IUserInfoSubsystem>();
+	if (!user_info) {
+		UtilityFunctions::push_warning("UserInfoSubsystem not available");
+		return Dictionary();
+	}
+
+	// Get the local user ID from authentication subsystem
+	auto auth = Get<IAuthenticationSubsystem>();
+	if (!auth) {
+		UtilityFunctions::push_warning("AuthenticationSubsystem not available");
+		return Dictionary();
+	}
+
+	EOS_EpicAccountId local_id = auth->GetEpicAccountId();
+	EOS_EpicAccountId target_id = FAccountHelpers::EpicAccountIDFromString(target_user_id.utf8().get_data());
+
+	return user_info->GetCachedUserInfo(local_id, target_id);
 }
 
 // Achievements methods
@@ -1066,22 +1058,8 @@ void GodotEOS::on_friends_query_completed(bool success, const Array& friends_lis
 		UtilityFunctions::printerr("GodotEOS: Friends query failed");
 	}
 
-	// Emit the friends_updated signal
-	emit_signal("friends_updated", success, friends_list);
-}
-
-void GodotEOS::on_friend_info_query_completed(bool success, const Dictionary& friend_info) {
-	UtilityFunctions::print("GodotEOS: Friend info query completed - success: " + String(success ? "true" : "false"));
-
-	if (success) {
-		String friend_id = friend_info.get("id", "unknown");
-		UtilityFunctions::print("GodotEOS: Friend info updated for: " + friend_id);
-	} else {
-		UtilityFunctions::printerr("GodotEOS: Friend info query failed");
-	}
-
-	// Emit the friend_info_updated signal
-	emit_signal("friend_info_updated", friend_info);
+	// Emit the friends_query_completed signal
+	emit_signal("friends_query_completed", success, friends_list);
 }
 
 void GodotEOS::on_user_info_query_completed(bool success, const Dictionary& user_info) {

@@ -21,7 +21,6 @@ signal leaderboard_user_scores_completed(success: bool, user_scores: Dictionary)
 
 # Friends signals
 signal friends_query_completed(success: bool, friends_list: Array)
-signal friend_info_query_completed(success: bool, friend_info: Dictionary)
 
 # User Info signals
 signal user_info_query_completed(success: bool, user_info: Dictionary)
@@ -62,8 +61,7 @@ func _setup_signal_connections():
 		_godot_epic.connect("leaderboard_user_scores_updated", _on_leaderboard_user_scores_completed)
 
 		# Connect friends signals
-		_godot_epic.connect("friends_updated", _on_friends_query_completed)
-		_godot_epic.connect("friend_info_updated", _on_friend_info_query_completed)
+		_godot_epic.connect("friends_query_completed", _on_friends_query_completed)
 
 		# Connect user info signals
 		_godot_epic.connect("user_info_updated", _on_user_info_query_completed)
@@ -250,22 +248,11 @@ func get_friends_list() -> Array:
 		return _godot_epic.get_friends_list()
 	return []
 
-func get_friend_info(friend_id: String) -> Dictionary:
-	"""Get cached information about a specific friend"""
+func get_user_info(target_user_id: String) -> Dictionary:
+	"""Get cached information about a specific user"""
 	if _godot_epic:
-		return _godot_epic.get_friend_info(friend_id)
+		return _godot_epic.get_user_info(target_user_id)
 	return {}
-
-func query_friend_info(friend_id: String):
-	"""Query information about a specific friend"""
-	if _debug_mode:
-		print("EpicOS: query_friend_info() called for friend: ", friend_id)
-
-	if not _initialized:
-		print("EpicOS: Error - Not initialized. Call initialize() first.")
-		return
-
-	_godot_epic.query_friend_info(friend_id)
 
 func query_all_friends_info():
 	"""Query information about all friends"""
@@ -548,12 +535,6 @@ func _on_friends_query_completed(success: bool, friends_list: Array):
 	if _debug_mode:
 		print("EpicOS: Friends query completed - Success: ", success, " Count: ", friends_list.size())
 	friends_query_completed.emit(success, friends_list)
-
-func _on_friend_info_query_completed(success: bool, friend_info: Dictionary):
-	"""Handle friend info query completion"""
-	if _debug_mode:
-		print("EpicOS: Friend info query completed - Success: ", success, " Info: ", friend_info)
-	friend_info_query_completed.emit(success, friend_info)
 
 func _on_user_info_query_completed(success: bool, user_info: Dictionary):
 	"""Handle user info query completion"""

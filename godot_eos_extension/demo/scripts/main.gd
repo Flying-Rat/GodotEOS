@@ -108,7 +108,7 @@ func _ready():
 	# Connect to signals for async operations
 	godot_eos.connect("login_completed", _on_login_completed)
 	godot_eos.connect("logout_completed", _on_logout_completed)
-	godot_eos.connect("friends_updated", _on_friends_updated)
+	godot_eos.connect("friends_query_completed", _on_friends_updated)
 	godot_eos.connect("achievement_definitions_updated", _on_achievement_definitions_updated)
 	godot_eos.connect("player_achievements_updated", _on_player_achievements_updated)
 	godot_eos.connect("achievements_unlocked", _on_achievements_unlocked)
