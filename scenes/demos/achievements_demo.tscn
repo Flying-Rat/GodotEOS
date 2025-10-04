@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://6cf02yugmud1"]
 
-[ext_resource type="Script" uid="uid://cnmpfda7y3s3a" path="res://scripts/demos/achievements_demo.gd" id="1"]
+[ext_resource type="Script" uid="uid://e54bfucy802e" path="res://scripts/demos/achievements_demo.gd" id="1"]
 
 [node name="AchievementsDemo" type="Control"]
 layout_mode = 3
@@ -55,7 +55,7 @@ size_flags_vertical = 0
 theme_override_constants/separation = 10
 
 [node name="QuickActionsPanel" type="MarginContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox"]
-custom_minimum_size = Vector2(200, 0)
+custom_minimum_size = Vector2(0.2, 0)
 layout_mode = 2
 size_flags_horizontal = 0
 theme_override_constants/margin_left = 10
@@ -69,29 +69,25 @@ theme_override_constants/separation = 5
 
 [node name="QuickActionsGrid" type="GridContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/VBoxContainer"]
 layout_mode = 2
-size_flags_horizontal = 4
 theme_override_constants/v_separation = 10
 
 [node name="QueryDefinitionsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/VBoxContainer/QuickActionsGrid"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
-text = "Query Definitions"
+text = "1. Query Achievement Definitions"
 
 [node name="QueryPlayerAchievementsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/VBoxContainer/QuickActionsGrid"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
-text = "Query Player Achievements"
+text = "2. Query Player Achievements"
 
-[node name="QueryStatsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/VBoxContainer/QuickActionsGrid"]
+[node name="GetPlayerAchievementsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/VBoxContainer/QuickActionsGrid"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
-text = "Query Stats"
-
-[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/VBoxContainer/QuickActionsGrid"]
-layout_mode = 2
+text = "Get Player Achievements"
 
 [node name="GetDefinitionsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/VBoxContainer/QuickActionsGrid"]
 unique_name_in_owner = true
@@ -99,11 +95,14 @@ custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 text = "Get Definitions"
 
-[node name="GetPlayerAchievementsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/VBoxContainer/QuickActionsGrid"]
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/VBoxContainer/QuickActionsGrid"]
+layout_mode = 2
+
+[node name="QueryStatsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/VBoxContainer/QuickActionsGrid"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
-text = "Get Player Achievements"
+text = "Query Stats"
 
 [node name="GetStatsButton" type="Button" parent="MarginContainer/VBoxContainer/MainSplitHBox/QuickActionsPanel/VBoxContainer/QuickActionsGrid"]
 unique_name_in_owner = true
@@ -134,7 +133,7 @@ theme_override_constants/separation = 10
 [node name="AchievementsLabel" type="Label" parent="MarginContainer/VBoxContainer/MainSplitHBox/MainContentHBox/AchievementsPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "Achievement Progress"
+text = "Player Achievements"
 
 [node name="AchievementsScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox/MainContentHBox/AchievementsPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -164,7 +163,7 @@ theme_override_constants/separation = 10
 [node name="StatsLabel" type="Label" parent="MarginContainer/VBoxContainer/MainSplitHBox/MainContentHBox/StatsPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "Statistics"
+text = "Player Stats"
 
 [node name="StatsScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer/MainSplitHBox/MainContentHBox/StatsPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -223,7 +222,7 @@ theme_override_constants/separation = 10
 
 [node name="StatSectionLabel" type="Label" parent="MarginContainer/VBoxContainer/ManualTestingPanel/MarginContainer/VBoxContainer/ControlsHBox/StatControlSection"]
 layout_mode = 2
-text = "Statistics Control:"
+text = "Stats Control:"
 
 [node name="StatNameLineEdit" type="LineEdit" parent="MarginContainer/VBoxContainer/ManualTestingPanel/MarginContainer/VBoxContainer/ControlsHBox/StatControlSection"]
 unique_name_in_owner = true
