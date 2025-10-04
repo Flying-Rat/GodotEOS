@@ -62,6 +62,12 @@ public:
 	void query_friend_info(const String& friend_id);
 	void query_all_friends_info();
 
+	//WIP: User Info methods
+	//void query_user_info(const String& local_user_id, const String& target_user_id);
+	//Dictionary get_cached_user_info(const String& local_user_id, const String& target_user_id);
+	//String get_user_display_name(const String& local_user_id, const String& target_user_id);
+	//bool is_user_info_cached(const String& local_user_id, const String& target_user_id);
+
 	// Achievements methods
 	void query_achievement_definitions();
 	void query_player_achievements();
@@ -102,6 +108,7 @@ private:
 	void setup_achievements_callbacks();
 	void setup_leaderboards_callbacks();
 	void setup_friends_callbacks();
+	void setup_user_info_callbacks();
 
 	void on_authentication_completed(bool success, const Dictionary& user_info);
 	void on_logout_completed(bool success);
@@ -114,6 +121,7 @@ private:
 	void on_leaderboard_user_scores_completed(bool success, const Dictionary& user_scores);
 	void on_friends_query_completed(bool success, const Array& friends_list);
 	void on_friend_info_query_completed(bool success, const Dictionary& friend_info);
+	void on_user_info_query_completed(bool success, const Dictionary& user_info);
 };
 
 }

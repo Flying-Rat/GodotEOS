@@ -1,6 +1,7 @@
 #include "UserInfoSubsystem.h"
 #include "../Utils/SubsystemManager.h"
 #include "../Platform/IPlatformSubsystem.h"
+#include "../Utils/AccountHelpers.h"
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/core/error_macros.hpp>
 
@@ -9,6 +10,7 @@ namespace godot {
 UserInfoSubsystem::UserInfoSubsystem()
     : userinfo_handle(nullptr)
 {
+    
 }
 
 UserInfoSubsystem::~UserInfoSubsystem() {
@@ -108,7 +110,7 @@ String UserInfoSubsystem::GetUserDisplayName(EOS_EpicAccountId local_user_id, EO
     Dictionary user_info = GetCachedUserInfo(local_user_id, target_user_id);
     
     if (user_info.is_empty()) {
-        return "";
+        return "Fetching...";
     }
 
     // Try display name first
@@ -123,7 +125,7 @@ String UserInfoSubsystem::GetUserDisplayName(EOS_EpicAccountId local_user_id, EO
         return nickname;
     }
 
-    return "";
+    return "Fetching...";
 }
 
 bool UserInfoSubsystem::IsUserInfoCached(EOS_EpicAccountId local_user_id, EOS_EpicAccountId target_user_id) {
@@ -158,18 +160,27 @@ void UserInfoSubsystem::ClearCache() {
     UtilityFunctions::print("UserInfoSubsystem: Cache cleared (EOS manages cache internally)");
 }
 
+void UserInfoSubsystem::SetUserInfoQueryCallback(const Callable& callback) {
+    user_info_query_callback = callback;
+}
+
 Dictionary UserInfoSubsystem::copy_user_info_to_dictionary(EOS_EpicAccountId local_user_id, EOS_EpicAccountId target_user_id) {
+    
     Dictionary result;
 
     EOS_UserInfo_CopyUserInfoOptions copy_options = {};
     copy_options.ApiVersion = EOS_USERINFO_COPYUSERINFO_API_LATEST;
     copy_options.LocalUserId = local_user_id;
     copy_options.TargetUserId = target_user_id;
-
+    
     EOS_UserInfo* user_info = nullptr;
     EOS_EResult copy_result = EOS_UserInfo_CopyUserInfo(userinfo_handle, &copy_options, &user_info);
-
+    
     if (copy_result == EOS_EResult::EOS_Success && user_info) {
+        
+        // Add target user ID to the result
+        result["target_user_id"] = FAccountHelpers::EpicAccountIDToString(target_user_id);
+        
         // Extract display name
         if (user_info->DisplayName && strlen(user_info->DisplayName) > 0) {
             result["display_name"] = String::utf8(user_info->DisplayName);
@@ -212,9 +223,22 @@ void EOS_CALL UserInfoSubsystem::on_query_user_info_complete(const EOS_UserInfo_
 
     if (data->ResultCode == EOS_EResult::EOS_Success) {
         UtilityFunctions::print("UserInfoSubsystem: User info query successful");
+
+        // Create dictionary with user info data
+        Dictionary user_info = subsystem->copy_user_info_to_dictionary(context->local_user_id, context->target_user_id);
+
+        // Emit callback if set
+        if (subsystem->user_info_query_callback.is_valid()) {
+            subsystem->user_info_query_callback.call(true, user_info);
+        }
     } else {
         String error_msg = "UserInfoSubsystem: User info query failed: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
         UtilityFunctions::printerr(error_msg);
+
+        // Emit callback with failure
+        if (subsystem->user_info_query_callback.is_valid()) {
+            subsystem->user_info_query_callback.call(false, Dictionary());
+        }
     }
 }
 

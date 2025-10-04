@@ -67,6 +67,16 @@ public:
      * @brief Clear all cached user information.
      */
     virtual void ClearCache() = 0;
+
+    /**
+     * @brief Set the callback for user info query completion.
+     * 
+     * The callback will be called with (bool success, Dictionary user_info)
+     * where user_info contains the queried user information.
+     * 
+     * @param callback The callable to invoke when user info query completes
+     */
+    virtual void SetUserInfoQueryCallback(const Callable& callback) = 0;
 };
 
 } // namespace godot

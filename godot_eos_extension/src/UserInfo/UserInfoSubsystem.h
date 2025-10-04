@@ -34,6 +34,7 @@ public:
     virtual String GetUserDisplayName(EOS_EpicAccountId local_user_id, EOS_EpicAccountId target_user_id) override;
     virtual bool IsUserInfoCached(EOS_EpicAccountId local_user_id, EOS_EpicAccountId target_user_id) override;
     virtual void ClearCache() override;
+    virtual void SetUserInfoQueryCallback(const Callable& callback) override;
 
 private:
     // EOS handles
@@ -45,6 +46,9 @@ private:
         EOS_EpicAccountId local_user_id;
         EOS_EpicAccountId target_user_id;
     };
+
+    // Callback callable
+    Callable user_info_query_callback;
 
     // EOS callbacks
     static void EOS_CALL on_query_user_info_complete(const EOS_UserInfo_QueryUserInfoCallbackInfo* data);
