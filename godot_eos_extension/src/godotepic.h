@@ -62,11 +62,8 @@ public:
 	void query_friend_info(const String& friend_id);
 	void query_all_friends_info();
 
-	//WIP: User Info methods
-	//void query_user_info(const String& local_user_id, const String& target_user_id);
-	//Dictionary get_cached_user_info(const String& local_user_id, const String& target_user_id);
-	//String get_user_display_name(const String& local_user_id, const String& target_user_id);
-	//bool is_user_info_cached(const String& local_user_id, const String& target_user_id);
+	// User Info methods
+	void query_user_info(const String& target_user_id);
 
 	// Achievements methods
 	void query_achievement_definitions();

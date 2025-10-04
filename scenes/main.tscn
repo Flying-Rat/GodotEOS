@@ -102,6 +102,11 @@ layout_mode = 2
 disabled = true
 text = "Leaderboard Test"
 
+[node name="UserInfoButton" type="Button" parent="VBoxContainer/FeaturesSection/FeaturesGrid"]
+layout_mode = 2
+disabled = true
+text = "Query User Info"
+
 [node name="SaveButton" type="Button" parent="VBoxContainer/FeaturesSection/FeaturesGrid"]
 layout_mode = 2
 disabled = true

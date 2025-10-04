@@ -47,10 +47,7 @@ void GodotEOS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("query_all_friends_info"), &GodotEOS::query_all_friends_info);
 
 	//WIP: User Info methods
-	//ClassDB::bind_method(D_METHOD("query_user_info", "local_user_id", "target_user_id"), &GodotEOS::query_user_info);
-	//ClassDB::bind_method(D_METHOD("get_cached_user_info", "local_user_id", "target_user_id"), &GodotEOS::get_cached_user_info);
-	//ClassDB::bind_method(D_METHOD("get_user_display_name", "local_user_id", "target_user_id"), &GodotEOS::get_user_display_name);
-	//ClassDB::bind_method(D_METHOD("is_user_info_cached", "local_user_id", "target_user_id"), &GodotEOS::is_user_info_cached);
+	ClassDB::bind_method(D_METHOD("query_user_info", "target_user_id"), &GodotEOS::query_user_info);
 
 	// Achievements methods
 	ClassDB::bind_method(D_METHOD("query_achievement_definitions"), &GodotEOS::query_achievement_definitions);
@@ -121,6 +118,9 @@ void GodotEOS::_bind_methods() {
 
 	// Stats signals
 	ADD_SIGNAL(MethodInfo("stats_ingested", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::ARRAY, "stat_names")));
+
+	// User Info signals
+	ADD_SIGNAL(MethodInfo("user_info_updated", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::DICTIONARY, "user_info")));
 }
 
 GodotEOS::GodotEOS() {
@@ -416,64 +416,34 @@ void GodotEOS::query_all_friends_info() {
 	}
 }
 
-// // User Info methods
-// void GodotEOS::query_user_info(const String& local_user_id, const String& target_user_id) {
-// 	auto user_info = Get<IUserInfoSubsystem>();
-// 	if (!user_info) {
-// 		UtilityFunctions::push_warning("UserInfoSubsystem not available");
-// 		Dictionary empty_info;
-// 		on_user_info_query_completed(false, empty_info);
-// 		return;
-// 	}
+// User Info methods
+void GodotEOS::query_user_info(const String& target_user_id) {
+	auto user_info = Get<IUserInfoSubsystem>();
+	if (!user_info) {
+		UtilityFunctions::push_warning("UserInfoSubsystem not available");
+		Dictionary empty_info;
+		on_user_info_query_completed(false, empty_info);
+		return;
+	}
 
-// 	EOS_EpicAccountId local_id = FAccountHelpers::EpicAccountIDFromString(local_user_id.utf8().get_data());
-// 	EOS_EpicAccountId target_id = FAccountHelpers::EpicAccountIDFromString(target_user_id.utf8().get_data());
+	// Get the local user ID from authentication subsystem
+	auto auth = Get<IAuthenticationSubsystem>();
+	if (!auth) {
+		UtilityFunctions::push_warning("AuthenticationSubsystem not available");
+		Dictionary empty_info;
+		on_user_info_query_completed(false, empty_info);
+		return;
+	}
 
-// 	if (!user_info->QueryUserInfo(local_id, target_id)) {
-// 		UtilityFunctions::printerr("UserInfoSubsystem query user info failed");
-// 		Dictionary empty_info;
-// 		on_user_info_query_completed(false, empty_info);
-// 	}
-// }
+	EOS_EpicAccountId local_id = auth->GetEpicAccountId();
+	EOS_EpicAccountId target_id = FAccountHelpers::EpicAccountIDFromString(target_user_id.utf8().get_data());
 
-// Dictionary GodotEOS::get_cached_user_info(const String& local_user_id, const String& target_user_id) {
-// 	auto user_info = Get<IUserInfoSubsystem>();
-// 	if (!user_info) {
-// 		UtilityFunctions::push_warning("UserInfoSubsystem not available");
-// 		return Dictionary();
-// 	}
-
-// 	EOS_EpicAccountId local_id = FAccountHelpers::EpicAccountIDFromString(local_user_id.utf8().get_data());
-// 	EOS_EpicAccountId target_id = FAccountHelpers::EpicAccountIDFromString(target_user_id.utf8().get_data());
-
-// 	return user_info->GetCachedUserInfo(local_id, target_id);
-// }
-
-// String GodotEOS::get_user_display_name(const String& local_user_id, const String& target_user_id) {
-// 	auto user_info = Get<IUserInfoSubsystem>();
-// 	if (!user_info) {
-// 		UtilityFunctions::push_warning("UserInfoSubsystem not available");
-// 		return "";
-// 	}
-
-// 	EOS_EpicAccountId local_id = FAccountHelpers::EpicAccountIDFromString(local_user_id.utf8().get_data());
-// 	EOS_EpicAccountId target_id = FAccountHelpers::EpicAccountIDFromString(target_user_id.utf8().get_data());
-
-// 	return user_info->GetUserDisplayName(local_id, target_id);
-// }
-
-// bool GodotEOS::is_user_info_cached(const String& local_user_id, const String& target_user_id) {
-// 	auto user_info = Get<IUserInfoSubsystem>();
-// 	if (!user_info) {
-// 		UtilityFunctions::push_warning("UserInfoSubsystem not available");
-// 		return false;
-// 	}
-
-// 	EOS_EpicAccountId local_id = FAccountHelpers::EpicAccountIDFromString(local_user_id.utf8().get_data());
-// 	EOS_EpicAccountId target_id = FAccountHelpers::EpicAccountIDFromString(target_user_id.utf8().get_data());
-
-// 	return user_info->IsUserInfoCached(local_id, target_id);
-// }
+	if (!user_info->QueryUserInfo(local_id, target_id)) {
+		UtilityFunctions::printerr("UserInfoSubsystem query user info failed");
+		Dictionary empty_info;
+		on_user_info_query_completed(false, empty_info);
+	}
+}
 
 // Achievements methods
 void GodotEOS::query_achievement_definitions() {

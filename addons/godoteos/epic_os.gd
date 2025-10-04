@@ -23,6 +23,9 @@ signal leaderboard_user_scores_completed(success: bool, user_scores: Dictionary)
 signal friends_query_completed(success: bool, friends_list: Array)
 signal friend_info_query_completed(success: bool, friend_info: Dictionary)
 
+# User Info signals
+signal user_info_query_completed(success: bool, user_info: Dictionary)
+
 var _godot_epic: GodotEOS = null
 var _initialized: bool = false
 var _debug_mode: bool = false
@@ -61,6 +64,9 @@ func _setup_signal_connections():
 		# Connect friends signals
 		_godot_epic.connect("friends_updated", _on_friends_query_completed)
 		_godot_epic.connect("friend_info_updated", _on_friend_info_query_completed)
+
+		# Connect user info signals
+		_godot_epic.connect("user_info_updated", _on_user_info_query_completed)
 
 func initialize(config: Dictionary = {}) -> bool:
 	"""Initialize the EOS SDK with configuration options"""
@@ -272,6 +278,20 @@ func query_all_friends_info():
 
 	_godot_epic.query_all_friends_info()
 
+# =============================================================================
+# USER INFO METHODS
+# =============================================================================
+
+func query_user_info(target_user_id: String):
+	"""Query user information for a specific user"""
+	if _debug_mode:
+		print("EpicOS: query_user_info() called for target: ", target_user_id)
+
+	if not _initialized:
+		print("EpicOS: Error - Not initialized. Call initialize() first.")
+		return
+
+	_godot_epic.query_user_info(target_user_id)
 # =============================================================================
 # ACHIEVEMENTS METHODS
 # =============================================================================
@@ -534,6 +554,12 @@ func _on_friend_info_query_completed(success: bool, friend_info: Dictionary):
 	if _debug_mode:
 		print("EpicOS: Friend info query completed - Success: ", success, " Info: ", friend_info)
 	friend_info_query_completed.emit(success, friend_info)
+
+func _on_user_info_query_completed(success: bool, user_info: Dictionary):
+	"""Handle user info query completion"""
+	if _debug_mode:
+		print("EpicOS: User info query completed - Success: ", success, " Info: ", user_info)
+	user_info_query_completed.emit(success, user_info)
 
 # =============================================================================
 # PROCESS HANDLING - Integrates with GDExtension ticking

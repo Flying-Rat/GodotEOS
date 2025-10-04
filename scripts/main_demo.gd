@@ -10,6 +10,7 @@ extends Control
 @onready var ingest_stat_button = $VBoxContainer/FeaturesSection/StatsSection/IngestStatButton
 @onready var query_stats_button = $VBoxContainer/FeaturesSection/StatsSection/QueryStatsButton
 @onready var leaderboard_button = $VBoxContainer/FeaturesSection/LeaderboardButton
+@onready var user_info_button = $VBoxContainer/FeaturesSection/FeaturesGrid/UserInfoButton
 @onready var save_button = $VBoxContainer/FeaturesSection/FeaturesGrid/SaveButton
 @onready var load_button = $VBoxContainer/FeaturesSection/FeaturesGrid/LoadButton
 
@@ -23,6 +24,7 @@ func _ready():
 	ingest_stat_button.pressed.connect(_on_ingest_stat_pressed)
 	query_stats_button.pressed.connect(_on_query_stats_pressed)
 	leaderboard_button.pressed.connect(_on_leaderboard_pressed)
+	user_info_button.pressed.connect(_on_user_info_pressed)
 	save_button.pressed.connect(_on_save_pressed)
 	load_button.pressed.connect(_on_load_pressed)
 
@@ -32,6 +34,7 @@ func _ready():
 	EpicOS.achievement_stats_updated.connect(_on_achievement_stats_updated)
 	EpicOS.stats_updated.connect(_on_stats_updated)
 	EpicOS.leaderboard_retrieved.connect(_on_leaderboard_retrieved)
+	EpicOS.user_info_query_completed.connect(_on_user_info_completed)
 	EpicOS.file_saved.connect(_on_file_saved)
 	EpicOS.file_loaded.connect(_on_file_loaded)
 
@@ -53,6 +56,7 @@ func update_ui_state():
 	ingest_stat_button.disabled = not logged_in
 	query_stats_button.disabled = not logged_in
 	leaderboard_button.disabled = not logged_in
+	user_info_button.disabled = not logged_in
 	save_button.disabled = not logged_in
 	load_button.disabled = not logged_in
 
@@ -98,6 +102,16 @@ func _on_leaderboard_pressed():
 	var score = randi_range(500, 2000)
 	EpicOS.submit_score("demo_leaderboard", score)
 	EpicOS.get_leaderboard("demo_leaderboard", 5)
+
+func _on_user_info_pressed():
+	_add_output("Querying user info...")
+	# Query our own user info (local user = target user)
+	var epic_account_id = EpicOS.get_epic_account_id()
+	if epic_account_id != "":
+		EpicOS.query_user_info(epic_account_id)
+		_add_output("Querying user info for: " + epic_account_id)
+	else:
+		_add_output("ERROR: No Epic Account ID available")
 
 func _on_save_pressed():
 	_add_output("Saving game data to cloud...")
@@ -151,7 +165,18 @@ func _on_stats_updated(stats: Dictionary):
 func _on_leaderboard_retrieved(leaderboard_data: Array):
 	_add_output("Leaderboard data received:")
 	for entry in leaderboard_data:
-		_add_output("  #%d - %s: %d points" % [entry.rank, entry.display_name, entry.score])
+		_add_output("  %d - %s: %d points" % [entry.rank, entry.display_name, entry.score])
+
+func _on_user_info_completed(success: bool, user_info: Dictionary):
+	if success:
+		_add_output("User info query successful!")
+		_add_output("Display Name: " + str(user_info.get("display_name", "N/A")))
+		_add_output("Nickname: " + str(user_info.get("nickname", "N/A")))
+		_add_output("Country: " + str(user_info.get("country", "N/A")))
+		_add_output("Preferred Language: " + str(user_info.get("preferred_language", "N/A")))
+		_add_output("Target User ID: " + str(user_info.get("target_user_id", "N/A")))
+	else:
+		_add_output("User info query failed!")
 
 func _on_file_saved(success: bool, filename: String):
 	if success:
