@@ -34,6 +34,7 @@ extends Control
 var cached_definitions: Array = []
 var cached_ranks: Array = []
 var cached_user_scores: Dictionary = {}
+var selected_leaderboard_id: String = ""
 
 # Test leaderboard IDs and stats for demonstration
 var test_leaderboard_ids: Array = [
@@ -83,6 +84,9 @@ func _ready():
 	if EpicOS:
 		EpicOS.set_debug_mode(true)
 
+		# Query friends to ensure they're cached for user scores queries
+		EpicOS.query_friends()
+
 	_update_ui_state()
 	_log_message("[color=cyan]Leaderboards Demo initialized. Ready to demonstrate EpicOS leaderboards functionality.[/color]")
 
@@ -99,9 +103,12 @@ func _on_query_ranks_button_pressed():
 		_log_message("[color=red]No leaderboard definitions available. Query definitions first![/color]")
 		return
 
-	# Query ranks for the first available leaderboard
-	var first_leaderboard = cached_definitions[0]
-	var leaderboard_id = str(first_leaderboard.get("leaderboard_id", ""))
+	# Use selected leaderboard ID from cache, or fall back to first available
+	var leaderboard_id = selected_leaderboard_id
+	if leaderboard_id.is_empty() and not cached_definitions.is_empty():
+		# Fall back to first leaderboard if nothing selected
+		var first_leaderboard = cached_definitions[0]
+		leaderboard_id = str(first_leaderboard.get("leaderboard_id", ""))
 
 	if leaderboard_id.is_empty():
 		_log_message("[color=red]Invalid leaderboard definition![/color]")
@@ -119,9 +126,12 @@ func _on_query_user_scores_button_pressed():
 		_log_message("[color=red]No leaderboard definitions available. Query definitions first![/color]")
 		return
 
-	# Query user scores for the first available leaderboard
-	var first_leaderboard = cached_definitions[0]
-	var leaderboard_id = str(first_leaderboard.get("leaderboard_id", ""))
+	# Use selected leaderboard ID from cache, or fall back to first available
+	var leaderboard_id = selected_leaderboard_id
+	if leaderboard_id.is_empty() and not cached_definitions.is_empty():
+		# Fall back to first leaderboard if nothing selected
+		var first_leaderboard = cached_definitions[0]
+		leaderboard_id = str(first_leaderboard.get("leaderboard_id", ""))
 
 	if leaderboard_id.is_empty():
 		_log_message("[color=red]Invalid leaderboard definition![/color]")
@@ -137,10 +147,19 @@ func _on_query_user_scores_button_pressed():
 		_log_message("[color=red]Unable to get current user ID. Make sure you're logged in![/color]")
 		return
 
-	# Query scores for the current user
-	var user_ids = [current_user_id]
+	# Get cached friends list and extract their user IDs
+	var friends_list = EpicOS.get_friends_list()
+	var user_ids = [current_user_id]  # Start with current user
+
+	# Add all cached friends
+	for friend in friends_list:
+		var friend_user_id = friend.get("id", "")
+		if not friend_user_id.is_empty() and friend_user_id != current_user_id:
+			user_ids.append(friend_user_id)
+
 	_log_message("[color=yellow]Querying user scores for leaderboard: " + leaderboard_id + "[/color]")
-	_log_message("[color=yellow]User ID: " + current_user_id + "[/color]")
+	_log_message("[color=yellow]Users: " + str(user_ids) + "[/color]")
+	_log_message("[color=yellow]Including " + str(user_ids.size()) + " users (current user + " + str(user_ids.size() - 1) + " friends)[/color]")
 
 	EpicOS.query_leaderboard_user_scores(leaderboard_id, user_ids)
 
@@ -149,11 +168,11 @@ func _on_refresh_button_pressed():
 	_refresh_displays()
 
 func _on_query_specific_ranks_button_pressed():
-	var leaderboard_id = leaderboard_input.text.strip_edges()
+	var leaderboard_id = selected_leaderboard_id
 	var limit = int(limit_input.value)
 
 	if leaderboard_id.is_empty():
-		_log_message("[color=red]Please enter a leaderboard ID![/color]")
+		_log_message("[color=red]Please select a leaderboard from the definitions list first![/color]")
 		return
 
 	# Validate that the leaderboard ID exists
@@ -228,6 +247,7 @@ func _on_definitions_list_item_selected(index: int):
 	if index >= 0 and index < cached_definitions.size():
 		var definition = cached_definitions[index]
 		var leaderboard_id = str(definition.get("leaderboard_id", ""))
+		selected_leaderboard_id = leaderboard_id  # Cache the selected leaderboard ID
 		leaderboard_input.text = leaderboard_id
 		_log_message("[color=cyan]Selected leaderboard: " + str(definition) + "[/color]")
 
@@ -262,10 +282,11 @@ func _on_leaderboard_definitions_completed(success: bool, definitions: Array):
 				var stat_name = definition.get("stat_name", "")
 				_log_message("[color=cyan]  • " + lb_id + " (stat: " + stat_name + ")[/color]")
 
-			# Auto-populate the first leaderboard ID in the input field
+			# Auto-populate the first leaderboard ID in the input field and cache it
 			if leaderboard_input:
 				var first_id = definitions[0].get("leaderboard_id", "")
 				leaderboard_input.text = first_id
+				selected_leaderboard_id = first_id  # Cache the auto-selected leaderboard
 				_log_message("[color=green]Auto-populated leaderboard input with: " + first_id + "[/color]")
 	else:
 		_log_message("[color=red]✗ Leaderboard definitions query failed![/color]")
@@ -312,6 +333,7 @@ func _on_logout_status_changed(success: bool):
 		cached_definitions.clear()
 		cached_ranks.clear()
 		cached_user_scores.clear()
+		selected_leaderboard_id = ""  # Clear selected leaderboard
 		_refresh_displays()
 	_update_ui_state()
 
@@ -356,7 +378,7 @@ func _refresh_ranks_display():
 		var display_name = str(rank_entry.get("display_name", ""))
 		var score = rank_entry.get("score", 0)
 
-		var display_text = "#" + str(rank) + " - " + display_name + ": " + str(score) + " - " + user_id
+		var display_text = "" + str(rank) + " - " + display_name + ": " + str(score) + " - " + user_id
 		ranks_list.add_item(display_text)
 
 	_log_message("[color=cyan]Refreshed ranks display with " + str(cached_ranks.size()) + " entries[/color]")
