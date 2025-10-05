@@ -317,6 +317,18 @@ func _on_leaderboard_user_scores_completed(success: bool, user_scores: Dictionar
 		_log_message("[color=green]✓ Leaderboard user scores query completed![/color]")
 		_log_message("[color=green]Found scores for " + str(user_scores.size()) + " users[/color]")
 
+		# Log which users had scores vs were requested
+		if user_scores.size() > 0:
+			_log_message("[color=cyan]Users with scores:[/color]")
+			for user_id in user_scores:
+				var score_data = user_scores[user_id]
+				var score = score_data.get("score", 0)
+				var rank = score_data.get("rank", "N/A")
+				_log_message("[color=cyan]  • " + user_id + ": " + str(score) + " (Rank: " + str(rank) + ")[/color]")
+		else:
+			_log_message("[color=yellow]⚠ No users had scores for this leaderboard[/color]")
+			_log_message("[color=yellow]Users need to ingest stats first before appearing on leaderboards[/color]")
+
 		cached_user_scores = user_scores
 		_refresh_user_scores_display()
 	else:

@@ -208,7 +208,7 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
     options.UserIds = context->user_ids.data();
     options.UserIdsCount = static_cast<uint32_t>(context->user_ids.size());
     options.StatInfo = &context->stat_info;
-    options.StatInfoCount = 1;
+    options.StatInfoCount = 1;  // Number of stats to query (always 1 in this implementation)
     options.StartTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
     options.EndTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
     options.LocalUserId = auth->GetProductUserId();
@@ -395,6 +395,13 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_user_scores_complete(c
     if (data->ResultCode == EOS_EResult::EOS_Success) {
         self->leaderboard_user_scores.clear();
 
+        // Log requested users for debugging
+        UtilityFunctions::print("LeaderboardsSubsystem: Requested scores for " + String::num_int64(context->user_ids.size()) + " users");
+        for (size_t i = 0; i < context->user_ids.size(); i++) {
+            String user_id_str = FAccountHelpers::ProductUserIDToString(context->user_ids[i]);
+            UtilityFunctions::print("LeaderboardsSubsystem: Requested user: " + user_id_str);
+        }
+
         // Get user scores count
         EOS_Leaderboards_GetLeaderboardUserScoreCountOptions count_options = {};
         count_options.ApiVersion = EOS_LEADERBOARDS_GETLEADERBOARDUSERSCORECOUNT_API_LATEST;
@@ -402,7 +409,7 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_user_scores_complete(c
 
         uint32_t scores_count = EOS_Leaderboards_GetLeaderboardUserScoreCount(self->leaderboards_handle, &count_options);
 
-        UtilityFunctions::print("LeaderboardsSubsystem: Retrieved " + String::num_int64(scores_count) + " user scores");
+        UtilityFunctions::print("LeaderboardsSubsystem: Retrieved " + String::num_int64(scores_count) + " user scores (only users with stats are returned)");
 
         for (uint32_t i = 0; i < scores_count; i++) {
             EOS_Leaderboards_CopyLeaderboardUserScoreByIndexOptions copy_options = {};
@@ -422,6 +429,7 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_user_scores_complete(c
                 score_dict["rank"] = (int)(i + 1);  // Results are sorted by aggregation method
 
                 self->leaderboard_user_scores[user_id] = score_dict;
+                UtilityFunctions::print("LeaderboardsSubsystem: Found score for user " + user_id + ": " + String::num_int64(user_score->Score));
                 EOS_Leaderboards_LeaderboardUserScore_Release(user_score);
             }
         }
