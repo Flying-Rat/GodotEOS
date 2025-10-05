@@ -393,6 +393,86 @@ func _on_logout_status_changed(success: bool):
 	_update_ui_state()
 
 # ============================================================================
+# ITEM CLICK HANDLERS
+# ============================================================================
+
+func _on_achievement_item_gui_input(event: InputEvent, achievement_id: String):
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		achievement_input.text = achievement_id
+		_log_message("[color=blue]Selected achievement: " + achievement_id + "[/color]")
+
+func _on_stat_item_gui_input(event: InputEvent, stat_name: String):
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		stat_name_input.text = stat_name
+		_log_message("[color=blue]Selected stat: " + stat_name + "[/color]")
+
+func _on_item_mouse_entered(item: PanelContainer):
+	item.add_theme_stylebox_override("panel", _create_hover_style())
+
+func _on_item_mouse_exited(item: PanelContainer):
+	item.add_theme_stylebox_override("panel", _create_normal_style())
+
+# ============================================================================
+# STYLING HELPERS
+# ============================================================================
+
+func _create_normal_style() -> StyleBoxFlat:
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.15, 0.15, 0.15, 0.8)
+	style.border_width_left = 1
+	style.border_width_right = 1
+	style.border_width_top = 1
+	style.border_width_bottom = 1
+	style.border_color = Color(0.3, 0.3, 0.3)
+	style.corner_radius_top_left = 4
+	style.corner_radius_top_right = 4
+	style.corner_radius_bottom_left = 4
+	style.corner_radius_bottom_right = 4
+	return style
+
+func _create_hover_style() -> StyleBoxFlat:
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.25, 0.25, 0.25, 0.9)
+	style.border_width_left = 1
+	style.border_width_right = 1
+	style.border_width_top = 1
+	style.border_width_bottom = 1
+	style.border_color = Color(0.5, 0.5, 0.5)
+	style.corner_radius_top_left = 4
+	style.corner_radius_top_right = 4
+	style.corner_radius_bottom_left = 4
+	style.corner_radius_bottom_right = 4
+	return style
+
+func _create_placeholder_style() -> StyleBoxFlat:
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.1, 0.1, 0.1, 0.6)
+	style.border_width_left = 1
+	style.border_width_right = 1
+	style.border_width_top = 1
+	style.border_width_bottom = 1
+	style.border_color = Color(0.2, 0.2, 0.2)
+	style.corner_radius_top_left = 4
+	style.corner_radius_top_right = 4
+	style.corner_radius_bottom_left = 4
+	style.corner_radius_bottom_right = 4
+	return style
+
+func _apply_item_styling(item: PanelContainer, is_placeholder: bool = false):
+	item.mouse_filter = Control.MOUSE_FILTER_PASS
+	
+	if is_placeholder:
+		item.add_theme_stylebox_override("panel", _create_placeholder_style())
+	else:
+		item.add_theme_stylebox_override("panel", _create_normal_style())
+		item.mouse_entered.connect(_on_item_mouse_entered.bind(item))
+		item.mouse_exited.connect(_on_item_mouse_exited.bind(item))
+
+# ============================================================================
+# DISPLAY UPDATE FUNCTIONS
+# ============================================================================
+
+# ============================================================================
 # DISPLAY UPDATE FUNCTIONS
 # ============================================================================
 
@@ -459,6 +539,8 @@ func _create_placeholder_card():
 	item.custom_minimum_size = Vector2(0, 40)  # Match simplified height
 	item.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	
+	_apply_item_styling(item, true)  # true for placeholder styling
+	
 	var margin = MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 8)
 	margin.add_theme_constant_override("margin_right", 8)
@@ -491,6 +573,8 @@ func _create_achievement_card(definition: Dictionary, player_data: Dictionary):
 	item.custom_minimum_size = Vector2(0, 40)  # Much smaller height
 	item.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	
+	_apply_item_styling(item)
+	
 	# Add minimal margin
 	var margin = MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 8)
@@ -505,17 +589,11 @@ func _create_achievement_card(definition: Dictionary, player_data: Dictionary):
 	margin.add_child(hbox)
 	
 	# Achievement name
-	var name_label = RichTextLabel.new()
+	var name_label = Label.new()
 	name_label.text = display_name
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_label.add_theme_font_size_override("normal_font_size", 14)
-	name_label.add_theme_font_size_override("bold_font_size", 14)
-	name_label.scroll_active = false
-	name_label.selection_enabled = true
-	if is_unlocked:
-		name_label.modulate = Color.WHITE
-	else:
-		name_label.modulate = Color.LIGHT_GRAY
+	name_label.add_theme_font_size_override("font_size", 14)
+	name_label.modulate = Color.WHITE if is_unlocked else Color.LIGHT_GRAY
 	hbox.add_child(name_label)
 	
 	# State display (no percentages)
@@ -527,6 +605,9 @@ func _create_achievement_card(definition: Dictionary, player_data: Dictionary):
 	else:
 		state_label.modulate = Color.YELLOW
 	hbox.add_child(state_label)
+	
+	# Connect click signal
+	item.gui_input.connect(_on_achievement_item_gui_input.bind(achievement_id))
 	
 	# Add the item to the container
 	achievement_cards_container.add_child(item)
@@ -540,6 +621,8 @@ func _create_stat_item(stat: Dictionary):
 	var item = PanelContainer.new()
 	item.custom_minimum_size = Vector2(0, 40)
 	item.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	
+	_apply_item_styling(item)
 	
 	# Add minimal margin
 	var margin = MarginContainer.new()
@@ -555,13 +638,10 @@ func _create_stat_item(stat: Dictionary):
 	margin.add_child(hbox)
 	
 	# Stat name
-	var name_label = RichTextLabel.new()
+	var name_label = Label.new()
 	name_label.text = stat_name
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_label.add_theme_font_size_override("normal_font_size", 14)
-	name_label.add_theme_font_size_override("bold_font_size", 14)
-	name_label.scroll_active = false
-	name_label.selection_enabled = true
+	name_label.add_theme_font_size_override("font_size", 14)
 	name_label.modulate = Color.WHITE
 	hbox.add_child(name_label)
 	
@@ -571,6 +651,9 @@ func _create_stat_item(stat: Dictionary):
 	value_label.add_theme_font_size_override("font_size", 14)
 	value_label.modulate = Color.GREEN
 	hbox.add_child(value_label)
+	
+	# Connect click signal
+	item.gui_input.connect(_on_stat_item_gui_input.bind(stat_name))
 	
 	# Add the item to the container
 	stats_container.add_child(item)
