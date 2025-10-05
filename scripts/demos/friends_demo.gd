@@ -1,16 +1,14 @@
 extends Control
 
 # Friends Demo Script
-# Demonstrates how to use the EpicOS friends features
+# Demonstrates EpicOS friends functionality with simplified interface
 
 @onready var status_label: Label = $VBoxContainer/HeaderContainer/StatusPanel/StatusContainer/StatusLabel
 @onready var query_friends_button: Button = $VBoxContainer/ActionsSection/QueryFriendsButton
-@onready var query_all_info_button: Button = $VBoxContainer/ActionsSection/QueryAllInfoButton
-@onready var refresh_button: Button = $VBoxContainer/HeaderContainer/RefreshButton
+@onready var query_friend_info_button: Button = $VBoxContainer/ActionsSection/QueryFriendInfoButton
 @onready var friends_list: ItemList = $VBoxContainer/FriendsSection/FriendsListPanel/FriendsListContainer/FriendsList
 @onready var selected_friend_label: Label = $VBoxContainer/FriendsSection/FriendDetailsPanel/FriendDetailsContainer/FriendDetailsLabel
 @onready var friend_info_text: RichTextLabel = $VBoxContainer/FriendsSection/FriendDetailsPanel/FriendDetailsContainer/FriendInfoScrollContainer/FriendInfoText
-@onready var query_friend_info_button: Button = $VBoxContainer/ActionsSection/QueryFriendInfoButton
 @onready var output_text: RichTextLabel = $VBoxContainer/OutputSection/OutputText
 @onready var back_button: Button = $VBoxContainer/HeaderContainer/BackButton
 
@@ -20,8 +18,6 @@ var selected_friend_id: String = ""
 func _ready():
 	# Connect button signals
 	query_friends_button.pressed.connect(_on_query_friends_button_pressed)
-	query_all_info_button.pressed.connect(_on_query_all_info_button_pressed)
-	refresh_button.pressed.connect(_on_refresh_button_pressed)
 	query_friend_info_button.pressed.connect(_on_query_friend_info_button_pressed)
 	back_button.pressed.connect(_on_back_button_pressed)
 
@@ -31,7 +27,7 @@ func _ready():
 	# Connect EpicOS signals
 	if EpicOS:
 		EpicOS.friends_query_completed.connect(_on_friends_query_completed)
-		EpicOS.friend_info_query_completed.connect(_on_friend_info_query_completed)
+		EpicOS.user_info_query_completed.connect(_on_friend_info_query_completed)
 		EpicOS.login_completed.connect(_on_login_status_changed)
 		EpicOS.logout_completed.connect(_on_logout_status_changed)
 
@@ -40,42 +36,31 @@ func _ready():
 		EpicOS.set_debug_mode(true)
 
 	_update_ui_state()
-	_log_message("[color=cyan]Friends Demo initialized. Ready to demonstrate EpicOS friends functionality.[/color]")
+	_log_message("[color=cyan]Friends Demo initialized.[/color]")
+	_log_message("[color=yellow]1. Click 'Query Friends List' to get your friends[/color]")
+	_log_message("[color=yellow]2. Select a friend and click 'Query Selected Friend Info' to get their details[/color]")
 
 func _on_query_friends_button_pressed():
-	_log_message("[color=yellow]Querying friends list...[/color]")
+	_log_message("[color=yellow]🔍 Querying friends list...[/color]")
 
 	if EpicOS:
 		EpicOS.query_friends()
 	else:
 		_log_message("[color=red]EpicOS not available![/color]")
 
-func _on_query_all_info_button_pressed():
-	_log_message("[color=yellow]Querying detailed info for all friends...[/color]")
-
-	if EpicOS:
-		EpicOS.query_all_friends_info()
-	else:
-		_log_message("[color=red]EpicOS not available![/color]")
-
-func _on_refresh_button_pressed():
-	_log_message("[color=yellow]Refreshing friends display from cache...[/color]")
-	_refresh_friends_display()
-
 func _on_query_friend_info_button_pressed():
 	if selected_friend_id.is_empty():
-		_log_message("[color=red]No friend selected![/color]")
+		_log_message("[color=red]No friend selected! Select a friend from the list first.[/color]")
 		return
 
-	_log_message("[color=yellow]Querying info for friend: " + selected_friend_id + "[/color]")
+	_log_message("[color=yellow]📋 Querying info for selected friend: " + selected_friend_id + "[/color]")
 
 	if EpicOS:
-		EpicOS.query_friend_info(selected_friend_id)
+		EpicOS.query_user_info(selected_friend_id)
 	else:
 		_log_message("[color=red]EpicOS not available![/color]")
 
 func _on_back_button_pressed():
-	# Navigate back to demo menu
 	get_tree().change_scene_to_file("res://scenes/demos/demo_menu.tscn")
 
 func _on_friends_list_item_selected(index: int):
@@ -84,44 +69,49 @@ func _on_friends_list_item_selected(index: int):
 		if friend_data.has("id"):
 			selected_friend_id = friend_data["id"]
 			selected_friend_label.text = "Selected: " + str(friend_data.get("display_name", "Unknown"))
-			_update_friend_details(friend_data)
+			_update_friend_details(selected_friend_id)
 			_update_ui_state()
 		else:
 			_log_message("[color=red]Invalid friend data![/color]")
 
 func _on_friends_query_completed(success: bool, friends_list_data: Array):
 	if success:
-		_log_message("[color=green]✓ Friends query completed successfully![/color]")
+		_log_message("[color=green]✓ Friends list query completed![/color]")
 		_log_message("[color=green]Found " + str(friends_list_data.size()) + " friends[/color]")
 
 		cached_friends = friends_list_data
 		_refresh_friends_display()
 	else:
-		_log_message("[color=red]✗ Friends query failed![/color]")
+		_log_message("[color=red]✗ Friends list query failed![/color]")
 
 func _on_friend_info_query_completed(success: bool, friend_info: Dictionary):
 	if success:
 		_log_message("[color=green]✓ Friend info query completed![/color]")
-		_log_message("[color=green]Friend info: " + str(friend_info) + "[/color]")
 
-		# Update the cached friend data
+		# Update cached friend data with new info
+		var target_user_id = friend_info.get("target_user_id", "")
 		for i in range(cached_friends.size()):
-			var friend = cached_friends[i]
-			if friend.has("friend_id") and friend["friend_id"] == friend_info.get("friend_id", ""):
-				# Merge the new info with existing data
-				for key in friend_info:
-					friend[key] = friend_info[key]
+			if cached_friends[i].get("id", "") == target_user_id:
+				# Update only the user info fields, preserving existing data like status
+				cached_friends[i]["display_name"] = friend_info.get("display_name", cached_friends[i].get("display_name", ""))
+				cached_friends[i]["nickname"] = friend_info.get("nickname", cached_friends[i].get("nickname", ""))
+				cached_friends[i]["country"] = friend_info.get("country", cached_friends[i].get("country", ""))
+				cached_friends[i]["preferred_language"] = friend_info.get("preferred_language", cached_friends[i].get("preferred_language", ""))
 				break
 
+		# Refresh the friends display to show updated names
+		_refresh_friends_display()
+
 		# Update display if this is the selected friend
-		if not selected_friend_id.is_empty() and friend_info.get("friend_id", "") == selected_friend_id:
-			_update_friend_details(friend_info)
+		if not selected_friend_id.is_empty() and target_user_id == selected_friend_id:
+			# Find the updated friend data in cached_friends
+			_update_friend_details(target_user_id)
 	else:
 		_log_message("[color=red]✗ Friend info query failed![/color]")
 
 func _on_login_status_changed(success: bool, user_info: Dictionary):
 	if success:
-		_log_message("[color=green]User logged in - friends features now available[/color]")
+		_log_message("[color=green]✓ User logged in - friends features available[/color]")
 	_update_ui_state()
 
 func _on_logout_status_changed(success: bool):
@@ -136,35 +126,39 @@ func _refresh_friends_display():
 	friends_list.clear()
 
 	if cached_friends.is_empty():
-		_log_message("[color=yellow]No friends data to display. Try querying friends first.[/color]")
+		friends_list.add_item("No friends found. Click 'Query Friends List' first.")
 		return
 
 	for friend in cached_friends:
-		var display_text = str(friend.get("display_name", "Unknown Friend"))
+		var display_text = str(friend.get("id", "Unknown ID")) + " - " + str(friend.get("display_name", "Unknown Friend"))
 		var status = friend.get("status", "Unknown")
 
 		# Add status indicator
-		if status == "online":
-			display_text = "🟢 " + display_text
-		elif status == "offline":
-			display_text = "🔴 " + display_text
+		if status == "Friends":
+			display_text = "� " + display_text
 		else:
-			display_text = "⚪ " + display_text
+			display_text = "❓ " + display_text
 
 		friends_list.add_item(display_text)
 
-	_log_message("[color=cyan]Refreshed friends display with " + str(cached_friends.size()) + " friends[/color]")
+	_log_message("[color=cyan]Displayed " + str(cached_friends.size()) + " friends[/color]")
 
-func _update_friend_details(friend_data: Dictionary):
+func _update_friend_details(target_user_id: String):
+	var friend_data = {}
+	for friend in cached_friends:
+		if friend.get("id", "") == target_user_id:
+			friend_data = friend
+			break
+
 	var details_text = "[color=cyan]Friend Details:[/color]\n\n"
 
-	# Display all available friend information
-	for key in friend_data:
-		var value = str(friend_data[key])
-		details_text += "[color=yellow]" + key + ":[/color] " + value + "\n"
-
 	if friend_data.is_empty():
-		details_text = "[color=gray]No detailed information available.\nTry querying friend info.[/color]"
+		details_text = "[color=gray]No detailed information available.\nSelect a friend and click 'Query Selected Friend Info'.[/color]"
+	else:
+		# Display all available friend information, excluding target_user_id as it's redundant with id
+		for key in friend_data:
+			var value = str(friend_data[key])
+			details_text += "[color=yellow]" + key + ":[/color] " + value + "\n"
 
 	friend_info_text.text = details_text
 
@@ -187,29 +181,8 @@ func _update_ui_state():
 	# Enable/disable buttons based on authentication status
 	var friends_available = platform_initialized and is_logged_in
 	query_friends_button.disabled = not friends_available
-	query_all_info_button.disabled = not friends_available
 	query_friend_info_button.disabled = not friends_available or selected_friend_id.is_empty()
 
 func _log_message(message: String):
 	if output_text:
 		output_text.append_text(message + "\n")
-
-# Update UI state periodically
-func _process(_delta):
-	# Update UI state periodically (every second)
-	if Engine.get_process_frames() % 60 == 0:  # Assuming 60 FPS
-		_update_ui_state()
-
-# Demonstrate using cached friends data
-func _demonstrate_cached_data():
-	if not EpicOS:
-		return
-
-	var cached_friends_list = EpicOS.get_friends_list()
-	_log_message("[color=cyan]Cached friends count: " + str(cached_friends_list.size()) + "[/color]")
-
-	for friend in cached_friends_list:
-		var friend_id = friend.get("friend_id", "")
-		if not friend_id.is_empty():
-			var cached_info = EpicOS.get_friend_info(friend_id)
-			_log_message("[color=cyan]Cached info for " + friend_id + ": " + str(cached_info) + "[/color]")
