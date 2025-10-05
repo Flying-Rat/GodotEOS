@@ -155,6 +155,12 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
         return false;
     }
 
+    // Check if leaderboard definitions have been queried
+    if (leaderboard_definitions.size() == 0) {
+        UtilityFunctions::push_warning("LeaderboardsSubsystem: Leaderboard definitions not available. Call QueryLeaderboardDefinitions() first.");
+        return false;
+    }
+
     // Find the leaderboard definition to get stat info
     Dictionary leaderboard_def;
     bool found = false;
@@ -390,14 +396,19 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_user_scores_complete(c
         self->leaderboard_user_scores.clear();
 
         // Get user scores count
-        const EOS_Leaderboards_GetLeaderboardUserScoreCountOptions count_options = { EOS_LEADERBOARDS_GETLEADERBOARDUSERSCORECOUNT_API_LATEST };
+        EOS_Leaderboards_GetLeaderboardUserScoreCountOptions count_options = {};
+        count_options.ApiVersion = EOS_LEADERBOARDS_GETLEADERBOARDUSERSCORECOUNT_API_LATEST;
+        count_options.StatName = context->stat_name.c_str();
 
         uint32_t scores_count = EOS_Leaderboards_GetLeaderboardUserScoreCount(self->leaderboards_handle, &count_options);
 
         UtilityFunctions::print("LeaderboardsSubsystem: Retrieved " + String::num_int64(scores_count) + " user scores");
 
         for (uint32_t i = 0; i < scores_count; i++) {
-            const EOS_Leaderboards_CopyLeaderboardUserScoreByIndexOptions copy_options = { EOS_LEADERBOARDS_COPYLEADERBOARDUSERSCOREBYINDEX_API_LATEST, i };
+            EOS_Leaderboards_CopyLeaderboardUserScoreByIndexOptions copy_options = {};
+            copy_options.ApiVersion = EOS_LEADERBOARDS_COPYLEADERBOARDUSERSCOREBYINDEX_API_LATEST;
+            copy_options.LeaderboardUserScoreIndex = i;
+            copy_options.StatName = context->stat_name.c_str();
 
             EOS_Leaderboards_LeaderboardUserScore* user_score = nullptr;
             EOS_EResult result = EOS_Leaderboards_CopyLeaderboardUserScoreByIndex(self->leaderboards_handle, &copy_options, &user_score);
@@ -408,7 +419,7 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_user_scores_complete(c
 
                 Dictionary score_dict;
                 score_dict["score"] = (int)user_score->Score;
-                score_dict["rank"] = 0;  // Rank not available in user score struct
+                score_dict["rank"] = (int)(i + 1);  // Results are sorted by aggregation method
 
                 self->leaderboard_user_scores[user_id] = score_dict;
                 EOS_Leaderboards_LeaderboardUserScore_Release(user_score);
