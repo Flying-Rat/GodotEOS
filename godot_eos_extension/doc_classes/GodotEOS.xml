@@ -60,15 +60,6 @@
 				Returns an empty string if no user is logged in or the Epic Account ID is invalid.
 			</description>
 		</method>
-		<method name="get_friend_info">
-			<return type="Dictionary" />
-			<param index="0" name="friend_id" type="String" />
-			<description>
-				Returns cached information about a specific friend by their Epic Account ID.
-				The dictionary contains friend details like ID, display name, and status.
-				Returns an empty dictionary if the friend is not found. Call [method query_friend_info] or [method query_all_friends_info] to update the cache.
-			</description>
-		</method>
 		<method name="get_friends_list">
 			<return type="Array" />
 			<description>
@@ -131,6 +122,15 @@
 			<description>
 				Returns the singleton instance of GodotEOS. Creates the instance if it doesn't exist.
 				This is the primary way to access the EOS API from GDScript.
+			</description>
+		</method>
+		<method name="get_user_info">
+			<return type="Dictionary" />
+			<param index="0" name="target_user_id" type="String" />
+			<description>
+				Returns the cached user information for a specific user by their Product User ID.
+				The dictionary contains user details such as display name, nickname, country, and preferred language.
+				Returns an empty dictionary if the user information is not found. Call [method query_user_info] first to populate the cache.
 			</description>
 		</method>
 		<method name="ingest_achievement_stat">
@@ -211,7 +211,7 @@
 			<description>
 				Initiates login using a persistent device ID.
 				This creates or reuses a device-specific account without requiring explicit user credentials.
-				The [code]display_name[/code] parameter is currently not used by the implementation.
+				The [code]display_name[/code] parameter sets the user's display name for this device account.
 				Emits [signal login_completed] when the login process finishes.
 			</description>
 		</method>
@@ -274,16 +274,6 @@
 				[b]Note:[/b] This is an internal method and should not be called directly by user code.
 			</description>
 		</method>
-		<method name="on_friend_info_query_completed">
-			<return type="void" />
-			<param index="0" name="success" type="bool" />
-			<param index="1" name="friend_info" type="Dictionary" />
-			<description>
-				Internal callback method invoked when a friend info query completes.
-				Emits [signal friend_info_updated] with the friend information dictionary.
-				[b]Note:[/b] This is an internal method and should not be called directly by user code.
-			</description>
-		</method>
 		<method name="on_friends_query_completed">
 			<return type="void" />
 			<param index="0" name="success" type="bool" />
@@ -343,6 +333,16 @@
 				[b]Note:[/b] This is an internal method and should not be called directly by user code.
 			</description>
 		</method>
+		<method name="on_user_info_query_completed">
+			<return type="void" />
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="user_info" type="Dictionary" />
+			<description>
+				Internal callback method invoked when user information query completes.
+				Emits [signal user_info_updated] with the success status and user information dictionary.
+				[b]Note:[/b] This is an internal method and should not be called directly by user code.
+			</description>
+		</method>
 		<method name="query_achievement_definitions">
 			<return type="void" />
 			<description>
@@ -366,16 +366,6 @@
 				Queries detailed information for all friends in the current user's friends list.
 				This fetches display names and other user info for each friend. Results are cached and accessible via [method get_friend_info].
 				[b]Note:[/b] Call [method query_friends] first to populate the friends list, then call this method to get detailed info for all friends.
-			</description>
-		</method>
-		<method name="query_friend_info">
-			<return type="void" />
-			<param index="0" name="friend_id" type="String" />
-			<description>
-				Queries detailed information for a specific friend by their Epic Account ID.
-				This fetches the friend's display name and other user info. Results are cached and accessible via [method get_friend_info].
-				Emits [signal friend_info_updated] when complete.
-				[b]Note:[/b] The user must be logged in before calling this method.
 			</description>
 		</method>
 		<method name="query_friends">
@@ -427,6 +417,16 @@
 				[b]Note:[/b] The user must be logged in before calling this method.
 			</description>
 		</method>
+		<method name="query_user_info">
+			<return type="void" />
+			<param index="0" name="target_user_id" type="String" />
+			<description>
+				Queries detailed user information for a specific user by their Product User ID.
+				This retrieves display name, nickname, country, preferred language, and other user details from the EOS backend.
+				Results are cached and can be accessed with [method get_user_info]. Emits [signal user_info_updated] when complete.
+				[b]Note:[/b] The user must be logged in before calling this method.
+			</description>
+		</method>
 		<method name="shutdown_platform">
 			<return type="void" />
 			<description>
@@ -467,7 +467,8 @@
 	</methods>
 	<signals>
 		<signal name="achievement_definitions_updated">
-			<param index="0" name="definitions" type="Array" />
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="definitions" type="Array" />
 			<description>
 				Emitted when achievement definitions query completes successfully.
 				The [code]definitions[/code] array contains dictionaries with achievement metadata including ID, title, description, and unlock requirements.
@@ -494,32 +495,26 @@
 			</description>
 		</signal>
 		<signal name="achievements_unlocked">
-			<param index="0" name="unlocked_achievement_ids" type="Array" />
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="unlocked_achievement_ids" type="Array" />
 			<description>
 				Emitted when one or more achievements are unlocked via [method unlock_achievement] or [method unlock_achievements].
 				The [code]unlocked_achievement_ids[/code] array contains the IDs of all successfully unlocked achievements.
 			</description>
 		</signal>
-		<signal name="friend_info_updated">
-			<param index="0" name="friend_info" type="Dictionary" />
-			<description>
-				Emitted when friend info query completes for a specific friend.
-				The [code]friend_info[/code] dictionary contains the friend's Epic Account ID, display name, and other user info.
-				This signal is triggered by [method query_friend_info] or [method query_all_friends_info].
-			</description>
-		</signal>
-		<signal name="friends_updated">
+		<signal name="friends_query_completed">
 			<param index="0" name="success" type="bool" />
 			<param index="1" name="friends_list" type="Array" />
 			<description>
-				Emitted when the friends list query completes.
+				Emitted when friends list query completes.
 				The [code]success[/code] parameter indicates if the query succeeded.
-				The [code]friends_list[/code] array contains Epic Account ID strings for all friends.
+				The [code]friends_list[/code] array contains dictionaries with friend information including Epic Account IDs and relationship status.
 				This signal is triggered by [method query_friends].
 			</description>
 		</signal>
 		<signal name="leaderboard_definitions_updated">
-			<param index="0" name="definitions" type="Array" />
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="definitions" type="Array" />
 			<description>
 				Emitted when leaderboard definitions query completes successfully.
 				The [code]definitions[/code] array contains dictionaries with leaderboard metadata including ID, name, and aggregation method.
@@ -527,7 +522,8 @@
 			</description>
 		</signal>
 		<signal name="leaderboard_ranks_updated">
-			<param index="0" name="ranks" type="Array" />
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="ranks" type="Array" />
 			<description>
 				Emitted when leaderboard ranks query completes successfully.
 				The [code]ranks[/code] array contains dictionaries with rank entries including position, score, and user information.
@@ -535,7 +531,8 @@
 			</description>
 		</signal>
 		<signal name="leaderboard_user_scores_updated">
-			<param index="0" name="user_scores" type="Dictionary" />
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="user_scores" type="Dictionary" />
 			<description>
 				Emitted when leaderboard user scores query completes successfully.
 				The [code]user_scores[/code] dictionary maps user IDs to their score information (score and rank).
@@ -561,7 +558,8 @@
 			</description>
 		</signal>
 		<signal name="player_achievements_updated">
-			<param index="0" name="achievements" type="Array" />
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="achievements" type="Array" />
 			<description>
 				Emitted when player achievements query completes successfully.
 				The [code]achievements[/code] array contains dictionaries with the player's achievement progress including unlock status and progress values.
@@ -569,10 +567,21 @@
 			</description>
 		</signal>
 		<signal name="stats_ingested">
-			<param index="0" name="stat_names" type="Array" />
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="stat_names" type="Array" />
 			<description>
 				Emitted when bulk stat ingestion completes via [method ingest_stats].
 				The [code]stat_names[/code] array contains the names of all stats that were successfully ingested.
+			</description>
+		</signal>
+		<signal name="user_info_updated">
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="user_info" type="Dictionary" />
+			<description>
+				Emitted when user information query completes.
+				The [code]success[/code] parameter indicates if the query succeeded.
+				The [code]user_info[/code] dictionary contains detailed user information including display name, nickname, country, and preferred language.
+				This signal is triggered by [method query_user_info].
 			</description>
 		</signal>
 	</signals>
