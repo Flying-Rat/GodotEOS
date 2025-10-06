@@ -22,27 +22,14 @@ Called when friends list is queried.
 }
 ```
 
-### Friend Info Query
-
-#### `on_friend_info_query_completed(success: bool, friend_info: Dictionary)`
-Called when friend info is queried.
-
-**Parameters:**
-- `success` (bool): Query success
-- `friend_info` (Dictionary): Friend information
-
-**Dictionary Structure:**
-```gdscript
-{
-    "id": String,
-    "display_name": String,
-    "status": String  # "Friends", "Invite Sent", "Invite Received", "Not Friends"
-}
-```
-
 ## Signal Connections
 
 ```gdscript
-EpicOS.friends_updated.connect(on_friends_query_completed)
-EpicOS.friend_info_updated.connect(on_friend_info_query_completed)
+EpicOS.friends_query_completed.connect(on_friends_query_completed)
 ```
+
+## Notes
+
+- Friend information is cached after querying
+- Use `query_user_info()` to get detailed information about specific friends
+- The `user_info_updated` signal will be emitted when detailed friend info is queried
