@@ -176,7 +176,7 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
         UtilityFunctions::push_warning("LeaderboardsSubsystem: Leaderboard definition not found for ID: " + leaderboard_id);
         return false;
     }
-    
+
     auto auth = Get<IAuthenticationSubsystem>();
     
     String stat_name = leaderboard_def["stat_name"];
@@ -216,18 +216,15 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
 	QueryUserScoresOptions.UserIds = UserData;
 	QueryUserScoresOptions.StatInfoCount = 1;
     
-	EOS_Leaderboards_UserScoresQueryStatInfo* StatInfoData = new EOS_Leaderboards_UserScoresQueryStatInfo[QueryUserScoresOptions.StatInfoCount];
-    std::vector<std::string> NarrowStatNames;
-    NarrowStatNames.emplace_back(stat_name.utf8().get_data());
-    StatInfoData[0].StatName = NarrowStatNames[0].c_str();
-    StatInfoData[0].Aggregation = EOS_ELeaderboardAggregation::EOS_LA_Sum;
+	EOS_Leaderboards_UserScoresQueryStatInfo StatInfoData;
+    StatInfoData.ApiVersion = EOS_LEADERBOARDS_USERSCORESQUERYSTATINFO_API_LATEST;
+    StatInfoData.StatName = stat_name.utf8().get_data();
+    StatInfoData.Aggregation = EOS_ELeaderboardAggregation::EOS_LA_Sum;
 
-    QueryUserScoresOptions.StatInfo = StatInfoData;
+    QueryUserScoresOptions.StatInfo = &StatInfoData;
     QueryUserScoresOptions.StartTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
 	QueryUserScoresOptions.EndTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
     QueryUserScoresOptions.LocalUserId = auth->GetProductUserId();
-
-
 
     EOS_Leaderboards_QueryLeaderboardUserScores(leaderboards_handle, &QueryUserScoresOptions, context.get(), on_query_leaderboard_user_scores_complete);
 

@@ -2,9 +2,12 @@
 
 #include "IFriendsSubsystem.h"
 #include <eos_friends_types.h>
+#include <eos_connect_types.h>
 #include <godot_cpp/variant/array.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
+#include <godot_cpp/variant/string.hpp>
 #include <godot_cpp/variant/callable.hpp>
+#include <vector>
 
 namespace godot {
 
@@ -33,6 +36,7 @@ public:
     bool QueryAllFriendsInfo() override;
     void SetFriendsQueryCallback(const Callable& callback) override;
     void SetFriendInfoQueryCallback(const Callable& callback) override;
+    String GetFriendProductId(const String& friend_id) const override;
 
 private:
     Array friends_list;
@@ -44,10 +48,12 @@ private:
 
     // Static callback for friends query
     static void EOS_CALL on_friends_query_complete(const EOS_Friends_QueryFriendsCallbackInfo* data);
+    static void EOS_CALL on_query_external_account_mappings(const EOS_Connect_QueryExternalAccountMappingsCallbackInfo *data);
 
     // Helper methods
     void update_friends_list();
     Dictionary create_friend_info_dict(EOS_EpicAccountId friend_id) const;
+    
 };
 
 } // namespace godot

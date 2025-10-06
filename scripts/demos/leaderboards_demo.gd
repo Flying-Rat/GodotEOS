@@ -186,9 +186,9 @@ func _on_query_user_scores_button_pressed():
 
 	# Add all cached friends
 	for friend in friends_list:
-		var friend_user_id = friend.get("id", "")
-		if not friend_user_id.is_empty() and friend_user_id != current_user_id:
-			user_ids.append(friend_user_id)
+		var friend_product_id = friend.get("product_id", "")
+		if not friend_product_id.is_empty() and friend_product_id != current_user_id:
+			user_ids.append(friend_product_id)
 
 	_log_message("[color=yellow]🔍 QueryLeaderboardUserScores() - Fetching scores for leaderboard: " + leaderboard_id + "[/color]")
 	_log_message("[color=yellow]Users: " + str(user_ids) + "[/color]")

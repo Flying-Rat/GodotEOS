@@ -58,6 +58,13 @@ public:
      * @param callback Callable to invoke when friend info query completes.
      */
     virtual void SetFriendInfoQueryCallback(const Callable& callback) = 0;
+
+    /**
+     * @brief Get the Product User ID for a specific friend.
+     * @param friend_id The Epic Account ID of the friend as a string.
+     * @return Product User ID as a string, or empty string if not found.
+     */
+    virtual String GetFriendProductId(const String& friend_id) const = 0;
 };
 
 } // namespace godot
