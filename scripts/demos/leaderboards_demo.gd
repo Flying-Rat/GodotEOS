@@ -1,7 +1,12 @@
 extends Control
 
 # Leaderboards Demo Script
-# Demonstrates how to use the EpicOS leaderboards features
+# Demonstrates EpicOS leaderboards features
+# Assumes user is already logged in via Authentication Demo
+
+# ============================================================================
+# UI REFERENCES
+# ============================================================================
 
 # Status Section
 @onready var status_label: Label = $VBoxContainer/StatusContainer/StatusPanel/StatusLabel
@@ -18,7 +23,7 @@ extends Control
 @onready var query_ranks_button: Button = $VBoxContainer/RanksQuerySection/QueryRanksButton
 @onready var query_user_scores_button: Button = $VBoxContainer/RanksQuerySection/QueryUserScoresButton
 
-# Leadeboards Lists
+# Leaderboards Lists
 @onready var definitions_list: ItemList = $VBoxContainer/DataSection/DefinitionsPanel/DefinitionsContainer/DefinitionsList
 @onready var ranks_list: ItemList = $VBoxContainer/DataSection/RanksPanel/RanksContainer/RanksList
 @onready var user_scores_list: ItemList = $VBoxContainer/DataSection/UserScoresPanel/UserScoresContainer/UserScoresList
@@ -28,6 +33,10 @@ extends Control
 @onready var clear_log_button: Button = %ClearLogButton
 
 @onready var output_text: RichTextLabel = $VBoxContainer/OutputSection/OutputText
+
+# ============================================================================
+# STATE VARIABLES
+# ============================================================================
 
 var cached_definitions: Array = []
 var cached_ranks: Array = []
@@ -52,6 +61,10 @@ var test_stat_names: Array = [
 	"games_played",
 	"time_played"
 ]
+
+# ============================================================================
+# INITIALIZATION
+# ============================================================================
 
 func _ready():
 	# Connect button signals
@@ -84,24 +97,39 @@ func _ready():
 		EpicOS.query_friends()
 
 	_update_ui_state()
-	_log_message("[color=cyan]Leaderboards Demo initialized. Ready to demonstrate EpicOS leaderboards functionality.[/color]")
-	
+	_log_message("[color=cyan]═══════════════════════════════════════[/color]")
+	_log_message("[color=cyan]Leaderboards Demo Initialized[/color]")
+	_log_message("[color=cyan]═══════════════════════════════════════[/color]")
+
+	if EpicOS and EpicOS.is_user_logged_in():
+		_log_message("[color=yellow]📋 INSTRUCTIONS:[/color]")
+		_log_message("[color=white]1. Click 'Query Definitions' to cache leaderboard definitions[/color]")
+		_log_message("[color=white]2. Click 'Query Ranks' to load leaderboard rankings[/color]")
+		_log_message("[color=white]3. Use other buttons to test leaderboard functions[/color]")
+		_log_message("")
+		_log_message("[color=yellow]Please use the buttons above to test leaderboard functions[/color]")
+	else:
+		_log_message("[color=yellow]Please login first (use Authentication Demo)[/color]")
+
 	# Output controls
 	if clear_log_button:
 		clear_log_button.pressed.connect(_on_clear_log_pressed)
 	if auto_scroll_toggle:
 		auto_scroll_toggle.toggled.connect(_on_auto_scroll_toggled)
-	
+
 	auto_scroll_enabled = auto_scroll_toggle.button_pressed
 	output_text.scroll_following = auto_scroll_enabled
 
-func _on_query_definitions_button_pressed():
-	_log_message("[color=yellow]Querying leaderboard definitions...[/color]")
+# ============================================================================
+# BUTTON HANDLERS
+# ============================================================================
 
+func _on_query_definitions_button_pressed():
+	_log_message("[color=yellow]🔍 QueryLeaderboardDefinitions() - Fetching leaderboard definitions from EOS...[/color]")
 	if EpicOS:
 		EpicOS.query_leaderboard_definitions()
 	else:
-		_log_message("[color=red]EpicOS not available![/color]")
+		_log_message("[color=red]✗ EpicOS not available[/color]")
 
 func _on_query_ranks_button_pressed():
 	if cached_definitions.is_empty():
@@ -119,12 +147,12 @@ func _on_query_ranks_button_pressed():
 		_log_message("[color=red]Invalid leaderboard definition![/color]")
 		return
 
-	_log_message("[color=yellow]Querying ranks for leaderboard: " + leaderboard_id + "[/color]")
+	_log_message("[color=yellow]🔍 QueryLeaderboardRanks() - Fetching ranks for leaderboard: " + leaderboard_id + "[/color]")
 
 	if EpicOS:
 		EpicOS.query_leaderboard_ranks(leaderboard_id, 10)
 	else:
-		_log_message("[color=red]EpicOS not available![/color]")
+		_log_message("[color=red]✗ EpicOS not available[/color]")
 
 func _on_query_user_scores_button_pressed():
 	if cached_definitions.is_empty():
@@ -144,7 +172,7 @@ func _on_query_user_scores_button_pressed():
 
 	# Get current user ID from EpicOS
 	if not EpicOS:
-		_log_message("[color=red]EpicOS not available![/color]")
+		_log_message("[color=red]✗ EpicOS not available[/color]")
 		return
 
 	var current_user_id = EpicOS.get_product_user_id()
@@ -162,36 +190,37 @@ func _on_query_user_scores_button_pressed():
 		if not friend_user_id.is_empty() and friend_user_id != current_user_id:
 			user_ids.append(friend_user_id)
 
-	_log_message("[color=yellow]Querying user scores for leaderboard: " + leaderboard_id + "[/color]")
+	_log_message("[color=yellow]🔍 QueryLeaderboardUserScores() - Fetching scores for leaderboard: " + leaderboard_id + "[/color]")
 	_log_message("[color=yellow]Users: " + str(user_ids) + "[/color]")
 	_log_message("[color=yellow]Including " + str(user_ids.size()) + " users (current user + " + str(user_ids.size() - 1) + " friends)[/color]")
 
 	EpicOS.query_leaderboard_user_scores(leaderboard_id, user_ids)
 
 func _on_refresh_button_pressed():
-	_log_message("[color=yellow]Refreshing display from cache...[/color]")
+	_log_message("[color=yellow]📚 Refreshing display from cache...[/color]")
 	_refresh_displays()
-
 
 func _on_ingest_stat_button_pressed():
 	var stat_name = stat_name_input.text.strip_edges()
 	var stat_value = int(stat_value_input.value)
 
 	if stat_name.is_empty():
-		_log_message("[color=red]Please enter a stat name![/color]")
+		_log_message("[color=red]✗ Please enter a stat name[/color]")
 		return
 
-	_log_message("[color=yellow]Ingesting stat: " + stat_name + " = " + str(stat_value) + "[/color]")
+	_log_message("[color=yellow]📊 IngestStat() - Updating stat: " + stat_name + " +" + str(stat_value) + "[/color]")
 
 	if EpicOS:
 		EpicOS.ingest_stat(stat_name, stat_value)
 	else:
-		_log_message("[color=red]EpicOS not available![/color]")
-
+		_log_message("[color=red]✗ EpicOS not available[/color]")
 
 func _on_back_button_pressed():
-	# Navigate back to demo menu
 	get_tree().change_scene_to_file("res://scenes/demos/demo_menu.tscn")
+
+# ============================================================================
+# LIST ITEM HANDLERS
+# ============================================================================
 
 func _on_definitions_list_item_selected(index: int):
 	if index >= 0 and index < cached_definitions.size():
@@ -201,12 +230,12 @@ func _on_definitions_list_item_selected(index: int):
 		selected_leaderboard_id = leaderboard_id  # Cache the selected leaderboard ID
 		selected_stat_id = stat_id
 		stat_name_input.text = stat_id;
-		_log_message("[color=cyan]Selected leaderboard: " + str(definition) + "[/color]")
+		_log_message("[color=blue]Selected leaderboard: " + str(definition) + "[/color]")
 
 func _on_ranks_list_item_selected(index: int):
 	if index >= 0 and index < cached_ranks.size():
 		var rank_entry = cached_ranks[index]
-		_log_message("[color=cyan]Selected rank entry: " + str(rank_entry) + "[/color]")
+		_log_message("[color=blue]Selected rank entry: " + str(rank_entry) + "[/color]")
 
 func _on_user_scores_list_item_selected(index: int):
 	# User scores list shows individual score entries
@@ -214,7 +243,11 @@ func _on_user_scores_list_item_selected(index: int):
 	if index >= 0 and index < keys.size():
 		var user_id = keys[index]
 		var user_score_data = cached_user_scores[user_id]
-		_log_message("[color=cyan]Selected user score: " + user_id + " = " + str(user_score_data) + "[/color]")
+		_log_message("[color=blue]Selected user score: " + user_id + " = " + str(user_score_data) + "[/color]")
+
+# ============================================================================
+# EPICOS SIGNAL HANDLERS
+# ============================================================================
 
 func _on_leaderboard_definitions_completed(success: bool, definitions: Array):
 	if success:
@@ -286,13 +319,17 @@ func _on_login_status_changed(success: bool, user_info: Dictionary):
 
 func _on_logout_status_changed(success: bool):
 	if success:
-		_log_message("[color=yellow]User logged out - clearing leaderboard data[/color]")
+		_log_message("[color=yellow]Logged out - clearing cached leaderboard data[/color]")
 		cached_definitions.clear()
 		cached_ranks.clear()
 		cached_user_scores.clear()
 		selected_leaderboard_id = ""  # Clear selected leaderboard
 		_refresh_displays()
 	_update_ui_state()
+
+# ============================================================================
+# DISPLAY UPDATE FUNCTIONS
+# ============================================================================
 
 func _refresh_displays():
 	_refresh_definitions_display()
@@ -356,6 +393,10 @@ func _refresh_user_scores_display():
 
 	_log_message("[color=cyan]Refreshed user scores display with " + str(cached_user_scores.size()) + " users[/color]")
 
+# ============================================================================
+# UI STATE MANAGEMENT
+# ============================================================================
+
 func _update_ui_state():
 	var is_logged_in = false
 	var platform_initialized = false
@@ -379,9 +420,17 @@ func _update_ui_state():
 	query_user_scores_button.disabled = not leaderboards_available
 	ingest_stat_button.disabled = not leaderboards_available
 
+# ============================================================================
+# UTILITY FUNCTIONS
+# ============================================================================
+
 func _log_message(message: String):
 	if output_text:
+		output_text.scroll_following = auto_scroll_enabled
 		output_text.append_text(message + "\n")
+		if auto_scroll_enabled:
+			await get_tree().process_frame
+			output_text.scroll_to_line(output_text.get_line_count() - 1)
 
 # Demonstrate using cached leaderboard data
 func _demonstrate_cached_data():
@@ -428,6 +477,9 @@ func _on_auto_scroll_toggled(button_pressed: bool):
 	if output_text:
 		output_text.scroll_following = auto_scroll_enabled
 
+# ============================================================================
+# PROCESSING
+# ============================================================================
 
 # Update UI state periodically
 func _process(_delta):
