@@ -1,7 +1,12 @@
 extends Control
 
 # Friends Demo Script
-# Demonstrates EpicOS friends functionality with simplified interface
+# Demonstrates EpicOS friends features
+# Assumes user is already logged in via Authentication Demo
+
+# ============================================================================
+# UI REFERENCES
+# ============================================================================
 
 @onready var status_label: Label = $VBoxContainer/HeaderContainer/StatusPanel/StatusContainer/StatusLabel
 @onready var query_friends_button: Button = $VBoxContainer/ActionsSection/QueryFriendsButton
@@ -12,8 +17,16 @@ extends Control
 @onready var output_text: RichTextLabel = $VBoxContainer/OutputSection/OutputText
 @onready var back_button: Button = $VBoxContainer/HeaderContainer/BackButton
 
+# ============================================================================
+# STATE VARIABLES
+# ============================================================================
+
 var cached_friends: Array = []
 var selected_friend_id: String = ""
+
+# ============================================================================
+# INITIALIZATION
+# ============================================================================
 
 func _ready():
 	# Connect button signals
@@ -36,32 +49,48 @@ func _ready():
 		EpicOS.set_debug_mode(true)
 
 	_update_ui_state()
-	_log_message("[color=cyan]Friends Demo initialized.[/color]")
-	_log_message("[color=yellow]1. Click 'Query Friends List' to get your friends[/color]")
-	_log_message("[color=yellow]2. Select a friend and click 'Query Selected Friend Info' to get their details[/color]")
+	_log_message("[color=cyan]═══════════════════════════════════════[/color]")
+	_log_message("[color=cyan]Friends Demo Initialized[/color]")
+	_log_message("[color=cyan]═══════════════════════════════════════[/color]")
+
+	if EpicOS and EpicOS.is_user_logged_in():
+		_log_message("[color=yellow]📋 INSTRUCTIONS:[/color]")
+		_log_message("[color=white]1. Click 'Query Friends List' to get your friends[/color]")
+		_log_message("[color=white]2. Select a friend and click 'Query Selected Friend Info' to get their details[/color]")
+		_log_message("")
+		_log_message("[color=yellow]Please use the buttons above to test friends functions[/color]")
+	else:
+		_log_message("[color=yellow]Please login first (use Authentication Demo)[/color]")
+
+# ============================================================================
+# BUTTON HANDLERS
+# ============================================================================
 
 func _on_query_friends_button_pressed():
-	_log_message("[color=yellow]🔍 Querying friends list...[/color]")
-
+	_log_message("[color=yellow]🔍 QueryFriends() - Fetching friends list from EOS...[/color]")
 	if EpicOS:
 		EpicOS.query_friends()
 	else:
-		_log_message("[color=red]EpicOS not available![/color]")
+		_log_message("[color=red]✗ EpicOS not available[/color]")
 
 func _on_query_friend_info_button_pressed():
 	if selected_friend_id.is_empty():
-		_log_message("[color=red]No friend selected! Select a friend from the list first.[/color]")
+		_log_message("[color=red]✗ No friend selected! Select a friend from the list first.[/color]")
 		return
 
-	_log_message("[color=yellow]📋 Querying info for selected friend: " + selected_friend_id + "[/color]")
+	_log_message("[color=yellow]📋 QueryUserInfo() - Fetching info for selected friend: " + selected_friend_id + "[/color]")
 
 	if EpicOS:
 		EpicOS.query_user_info(selected_friend_id)
 	else:
-		_log_message("[color=red]EpicOS not available![/color]")
+		_log_message("[color=red]✗ EpicOS not available[/color]")
 
 func _on_back_button_pressed():
 	get_tree().change_scene_to_file("res://scenes/demos/demo_menu.tscn")
+
+# ============================================================================
+# LIST ITEM HANDLERS
+# ============================================================================
 
 func _on_friends_list_item_selected(index: int):
 	if index >= 0 and index < cached_friends.size():
@@ -71,12 +100,17 @@ func _on_friends_list_item_selected(index: int):
 			selected_friend_label.text = "Selected: " + str(friend_data.get("display_name", "Unknown"))
 			_update_friend_details(selected_friend_id)
 			_update_ui_state()
+			_log_message("[color=blue]Selected friend: " + str(friend_data.get("display_name", "Unknown")) + "[/color]")
 		else:
-			_log_message("[color=red]Invalid friend data![/color]")
+			_log_message("[color=red]✗ Invalid friend data![/color]")
+
+# ============================================================================
+# EPICOS SIGNAL HANDLERS
+# ============================================================================
 
 func _on_friends_query_completed(success: bool, friends_list_data: Array):
 	if success:
-		_log_message("[color=green]✓ Friends list query completed![/color]")
+		_log_message("[color=green]✓ QueryFriends() completed![/color]")
 		_log_message("[color=green]Found " + str(friends_list_data.size()) + " friends[/color]")
 
 		cached_friends = friends_list_data
@@ -86,7 +120,7 @@ func _on_friends_query_completed(success: bool, friends_list_data: Array):
 
 func _on_friend_info_query_completed(success: bool, friend_info: Dictionary):
 	if success:
-		_log_message("[color=green]✓ Friend info query completed![/color]")
+		_log_message("[color=green]✓ QueryUserInfo() completed![/color]")
 
 		# Update cached friend data with new info
 		var target_user_id = friend_info.get("target_user_id", "")
@@ -116,11 +150,15 @@ func _on_login_status_changed(success: bool, user_info: Dictionary):
 
 func _on_logout_status_changed(success: bool):
 	if success:
-		_log_message("[color=yellow]User logged out - clearing friends data[/color]")
+		_log_message("[color=yellow]Logged out - clearing cached friends data[/color]")
 		cached_friends.clear()
 		selected_friend_id = ""
 		_refresh_friends_display()
 	_update_ui_state()
+
+# ============================================================================
+# DISPLAY UPDATE FUNCTIONS
+# ============================================================================
 
 func _refresh_friends_display():
 	friends_list.clear()
@@ -162,6 +200,10 @@ func _update_friend_details(target_user_id: String):
 
 	friend_info_text.text = details_text
 
+# ============================================================================
+# UI STATE MANAGEMENT
+# ============================================================================
+
 func _update_ui_state():
 	var is_logged_in = false
 	var platform_initialized = false
@@ -182,6 +224,10 @@ func _update_ui_state():
 	var friends_available = platform_initialized and is_logged_in
 	query_friends_button.disabled = not friends_available
 	query_friend_info_button.disabled = not friends_available or selected_friend_id.is_empty()
+
+# ============================================================================
+# UTILITY FUNCTIONS
+# ============================================================================
 
 func _log_message(message: String):
 	if output_text:

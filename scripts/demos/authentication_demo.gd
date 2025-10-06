@@ -1,7 +1,12 @@
 extends Control
 
 # Authentication Demo Script
-# Demonstrates how to use the EpicOS authentication features
+# Demonstrates EpicOS authentication features
+# Shows how to initialize the platform and login with different methods
+
+# ============================================================================
+# UI REFERENCES
+# ============================================================================
 
 @onready var status_label: Label = $VBoxContainer/HBoxContainer/StatusPanel/StatusContainer/StatusTitle
 @onready var user_label: Label = $VBoxContainer/HBoxContainer/StatusPanel/StatusContainer/UserLabel
@@ -21,8 +26,16 @@ extends Control
 @onready var output_text: RichTextLabel = $VBoxContainer/OutputSection/OutputText
 @onready var back_button: Button = $VBoxContainer/HBoxContainer/VBoxContainer/BackButton
 
+# ============================================================================
+# STATE VARIABLES
+# ============================================================================
+
 var is_platform_initialized: bool = false
 var is_user_logged_in: bool = false
+
+# ============================================================================
+# INITIALIZATION
+# ============================================================================
 
 func _ready():
 	# Connect button signals
@@ -44,10 +57,22 @@ func _ready():
 
 	# Update initial UI state
 	_update_ui_state()
-	_log_message("[color=cyan]Authentication Demo initialized. Ready to demonstrate EpicOS authentication.[/color]")
+	_log_message("[color=cyan]═══════════════════════════════════════[/color]")
+	_log_message("[color=cyan]Authentication Demo Initialized[/color]")
+	_log_message("[color=cyan]═══════════════════════════════════════[/color]")
+	_log_message("[color=yellow]📋 INSTRUCTIONS:[/color]")
+	_log_message("[color=white]1. Click 'Initialize Platform' to set up EOS[/color]")
+	_log_message("[color=white]2. Use login methods: Epic Account, Portal, or Developer[/color]")
+	_log_message("[color=white]3. Check user info after successful login[/color]")
+	_log_message("")
+	_log_message("[color=yellow]Please initialize the platform first, then login[/color]")
+
+# ============================================================================
+# BUTTON HANDLERS
+# ============================================================================
 
 func _on_init_button_pressed():
-	_log_message("[color=yellow]Initializing EOS platform...[/color]")
+	_log_message("[color=yellow]🔧 InitializePlatform() - Setting up EOS platform...[/color]")
 
 	# Example configuration - replace with your actual Epic Games credentials
 	var config = {
@@ -64,7 +89,7 @@ func _on_init_button_pressed():
 		is_platform_initialized = EpicOS.initialize(config)
 
 		if is_platform_initialized:
-			_log_message("[color=green]✓ EOS platform initialized successfully![/color]")
+			_log_message("[color=green]✓ InitializePlatform() completed successfully![/color]")
 		else:
 			_log_message("[color=red]✗ Failed to initialize EOS platform. Check your credentials.[/color]")
 	else:
@@ -77,23 +102,23 @@ func _on_epic_login_button_pressed():
 	var password = password_input.text.strip_edges()
 
 	if email.is_empty() or password.is_empty():
-		_log_message("[color=red]Please enter both email and password.[/color]")
+		_log_message("[color=red]✗ Please enter both email and password[/color]")
 		return
 
-	_log_message("[color=yellow]Attempting Epic Account login for: " + email + "[/color]")
+	_log_message("[color=yellow]🔐 LoginWithEpicAccount() - Attempting login for: " + email + "[/color]")
 
 	if EpicOS:
 		EpicOS.login_with_epic_account(email, password)
 	else:
-		_log_message("[color=red]EpicOS not available![/color]")
+		_log_message("[color=red]✗ EpicOS not available[/color]")
 
 func _on_portal_login_button_pressed():
-	_log_message("[color=yellow]Opening Epic Games Account Portal for login...[/color]")
+	_log_message("[color=yellow]🔐 LoginWithAccountPortal() - Opening Epic Games Account Portal...[/color]")
 
 	if EpicOS:
 		EpicOS.login_with_account_portal()
 	else:
-		_log_message("[color=red]EpicOS not available![/color]")
+		_log_message("[color=red]✗ EpicOS not available[/color]")
 
 func _on_dev_login_button_pressed():
 	var display_name = dev_input.text.strip_edges()
@@ -101,28 +126,31 @@ func _on_dev_login_button_pressed():
 	if display_name.is_empty():
 		display_name = "Developer_User"
 
-	_log_message("[color=yellow]Attempting Developer login with display name: " + display_name + "[/color]")
+	_log_message("[color=yellow]🔐 LoginWithDev() - Attempting developer login with display name: " + display_name + "[/color]")
 
 	if EpicOS:
 		EpicOS.login_with_dev(display_name)
 	else:
-		_log_message("[color=red]EpicOS not available![/color]")
+		_log_message("[color=red]✗ EpicOS not available[/color]")
 
 func _on_logout_button_pressed():
-	_log_message("[color=yellow]Logging out...[/color]")
+	_log_message("[color=yellow]🚪 Logout() - Logging out...[/color]")
 
 	if EpicOS:
 		EpicOS.logout()
 	else:
-		_log_message("[color=red]EpicOS not available![/color]")
+		_log_message("[color=red]✗ EpicOS not available[/color]")
 
 func _on_back_button_pressed():
-	# Navigate back to demo menu
 	get_tree().change_scene_to_file("res://scenes/demos/demo_menu.tscn")
+
+# ============================================================================
+# EPICOS SIGNAL HANDLERS
+# ============================================================================
 
 func _on_login_completed(success: bool, user_info: Dictionary):
 	if success:
-		_log_message("[color=green]✓ Login successful![/color]")
+		_log_message("[color=green]✓ Login completed successfully![/color]")
 		_log_message("[color=green]User info received: " + str(user_info) + "[/color]")
 		is_user_logged_in = true
 	else:
@@ -134,13 +162,17 @@ func _on_login_completed(success: bool, user_info: Dictionary):
 
 func _on_logout_completed(success: bool):
 	if success:
-		_log_message("[color=green]✓ Logout successful![/color]")
+		_log_message("[color=green]✓ Logout completed successfully![/color]")
 	else:
 		_log_message("[color=red]✗ Logout failed![/color]")
 
 	is_user_logged_in = false
 	_update_user_info()
 	_update_ui_state()
+
+# ============================================================================
+# UI STATE MANAGEMENT
+# ============================================================================
 
 func _update_ui_state():
 	# Update platform status
@@ -180,9 +212,17 @@ func _update_user_info():
 		account_info_label.text = "Epic Account ID: N/A"
 		product_user_label.text = "Product User ID: N/A"
 
+# ============================================================================
+# UTILITY FUNCTIONS
+# ============================================================================
+
 func _log_message(message: String):
 	if output_text:
 		output_text.append_text(message + "\n")
+
+# ============================================================================
+# PROCESSING
+# ============================================================================
 
 # Update status periodically
 func _on_timer_timeout():
