@@ -1,7 +1,7 @@
 # GodotEOS
 **Epic Online Services (EOS) Integration for Godot Engine**
 
-A comprehensive GDExtension plugin that brings Epic Games Online Services to Godot Engine, enabling developers to integrate achievements, leaderboards, cloud saves, authentication, and more into their games.
+A comprehensive GDExtension plugin that brings Epic Games Online Services to Godot Engine, enabling developers to integrate achievements, leaderboards, authentication, friends, and more into their games.
 
 ## 🚀 Features
 
@@ -9,7 +9,7 @@ A comprehensive GDExtension plugin that brings Epic Games Online Services to God
 - **Achievements**: Unlock and query player achievements
 - **Statistics**: Track and update player stats
 - **Leaderboards**: Submit scores and retrieve rankings
-- **Cloud Saves**: Save and load player data to Epic's cloud storage
+- **Friends**: Query and manage player friends lists
 - **Cross-Platform**: Windows and Linux support
 - **GDScript Integration**: Simple API calls with signal-based callbacks
 
@@ -107,16 +107,6 @@ EpicOS.submit_score("high_scores", 1500)
 EpicOS.get_leaderboard("high_scores", 10)  # Top 10 scores
 ```
 
-### Cloud Saves
-```gdscript
-# Save data to cloud
-var save_data = {"level": 5, "score": 1000}
-EpicOS.save_file("player_progress.json", JSON.stringify(save_data))
-
-# Load data from cloud
-EpicOS.load_file("player_progress.json")
-```
-
 ## 📡 API Reference
 
 ### Signals
@@ -124,8 +114,6 @@ EpicOS.load_file("player_progress.json")
 - `achievement_unlocked(achievement_id: String)`
 - `stats_updated(stats: Dictionary)`
 - `leaderboard_retrieved(leaderboard_data: Array)`
-- `file_saved(success: bool, filename: String)`
-- `file_loaded(success: bool, filename: String, data: String)`
 
 ### Methods
 - `initialize()` - Initialize the EOS SDK
@@ -138,8 +126,6 @@ EpicOS.load_file("player_progress.json")
 - `get_stats() -> Dictionary` - Get current statistics
 - `submit_score(board_id: String, score: int)` - Submit leaderboard score
 - `get_leaderboard(board_id: String, count: int)` - Get leaderboard entries
-- `save_file(filename: String, data: String)` - Save to cloud storage
-- `load_file(filename: String)` - Load from cloud storage
 
 ## 🎮 Demo Project
 
@@ -149,7 +135,7 @@ This repository **IS** a complete demo project showcasing all EOS features! You 
 - **Achievement Testing**: Unlock achievements and track progress
 - **Statistics Tracking**: Update and retrieve player statistics
 - **Leaderboard Integration**: Submit scores and view leaderboard rankings
-- **Cloud Save System**: Save and load player data to Epic's cloud storage
+- **Friends Management**: Query and display friends lists
 - **Real-time Output Log**: Monitor EOS operations and responses
 
 ### How to Run the Demo
