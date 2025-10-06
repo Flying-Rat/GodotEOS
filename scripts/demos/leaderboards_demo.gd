@@ -9,19 +9,14 @@ extends Control
 @onready var back_button: Button = $VBoxContainer/StatusContainer/BackButton
 
 # Stats Section
-@onready var test_stats_button: Button = $VBoxContainer/StatsSection/HBoxContainer/TestStatsButton
-@onready var random_score_button: Button = $VBoxContainer/StatsSection/HBoxContainer/RandomScoreButton
-@onready var stat_name_input: LineEdit = $VBoxContainer/StatsSection/HBoxContainer/StatNameInput
-@onready var stat_value_input: SpinBox = $VBoxContainer/StatsSection/HBoxContainer/StatValueInput
-@onready var ingest_stat_button: Button = $VBoxContainer/StatsSection/HBoxContainer/IngestStatButton
+@onready var stat_name_input: LineEdit = $VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer/StatNameInput
+@onready var stat_value_input: SpinBox = $VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer/StatValueInput
+@onready var ingest_stat_button: Button = $VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer/IngestStatButton
 
 # Ranks Query Section
 @onready var query_definitions_button: Button = $VBoxContainer/RanksQuerySection/QueryDefinitionsButton
 @onready var query_ranks_button: Button = $VBoxContainer/RanksQuerySection/QueryRanksButton
 @onready var query_user_scores_button: Button = $VBoxContainer/RanksQuerySection/QueryUserScoresButton
-@onready var leaderboard_input: LineEdit = $VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer/LeaderboardInput
-@onready var limit_input: SpinBox = $VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer/LimitInput
-@onready var query_specific_ranks_button: Button = $VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer/QuerySpecificRanksButton
 
 # Leadeboards Lists
 @onready var definitions_list: ItemList = $VBoxContainer/DataSection/DefinitionsPanel/DefinitionsContainer/DefinitionsList
@@ -29,12 +24,17 @@ extends Control
 @onready var user_scores_list: ItemList = $VBoxContainer/DataSection/UserScoresPanel/UserScoresContainer/UserScoresList
 
 # Output Log Section
+@onready var auto_scroll_toggle: CheckButton = %AutoScrollToggle
+@onready var clear_log_button: Button = %ClearLogButton
+
 @onready var output_text: RichTextLabel = $VBoxContainer/OutputSection/OutputText
 
 var cached_definitions: Array = []
 var cached_ranks: Array = []
 var cached_user_scores: Dictionary = {}
 var selected_leaderboard_id: String = ""
+var selected_stat_id: String = ""
+var auto_scroll_enabled: bool = true
 
 # Test leaderboard IDs and stats for demonstration
 var test_leaderboard_ids: Array = [
@@ -59,12 +59,8 @@ func _ready():
 	query_ranks_button.pressed.connect(_on_query_ranks_button_pressed)
 	query_user_scores_button.pressed.connect(_on_query_user_scores_button_pressed)
 	refresh_button.pressed.connect(_on_refresh_button_pressed)
-	query_specific_ranks_button.pressed.connect(_on_query_specific_ranks_button_pressed)
 
 	ingest_stat_button.pressed.connect(_on_ingest_stat_button_pressed)
-	test_stats_button.pressed.connect(_on_test_stats_button_pressed)
-	random_score_button.pressed.connect(_on_random_score_button_pressed)
-
 	back_button.pressed.connect(_on_back_button_pressed)
 
 	# Connect list selection signals
@@ -89,6 +85,15 @@ func _ready():
 
 	_update_ui_state()
 	_log_message("[color=cyan]Leaderboards Demo initialized. Ready to demonstrate EpicOS leaderboards functionality.[/color]")
+	
+	# Output controls
+	if clear_log_button:
+		clear_log_button.pressed.connect(_on_clear_log_pressed)
+	if auto_scroll_toggle:
+		auto_scroll_toggle.toggled.connect(_on_auto_scroll_toggled)
+	
+	auto_scroll_enabled = auto_scroll_toggle.button_pressed
+	output_text.scroll_following = auto_scroll_enabled
 
 func _on_query_definitions_button_pressed():
 	_log_message("[color=yellow]Querying leaderboard definitions...[/color]")
@@ -167,36 +172,6 @@ func _on_refresh_button_pressed():
 	_log_message("[color=yellow]Refreshing display from cache...[/color]")
 	_refresh_displays()
 
-func _on_query_specific_ranks_button_pressed():
-	var leaderboard_id = selected_leaderboard_id
-	var limit = int(limit_input.value)
-
-	if leaderboard_id.is_empty():
-		_log_message("[color=red]Please select a leaderboard from the definitions list first![/color]")
-		return
-
-	# Validate that the leaderboard ID exists
-	if not cached_definitions.is_empty():
-		var valid_ids = []
-		var found = false
-		for definition in cached_definitions:
-			var def_id = definition.get("leaderboard_id", "")
-			valid_ids.append(def_id)
-			if def_id == leaderboard_id:
-				found = true
-				break
-
-		if not found:
-			_log_message("[color=red]⚠ Warning: Leaderboard ID '" + leaderboard_id + "' not found in definitions![/color]")
-			_log_message("[color=yellow]Available leaderboard IDs: " + str(valid_ids) + "[/color]")
-			_log_message("[color=yellow]Query may fail. Select a leaderboard from the definitions list or use a valid ID.[/color]")
-
-	_log_message("[color=yellow]Querying ranks for leaderboard: " + leaderboard_id + " (limit: " + str(limit) + ")[/color]")
-
-	if EpicOS:
-		EpicOS.query_leaderboard_ranks(leaderboard_id, limit)
-	else:
-		_log_message("[color=red]EpicOS not available![/color]")
 
 func _on_ingest_stat_button_pressed():
 	var stat_name = stat_name_input.text.strip_edges()
@@ -213,31 +188,6 @@ func _on_ingest_stat_button_pressed():
 	else:
 		_log_message("[color=red]EpicOS not available![/color]")
 
-func _on_test_stats_button_pressed():
-	var test_stats = {
-		"score": randi() % 10000 + 1000,
-		"kills": randi() % 50 + 1,
-		"wins": randi() % 10 + 1,
-		"games_played": randi() % 100 + 10,
-		"time_played": randi() % 3600 + 300
-	}
-
-	_log_message("[color=yellow]Ingesting multiple test stats: " + str(test_stats) + "[/color]")
-
-	if EpicOS:
-		EpicOS.ingest_stats(test_stats)
-	else:
-		_log_message("[color=red]EpicOS not available![/color]")
-
-func _on_random_score_button_pressed():
-	var random_score = randi() % 50000 + 1000
-
-	_log_message("[color=yellow]Submitting random score: " + str(random_score) + "[/color]")
-
-	if EpicOS:
-		EpicOS.ingest_stat("score", random_score)
-	else:
-		_log_message("[color=red]EpicOS not available![/color]")
 
 func _on_back_button_pressed():
 	# Navigate back to demo menu
@@ -247,8 +197,10 @@ func _on_definitions_list_item_selected(index: int):
 	if index >= 0 and index < cached_definitions.size():
 		var definition = cached_definitions[index]
 		var leaderboard_id = str(definition.get("leaderboard_id", ""))
+		var stat_id = str(definition.get("stat_name", ""))
 		selected_leaderboard_id = leaderboard_id  # Cache the selected leaderboard ID
-		leaderboard_input.text = leaderboard_id
+		selected_stat_id = stat_id
+		stat_name_input.text = stat_id;
 		_log_message("[color=cyan]Selected leaderboard: " + str(definition) + "[/color]")
 
 func _on_ranks_list_item_selected(index: int):
@@ -281,13 +233,6 @@ func _on_leaderboard_definitions_completed(success: bool, definitions: Array):
 				var lb_id = definition.get("leaderboard_id", "")
 				var stat_name = definition.get("stat_name", "")
 				_log_message("[color=cyan]  • " + lb_id + " (stat: " + stat_name + ")[/color]")
-
-			# Auto-populate the first leaderboard ID in the input field and cache it
-			if leaderboard_input:
-				var first_id = definitions[0].get("leaderboard_id", "")
-				leaderboard_input.text = first_id
-				selected_leaderboard_id = first_id  # Cache the auto-selected leaderboard
-				_log_message("[color=green]Auto-populated leaderboard input with: " + first_id + "[/color]")
 	else:
 		_log_message("[color=red]✗ Leaderboard definitions query failed![/color]")
 		_log_message("[color=red]Check the console output for error details.[/color]")
@@ -406,7 +351,6 @@ func _refresh_user_scores_display():
 		var user_score_data = cached_user_scores[user_id]
 		var score = user_score_data.get("score", 0)
 		var rank = user_score_data.get("rank", "N/A")
-
 		var display_text = str(user_id) + ": " + str(score) + " (Rank: " + str(rank) + ")"
 		user_scores_list.add_item(display_text)
 
@@ -433,10 +377,7 @@ func _update_ui_state():
 	query_definitions_button.disabled = not leaderboards_available
 	query_ranks_button.disabled = not leaderboards_available
 	query_user_scores_button.disabled = not leaderboards_available
-	query_specific_ranks_button.disabled = not leaderboards_available
 	ingest_stat_button.disabled = not leaderboards_available
-	test_stats_button.disabled = not leaderboards_available
-	random_score_button.disabled = not leaderboards_available
 
 func _log_message(message: String):
 	if output_text:
@@ -476,6 +417,17 @@ func _query_user_scores_example():
 		EpicOS.query_leaderboard_user_scores(leaderboard_id, example_user_ids)
 	else:
 		_log_message("[color=red]EpicOS not available![/color]")
+
+func _on_clear_log_pressed():
+	if output_text:
+		output_text.clear()
+	_log_message("[color=cyan]Log cleared.[/color]")
+
+func _on_auto_scroll_toggled(button_pressed: bool):
+	auto_scroll_enabled = button_pressed
+	if output_text:
+		output_text.scroll_following = auto_scroll_enabled
+
 
 # Update UI state periodically
 func _process(_delta):

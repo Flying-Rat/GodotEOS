@@ -57,54 +57,6 @@ text = "← Back to Menu"
 custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 
-[node name="StatsSection" type="HBoxContainer" parent="VBoxContainer"]
-layout_mode = 2
-
-[node name="StatsLabel" type="Label" parent="VBoxContainer/StatsSection"]
-layout_mode = 2
-text = "Submit Statistics:"
-
-[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/StatsSection"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="TestStatsButton" type="Button" parent="VBoxContainer/StatsSection/HBoxContainer"]
-layout_mode = 2
-disabled = true
-text = "Submit Test Stats"
-
-[node name="RandomScoreButton" type="Button" parent="VBoxContainer/StatsSection/HBoxContainer"]
-layout_mode = 2
-disabled = true
-text = "Submit Random Score"
-
-[node name="VSeparator" type="VSeparator" parent="VBoxContainer/StatsSection/HBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="StatNameInput" type="LineEdit" parent="VBoxContainer/StatsSection/HBoxContainer"]
-custom_minimum_size = Vector2(200, 0)
-layout_mode = 2
-size_flags_horizontal = 8
-placeholder_text = "Stat Name"
-
-[node name="StatValueInput" type="SpinBox" parent="VBoxContainer/StatsSection/HBoxContainer"]
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 2
-size_flags_horizontal = 8
-max_value = 999999.0
-value = 100.0
-
-[node name="IngestStatButton" type="Button" parent="VBoxContainer/StatsSection/HBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 8
-disabled = true
-text = "Submit Single Stat"
-
-[node name="HSeparator6" type="HSeparator" parent="VBoxContainer"]
-custom_minimum_size = Vector2(0, 10)
-layout_mode = 2
-
 [node name="RanksQuerySection" type="HBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
 
@@ -123,33 +75,37 @@ layout_mode = 2
 disabled = true
 text = "Query User Scores"
 
+[node name="VSeparatorRanks" type="VSeparator" parent="VBoxContainer/RanksQuerySection"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+size_flags_horizontal = 6
+
 [node name="QuerySpecificHBoxContainer" type="HBoxContainer" parent="VBoxContainer/RanksQuerySection"]
 layout_mode = 2
 size_flags_horizontal = 10
 
-[node name="RanksQueryLabel" type="Label" parent="VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer"]
+[node name="StatsLabel" type="Label" parent="VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer"]
 layout_mode = 2
-size_flags_horizontal = 8
-text = "Query Specific Leaderboard:"
+text = "Submit Statistics:"
 
-[node name="LeaderboardInput" type="LineEdit" parent="VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer"]
+[node name="StatNameInput" type="LineEdit" parent="VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer"]
 custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 size_flags_horizontal = 8
-placeholder_text = "Leaderboard ID"
+placeholder_text = "Stat Name"
 
-[node name="LimitInput" type="SpinBox" parent="VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer"]
+[node name="StatValueInput" type="SpinBox" parent="VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer"]
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
-size_flags_horizontal = 0
-min_value = 1.0
-max_value = 1000.0
-value = 10.0
+size_flags_horizontal = 8
+max_value = 999999.0
+value = 100.0
 
-[node name="QuerySpecificRanksButton" type="Button" parent="VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer"]
+[node name="IngestStatButton" type="Button" parent="VBoxContainer/RanksQuerySection/QuerySpecificHBoxContainer"]
 layout_mode = 2
-size_flags_horizontal = 0
+size_flags_horizontal = 8
 disabled = true
-text = "Query Specific Ranks"
+text = "Submit Single Stat"
 
 [node name="HSeparator5" type="HSeparator" parent="VBoxContainer"]
 custom_minimum_size = Vector2(0, 10)
@@ -245,10 +201,27 @@ layout_mode = 2
 layout_mode = 2
 size_flags_vertical = 2
 
-[node name="OutputLabel" type="Label" parent="VBoxContainer/OutputSection"]
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/OutputSection"]
 layout_mode = 2
+
+[node name="OutputLabel" type="Label" parent="VBoxContainer/OutputSection/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 1
 text = "Output Log"
+
+[node name="AutoScrollToggle" type="CheckButton" parent="VBoxContainer/OutputSection/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 8
+button_pressed = true
+text = "Auto-scroll"
+
+[node name="ClearLogButton" type="Button" parent="VBoxContainer/OutputSection/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 8
+text = "Clear log"
 
 [node name="OutputText" type="RichTextLabel" parent="VBoxContainer/OutputSection"]
 custom_minimum_size = Vector2(0, 200)
