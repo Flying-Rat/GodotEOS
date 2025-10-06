@@ -21,7 +21,6 @@ struct LeaderboardRanksQueryContext {
 struct LeaderboardUserScoresQueryContext {
     LeaderboardsSubsystem* subsystem = nullptr;
     std::string stat_name;
-    EOS_Leaderboards_UserScoresQueryStatInfo stat_info{};
     std::vector<EOS_ProductUserId> user_ids;
 };
 
@@ -177,43 +176,63 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
         UtilityFunctions::push_warning("LeaderboardsSubsystem: Leaderboard definition not found for ID: " + leaderboard_id);
         return false;
     }
-
+    
+    auto auth = Get<IAuthenticationSubsystem>();
+    
     String stat_name = leaderboard_def["stat_name"];
-    int aggregation_int = leaderboard_def["aggregation"];
-    EOS_ELeaderboardAggregation aggregation = static_cast<EOS_ELeaderboardAggregation>(aggregation_int);
 
     std::unique_ptr<LeaderboardUserScoresQueryContext> context = std::make_unique<LeaderboardUserScoresQueryContext>();
     context->subsystem = this;
     context->user_ids.reserve(user_ids.size());
 
-    for (int i = 0; i < user_ids.size(); i++) {
-        String user_id_str = user_ids[i];
-        EOS_ProductUserId puid = FAccountHelpers::ProductUserIDFromString(user_id_str.utf8().get_data());
-        if (!TValidateAccount<EOS_ProductUserId>::IsValid(puid)) {
-            UtilityFunctions::push_warning("LeaderboardsSubsystem: Invalid Product User ID: " + user_id_str);
+
+    
+    context->stat_name = stat_name.utf8().get_data();
+    
+    // Query User Scores
+	EOS_Leaderboards_QueryLeaderboardUserScoresOptions QueryUserScoresOptions = { 0 };
+	QueryUserScoresOptions.ApiVersion = EOS_LEADERBOARDS_QUERYLEADERBOARDUSERSCORES_API_LATEST;
+	QueryUserScoresOptions.UserIdsCount = (uint32_t)user_ids.size();
+
+    EOS_ProductUserId* UserData = new EOS_ProductUserId[user_ids.size()];
+	for (uint32_t UserIndex = 0; UserIndex < user_ids.size(); ++UserIndex)
+	{
+        EOS_ProductUserId product_user_id = FAccountHelpers::ProductUserIDFromString(String(user_ids[UserIndex]).utf8().get_data());
+        if (!TValidateAccount<EOS_ProductUserId>::IsValid(product_user_id)) 
+        {
+            UtilityFunctions::push_warning("LeaderboardsSubsystem: Invalid Product User ID: " + String(user_ids[UserIndex]));
             return false;
         }
-        context->user_ids.push_back(puid);
-    }
+        else 
+        {
+            UtilityFunctions::print("LeaderboardsSubsystem: Querying score for user: " + String(user_ids[UserIndex]));
+        }
 
-    auto auth = Get<IAuthenticationSubsystem>();
+        UserData[UserIndex] = product_user_id;
+        context->user_ids.push_back(product_user_id);
+	}
 
-    context->stat_name = stat_name.utf8().get_data();
-    context->stat_info.ApiVersion = EOS_LEADERBOARDS_USERSCORESQUERYSTATINFO_API_LATEST;
-    context->stat_info.StatName = context->stat_name.c_str();
-    context->stat_info.Aggregation = aggregation;
 
-    EOS_Leaderboards_QueryLeaderboardUserScoresOptions options = {};
-    options.ApiVersion = EOS_LEADERBOARDS_QUERYLEADERBOARDUSERSCORES_API_LATEST;
-    options.UserIds = context->user_ids.data();
-    options.UserIdsCount = static_cast<uint32_t>(context->user_ids.size());
-    options.StatInfo = &context->stat_info;
-    options.StatInfoCount = 1;  // Number of stats to query (always 1 in this implementation)
-    options.StartTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
-    options.EndTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
-    options.LocalUserId = auth->GetProductUserId();
+	QueryUserScoresOptions.UserIds = UserData;
+	QueryUserScoresOptions.StatInfoCount = 1;
+    
+	EOS_Leaderboards_UserScoresQueryStatInfo* StatInfoData = new EOS_Leaderboards_UserScoresQueryStatInfo[QueryUserScoresOptions.StatInfoCount];
+    std::vector<std::string> NarrowStatNames;
+    NarrowStatNames.emplace_back(stat_name.utf8().get_data());
+    StatInfoData[0].StatName = NarrowStatNames[0].c_str();
+    StatInfoData[0].Aggregation = EOS_ELeaderboardAggregation::EOS_LA_Sum;
 
-    EOS_Leaderboards_QueryLeaderboardUserScores(leaderboards_handle, &options, context.get(), on_query_leaderboard_user_scores_complete);
+    QueryUserScoresOptions.StatInfo = StatInfoData;
+    QueryUserScoresOptions.StartTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
+	QueryUserScoresOptions.EndTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
+    QueryUserScoresOptions.LocalUserId = auth->GetProductUserId();
+
+
+
+    EOS_Leaderboards_QueryLeaderboardUserScores(leaderboards_handle, &QueryUserScoresOptions, context.get(), on_query_leaderboard_user_scores_complete);
+
+    delete[] UserData;
+
     context.release();
     return true;
 }
@@ -378,19 +397,26 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_ranks_complete(const E
 }
 
 void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_user_scores_complete(const EOS_Leaderboards_OnQueryLeaderboardUserScoresCompleteCallbackInfo* data) {
+
+    UtilityFunctions::print("LeaderboardsSubsystem: on_query_leaderboard_user_scores_complete called");
     if (!data) {
+        UtilityFunctions::print("LeaderboardsSubsystem: on_query_leaderboard_user_scores_complete received null data");
         return;
     }
 
     std::unique_ptr<LeaderboardUserScoresQueryContext> context(static_cast<LeaderboardUserScoresQueryContext*>(data->ClientData));
     if (!context) {
+        UtilityFunctions::print("LeaderboardsSubsystem: on_query_leaderboard_user_scores_complete received null context");
         return;
     }
 
     LeaderboardsSubsystem* self = context->subsystem;
     if (!self) {
+        UtilityFunctions::print("LeaderboardsSubsystem: on_query_leaderboard_user_scores_complete received null subsystem");
         return;
     }
+
+
 
     if (data->ResultCode == EOS_EResult::EOS_Success) {
         self->leaderboard_user_scores.clear();
@@ -402,12 +428,13 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_user_scores_complete(c
             UtilityFunctions::print("LeaderboardsSubsystem: Requested user: " + user_id_str);
         }
 
-        // Get user scores count
-        EOS_Leaderboards_GetLeaderboardUserScoreCountOptions count_options = {};
-        count_options.ApiVersion = EOS_LEADERBOARDS_GETLEADERBOARDUSERSCORECOUNT_API_LATEST;
-        count_options.StatName = context->stat_name.c_str();
+        std::string StatName = context->stat_name;
 
-        uint32_t scores_count = EOS_Leaderboards_GetLeaderboardUserScoreCount(self->leaderboards_handle, &count_options);
+        EOS_Leaderboards_GetLeaderboardUserScoreCountOptions LeaderboardUserScoresCountOptions = { 0 };
+        LeaderboardUserScoresCountOptions.ApiVersion = EOS_LEADERBOARDS_GETLEADERBOARDUSERSCORECOUNT_API_LATEST;
+        LeaderboardUserScoresCountOptions.StatName = StatName.c_str();
+
+        uint32_t scores_count = EOS_Leaderboards_GetLeaderboardUserScoreCount(self->leaderboards_handle, &LeaderboardUserScoresCountOptions);
 
         UtilityFunctions::print("LeaderboardsSubsystem: Retrieved " + String::num_int64(scores_count) + " user scores (only users with stats are returned)");
 
@@ -426,7 +453,8 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_user_scores_complete(c
 
                 Dictionary score_dict;
                 score_dict["score"] = (int)user_score->Score;
-                score_dict["rank"] = (int)(i + 1);  // Results are sorted by aggregation method
+                // Note: Rank is not provided by QueryLeaderboardUserScores API
+                // Results are returned for users with scores, in arbitrary order
 
                 self->leaderboard_user_scores[user_id] = score_dict;
                 UtilityFunctions::print("LeaderboardsSubsystem: Found score for user " + user_id + ": " + String::num_int64(user_score->Score));
@@ -435,6 +463,21 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_user_scores_complete(c
         }
 
         UtilityFunctions::print("LeaderboardsSubsystem: Leaderboard user scores query completed successfully");
+
+        // Iterate through all leaderboard definitions and print score counts
+        for (int i = 0; i < self->leaderboard_definitions.size(); i++) {
+            Dictionary def = self->leaderboard_definitions[i];
+            String stat_name = def["stat_name"];
+            String leaderboard_id = def["leaderboard_id"];
+
+            EOS_Leaderboards_GetLeaderboardUserScoreCountOptions options = {0};
+            options.ApiVersion = EOS_LEADERBOARDS_GETLEADERBOARDUSERSCORECOUNT_API_LATEST;
+            options.StatName = stat_name.utf8().get_data();
+
+            uint32_t count = EOS_Leaderboards_GetLeaderboardUserScoreCount(self->leaderboards_handle, &options);
+
+            UtilityFunctions::print("Leaderboard '" + leaderboard_id + "' (stat: " + stat_name + ") has " + String::num_int64(count) + " user scores");
+        }
 
         // Call the callback if set
         if (self->leaderboard_user_scores_callback.is_valid()) {
