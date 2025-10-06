@@ -15,7 +15,6 @@ Contents
 - `setup_godot_cpp_module.ps1` - Helper script to configure `godot-cpp` bindings (if used).
 - `extension_api.json` - Reflection metadata used by Godot for the GDExtension API.
 - `demo/` - Minimal/demo Godot project with scenes, scripts, and a `bin/` folder containing sample build artifacts.
-- `eos_samples/` - Epic-provided sample projects and tooling (kept for reference).
 - `eos_sdk/put_eos_sdk_here` - Placeholder where you should place the EOS SDK.
 
 Quick prerequisites

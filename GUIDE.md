@@ -1,11 +1,11 @@
 # GodotEOS Setup Guide
 
-A comprehensive guide to set up and use the GodotEOS GDExtension for Epic Online Services (EOS) integration in Godot 4.x.
+A comprehensive guide to set up and use the GodotEOS GDExtension for Epic Online Services (EOS) integration in Godot 4.3+.
 
 ## Prerequisites
 
 ### Required Software
-- **Godot Engine 4.x** (tested with Godot 4.2+)
+- **Godot Engine 4.3** (tested with Godot 4.3+)
 - **Visual Studio 2019/2022** or **MinGW** (Windows)
 - **SCons** build system
 - **Git** for cloning repositories
@@ -35,7 +35,7 @@ GodotEOS/
 │   ├── Lib/                   # EOS SDK libraries
 │   ├── Tools/                 # EOS SDK tools
 │   └── put_eos_sdk_here       # Marker file (already present)
-└── godot_epic_extension/      # Extension source code
+└── godot_eos_extension/       # Extension source code
 ```
 
 **Important**: Make sure the EOS SDK files are placed directly in the `eos_sdk` directory structure as shown above.
@@ -45,7 +45,7 @@ GodotEOS/
 Navigate to the extension directory:
 
 ```bash
-cd godot_epic_extension
+cd godot_eos_extension
 ```
 
 Build for your target platform:
@@ -304,7 +304,7 @@ GodotEOS/
 │   │   ├── EOSSDK-Win64-Shipping.lib
 │   │   └── [other libraries...]
 │   └── put_eos_sdk_here             # Marker file
-├── godot_epic_extension/             # Extension source
+├── godot_eos_extension/             # Extension source
 │   ├── src/
 │   │   ├── godotepic.h
 │   │   ├── godotepic.cpp
