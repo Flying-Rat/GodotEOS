@@ -19,7 +19,7 @@ Contents
 
 Quick prerequisites
 -------------------
-- Godot Engine 4.x (editor for running the demo)
+- Godot Engine 4.3 or higher (editor for running the demo)
 - SCons (build tool used by the Godot build system and `godot-cpp`)
 - Visual Studio (MSVC) toolchain on Windows or a suitable C/C++ toolchain on Linux/macOS
 - Epic Online Services SDK (place the SDK files under `eos_sdk/` as described below)
@@ -27,7 +27,7 @@ Quick prerequisites
 Putting the EOS SDK in place
 ----------------------------
 1. Download the EOS SDK from Epic's Developer portal.
-2. Extract the SDK and copy relevant `Bin`, `Include`, `Lib`, and `Tools` folders into `godot_epic_extension/eos_sdk/` or update the build scripts to point to your SDK location.
+2. Extract the SDK and copy relevant `Bin`, `Include`, `Lib`, and `Tools` folders into `godot_eos_extension/eos_sdk/` or update the build scripts to point to your SDK location.
 3. On Windows, ensure the demo `bin/` contains `EOSSDK-Win64-Shipping.dll` alongside the built `.gdextension` if you plan to run the demo from the editor.
 
 Build instructions (Windows PowerShell)
@@ -56,10 +56,32 @@ Notes about builds
 
 Running the demo
 ----------------
-1. Ensure the built `.gdextension` and any required EOS runtime DLLs are in `godot_epic_extension/demo/bin/` (or copy them into the demo project's `bin/` folder).
-2. Open `godot_epic_extension/demo/project.godot` in Godot Editor 4.x.
+There are two demo projects in this repository:
+
+### 1. Extension Demo (Minimal)
+This is a basic demo project located in `godot_eos_extension/demo/` for development and testing the GDExtension build and basic functionality.
+
+1. Ensure the built `.gdextension` and any required EOS runtime DLLs are in `godot_eos_extension/demo/bin/` (or copy them into the demo project's `bin/` folder).
+2. Open `godot_eos_extension/demo/project.godot` in Godot Editor 4.x.
 3. Enable the `GodotEOS` plugin (if required) under Project Settings → Plugins.
 4. Run the `main.tscn` scene to see the demo UI and test EOS-related flows.
+
+### 2. Full Showcase Demo (Public)
+The root project (`project.godot`) provides a comprehensive demo showcasing all EOS features with a complete UI.
+
+1. Open the root `project.godot` in Godot Editor 4.x.
+2. Enable the `GodotEOS` plugin in Project Settings → Plugins.
+3. Run the project (scenes/demos/demo_menu.tscn) to access the full demo menu with authentication, achievements, leaderboards, friends, and more.
+
+#### Showcase
+
+![Achievement Stats Animation](../screenshots/gifs/godoteos_achievement_stats.gif)
+
+![Authentication Flow](../screenshots/gifs/godoteos_auth.gif)
+
+![Friends Interface](../screenshots/gifs/godoteos_friends.gif)
+
+![Leaderboards Interaction](../screenshots/gifs/godoteos_leaderboards.gif)
 
 Setup helper scripts
 --------------------
@@ -109,7 +131,7 @@ Where to look next
 ------------------
 - Root `README.md` — higher-level project overview and demo usage examples.
 - `docs/` — design notes and EOS analysis files (e.g. `EOS_SDK_Analysis.md`).
-- `plan.md` — development roadmap and planned features.
+- Repository issues — development roadmap and planned features.
 
 If you'd like, I can also:
 - add a short CONTRIBUTING.md with native build conventions,

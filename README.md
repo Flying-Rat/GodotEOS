@@ -15,10 +15,10 @@ A comprehensive GDExtension plugin that brings Epic Games Online Services to God
 
 ## 📋 Prerequisites
 
-- Godot Engine 4.x
+- Godot Engine 4.3 or higher
 - Epic Games Developer Account
 - EOS SDK (included in releases)
-- Visual Studio 2019/2022 (Windows) or GCC (Linux)
+- Visual Studio 2019/2022 (Windows) or VS Code or GCC (Linux)
 
 ## 🛠️ Installation
 
@@ -29,7 +29,7 @@ A comprehensive GDExtension plugin that brings Epic Games Online Services to God
 
 ### Method 2: Build from Source
 1. Clone this repository
-2. Ensure you have the EOS SDK in the `thirdparty/` folder
+2. Ensure you have the EOS SDK in the `godot_eos_extension/eos_sdk/` folder
 3. Build using SCons:
    ```bash
    scons platform=windows target=template_debug
@@ -142,8 +142,32 @@ This repository **IS** a complete demo project showcasing all EOS features! You 
 
 1. Open this project in Godot Engine 4.x
 2. Enable the GodotEOS plugin in Project Settings → Plugins
-3. Run the project (scenes/main.tscn)
+3. Run the project (scenes/demos/demo_menu.tscn)
 4. Follow the on-screen instructions to test EOS features
+
+### Demo Screenshots
+
+Here are some screenshots showcasing the demo project functionality:
+
+![Demo Menu](screenshots/godoteos_demo_menu.png)
+
+![Authentication Demo](screenshots/godoteos_demo_auth.png)
+
+![Achievements Demo](screenshots/godoteos_demo_achievements.png)
+
+![Friends Demo](screenshots/godoteos_demo_friends.png)
+
+![Leaderboards Demo](screenshots/godoteos_demo_leaderboards.png)
+
+#### Demo GIFs
+
+![Achievement Stats Animation](screenshots/gifs/godoteos_achievement_stats.gif)
+
+![Authentication Flow](screenshots/gifs/godoteos_auth.gif)
+
+![Friends Interface](screenshots/gifs/godoteos_friends.gif)
+
+![Leaderboards Interaction](screenshots/gifs/godoteos_leaderboards.gif)
 
 ### Demo Workflow
 
@@ -152,13 +176,10 @@ This repository **IS** a complete demo project showcasing all EOS features! You 
 3. **Test Features**: Once logged in, use the feature buttons to test different EOS APIs
 4. **Monitor Output**: Watch the output log to see EOS responses and status updates
 
-### Current Demo Status
-
-This demo currently uses **mock implementations** for testing the UI and API structure. The actual EOS SDK integration will be implemented according to the development plan in `plan.md`.
 
 ### Demo Project Structure
 
-- `scenes/main.tscn` - Main demo scene with interactive UI
+- `scenes/demos/demo_menu.tscn` - Main demo scene with interactive UI
 - `scripts/main_demo.gd` - Demo logic and UI event handling
 - `addons/godoteos/` - GodotEOS plugin files
   - `epic_os.gd` - Main EOS interface singleton (mock implementation)
@@ -243,4 +264,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Status**: 🚧 In Development - See [plan.md](plan.md) for development roadmap
+**Status**: 🚧 In Development - See [GUIDE.md](GUIDE.md) for setup instructions
