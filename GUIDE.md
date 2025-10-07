@@ -98,9 +98,9 @@ Copy the built extension files to your Godot project:
 ```
 YourGodotProject/
 ├── addons/
-│   └── godot_epic/            # ← Create this directory
+│   └── godoteos/            # ← Create this directory
 │       ├── bin/               # Copy demo/bin/ contents here
-│       └── godotepic.gdextension  # Copy from demo/
+│       └── godoteos.gdextension  # Copy from demo/
 └── your_game_files/
 ```
 
@@ -110,52 +110,39 @@ YourGodotProject/
 2. Go to **Project → Project Settings → Plugins**
 3. Find "GodotEOS" and enable it
 
-### Step 3: Create EOS Autoload Script
+### Step 3: Configure EOS
 
-Create an autoload script (e.g., `epic_manager.gd`) to handle EOS initialization and ticking:
+The GodotEOS plugin includes an `EpicOS` singleton that handles EOS initialization and provides a high-level API for EOS features. The singleton is automatically added as an autoload when you enable the plugin.
+
+To initialize EOS, call the `EpicOS.initialize()` method with your configuration:
 
 ```gdscript
-extends Node
-
-var epic: GodotEOS
-
 func _ready():
-    # Get the GodotEOS singleton
-    epic = GodotEOS.get_singleton()
-
-    # Initialize EOS with your configuration
-    var init_options = {
+    # Configure EOS with your credentials
+    var config = {
         "product_name": "YourGameName",
         "product_version": "1.0.0",
         "product_id": "your_epic_product_id",
         "sandbox_id": "your_sandbox_id",
         "deployment_id": "your_deployment_id",
         "client_id": "your_client_id",
-        "client_secret": "your_client_secret",
-        # "encryption_key": "optional_64_char_hex_key"
+        "client_secret": "your_client_secret"
     }
 
-    if epic.initialize_platform(init_options):
-        print("✅ EOS Platform initialized successfully")
+    if EpicOS.initialize(config):
+        print("✅ EOS initialized successfully")
+        # EOS is now ready to use
     else:
-        print("❌ Failed to initialize EOS Platform")
+        print("❌ Failed to initialize EOS")
+        # Handle initialization failure
 
 func _process(_delta: float) -> void:
-    # Tick EOS platform every frame (equivalent to Steam.run_callbacks())
-    if epic and epic.is_platform_initialized():
-        epic.tick()
-
-func _exit_tree():
-    # Clean shutdown
-    if epic and epic.is_platform_initialized():
-        epic.shutdown_platform()
+    # The EpicOS singleton automatically ticks EOS every frame
+    # No manual ticking required
+    pass
 ```
 
-### Step 4: Add Autoload to Project
-
-1. Go to **Project → Project Settings → Autoload**
-2. Add your `epic_manager.gd` script as a singleton
-3. Set the node name to "EpicManager"
+**Note**: The `EpicOS` singleton is automatically registered as an autoload when the plugin is enabled. You don't need to manually add it to your project's autoloads.
 
 ## Configuration
 
@@ -171,7 +158,7 @@ func _exit_tree():
 
 ### Configuration Options
 
-The `initialize_platform()` method accepts a dictionary with these options:
+The `EpicOS.initialize()` method accepts a dictionary with these options:
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
@@ -192,10 +179,8 @@ The `initialize_platform()` method accepts a dictionary with these options:
 extends Node
 
 func _ready():
-    var epic = GodotEOS.get_singleton()
-
     # Check if EOS is initialized
-    if epic.is_platform_initialized():
+    if EpicOS.is_platform_initialized():
         print("EOS is ready!")
 
         # Your EOS-specific code here
@@ -212,9 +197,7 @@ func _ready():
 
 ```gdscript
 func initialize_eos():
-    var epic = GodotEOS.get_singleton()
-
-    var options = {
+    var config = {
         "product_id": "your_product_id",
         "sandbox_id": "your_sandbox_id",
         "deployment_id": "your_deployment_id",
@@ -222,7 +205,7 @@ func initialize_eos():
         "client_secret": "your_client_secret"
     }
 
-    if not epic.initialize_platform(options):
+    if not EpicOS.initialize(config):
         print("❌ EOS initialization failed!")
         # Handle initialization failure
         # - Show error message to user
@@ -244,7 +227,7 @@ func initialize_eos():
 **Solutions**:
 - Ensure the `.gdextension` file is in the correct location
 - Check that binary files match your platform (Windows/Linux/macOS)
-- Verify the extension file paths in `godotepic.gdextension`
+- Verify the extension file paths in `godoteos.gdextension`
 
 #### 2. Missing EOS SDK Libraries
 **Problem**: "Failed to load EOS SDK" or similar runtime errors
@@ -264,7 +247,7 @@ func initialize_eos():
 - Try cleaning and rebuilding: `scons --clean && scons platform=windows`
 
 #### 4. Platform Initialization Fails
-**Problem**: `initialize_platform()` returns `false`
+**Problem**: `EpicOS.initialize()` returns `false`
 
 **Solutions**:
 - Verify all required credentials are provided
@@ -292,6 +275,7 @@ GodotEOS/
 ├── README.md
 ├── GUIDE.md                          # This file
 ├── LICENSE
+├── project.godot                     # Main project file
 ├── eos_sdk/                          # EOS SDK (you provide)
 │   ├── Bin/
 │   │   ├── EOSSDK-Win64-Shipping.dll
@@ -308,12 +292,28 @@ GodotEOS/
 │   ├── src/
 │   │   ├── godotepic.h
 │   │   ├── godotepic.cpp
-│   │   └── register_types.cpp
+│   │   └── [other source files...]
 │   ├── SConstruct                    # Build configuration
-│   └── demo/                         # Build output
+│   ├── setup_gdextension.ps1         # Setup scripts
+│   ├── setup_godot_cpp_module.ps1
+│   ├── godot-cpp/                    # Godot C++ bindings
+│   ├── doc_classes/
+│   └── demo/                         # Build output and demo
 │       ├── bin/                      # Compiled binaries
-│       └── godotepic.gdextension     # Extension manifest
-└── [other files...]
+│       ├── godoteos.gdextension     # Extension manifest
+│       ├── project.godot            # Demo project
+│       ├── scenes/
+│       └── scripts/
+├── addons/
+│   └── godoteos/                     # Plugin addon
+│       ├── epic_os.gd               # EpicOS singleton
+│       ├── plugin.cfg               # Plugin configuration
+│       ├── plugin.gd                # Plugin script
+│       └── bin/                     # Runtime binaries
+├── scenes/                           # Demo scenes
+├── scripts/                          # Demo scripts
+├── screenshots/                      # Demo screenshots
+└── docs/                            # Documentation
 ```
 
 ## Next Steps
