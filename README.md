@@ -145,13 +145,19 @@ This repository **IS** a complete demo project showcasing all EOS features! You 
 3. Run the project (scenes/demos/demo_menu.tscn)
 4. Follow the on-screen instructions to test EOS features
 
-#### Demo GIFs
+#### Demo Authentication
 
 ![Authentication Flow](screenshots/gifs/godoteos_auth.gif)
 
+#### Demo Achievements & Stats
+
 ![Achievement Stats Animation](screenshots/gifs/godoteos_achievement_stats.gif)
 
+#### Demo Friends
+
 ![Friends Interface](screenshots/gifs/godoteos_friends.gif)
+
+#### Demo Leaderboards
 
 ![Leaderboards Interaction](screenshots/gifs/godoteos_leaderboards.gif)
 
