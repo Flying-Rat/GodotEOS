@@ -301,8 +301,7 @@ func _on_leaderboard_user_scores_completed(success: bool, user_scores: Dictionar
 			for user_id in user_scores:
 				var score_data = user_scores[user_id]
 				var score = score_data.get("score", 0)
-				var rank = score_data.get("rank", "N/A")
-				_log_message("[color=cyan]  • " + user_id + ": " + str(score) + " (Rank: " + str(rank) + ")[/color]")
+				_log_message("[color=cyan]  • " + user_id + ": " + str(score) + "[/color]")
 		else:
 			_log_message("[color=yellow]⚠ No users had scores for this leaderboard[/color]")
 			_log_message("[color=yellow]Users need to ingest stats first before appearing on leaderboards[/color]")
@@ -387,8 +386,7 @@ func _refresh_user_scores_display():
 	for user_id in cached_user_scores:
 		var user_score_data = cached_user_scores[user_id]
 		var score = user_score_data.get("score", 0)
-		var rank = user_score_data.get("rank", "N/A")
-		var display_text = str(user_id) + ": " + str(score) + " (Rank: " + str(rank) + ")"
+		var display_text = str(user_id) + ": " + str(score)
 		user_scores_list.add_item(display_text)
 
 	_log_message("[color=cyan]Refreshed user scores display with " + str(cached_user_scores.size()) + " users[/color]")

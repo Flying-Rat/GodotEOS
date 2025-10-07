@@ -365,9 +365,6 @@ void EOS_CALL FriendsSubsystem::on_query_external_account_mappings(const EOS_Con
         UtilityFunctions::print("FriendsSubsystem: External account mappings query successful");
 
         std::vector<FEpicAccountId> MappingsReceived;
-        int mappings_found = 0;
-        int total_friends = context->OutstandingExternalAccountsToQueryEpicIDs.size();
-        
         for (const FEpicAccountId& NextId : context->OutstandingExternalAccountsToQueryEpicIDs)
         {
             EOS_Connect_GetExternalAccountMappingsOptions Options = {};
@@ -381,7 +378,6 @@ void EOS_CALL FriendsSubsystem::on_query_external_account_mappings(const EOS_Con
             EOS_ProductUserId NewMapping = EOS_Connect_GetExternalAccountMapping(ConnectHandle, &Options);
             if (NewMapping)
             {
-                mappings_found++;
                 // Update the friends_list with the product_id
                 String friend_id_str = FAccountHelpers::EpicAccountIDToString(NextId);
                 String product_id_str = FAccountHelpers::ProductUserIDToString(NewMapping);
@@ -395,13 +391,7 @@ void EOS_CALL FriendsSubsystem::on_query_external_account_mappings(const EOS_Con
                     }
                 }
             }
-            else
-            {
-                UtilityFunctions::print("FriendsSubsystem: No product ID mapping found for friend " + FAccountHelpers::EpicAccountIDToString(NextId));
-            }
-        }
-        
-        UtilityFunctions::print("FriendsSubsystem: Processed " + String::num_int64(total_friends) + " friends, found mappings for " + String::num_int64(mappings_found) + " friends");    
+        }    
         
 
     } else {

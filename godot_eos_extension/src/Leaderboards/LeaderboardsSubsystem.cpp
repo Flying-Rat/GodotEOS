@@ -140,6 +140,8 @@ bool LeaderboardsSubsystem::QueryLeaderboardRanks(const String& leaderboard_id, 
 }
 
 bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard_id, const Array& user_ids) {
+    UtilityFunctions::print("LeaderboardsSubsystem: QueryLeaderboardUserScores called for leaderboard '" + leaderboard_id + "' with " + String::num_int64(user_ids.size()) + " users");
+
     if (!leaderboards_handle) {
         UtilityFunctions::printerr("LeaderboardsSubsystem: Not initialized");
         return false;
@@ -180,6 +182,7 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
     auto auth = Get<IAuthenticationSubsystem>();
     
     String stat_name = leaderboard_def["stat_name"];
+    UtilityFunctions::print("LeaderboardsSubsystem: Found leaderboard definition with stat name: " + stat_name);
 
     std::unique_ptr<LeaderboardUserScoresQueryContext> context = std::make_unique<LeaderboardUserScoresQueryContext>();
     context->subsystem = this;
@@ -225,6 +228,8 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
     QueryUserScoresOptions.StartTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
 	QueryUserScoresOptions.EndTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
     QueryUserScoresOptions.LocalUserId = auth->GetProductUserId();
+
+    UtilityFunctions::print("LeaderboardsSubsystem: Submitting leaderboard user scores query with stat '" + stat_name + "' and aggregation type Sum");
 
     EOS_Leaderboards_QueryLeaderboardUserScores(leaderboards_handle, &QueryUserScoresOptions, context.get(), on_query_leaderboard_user_scores_complete);
 
@@ -450,6 +455,8 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_user_scores_complete(c
 
                 Dictionary score_dict;
                 score_dict["score"] = (int)user_score->Score;
+                score_dict["display_name"] = "";  // Display name not provided by QueryLeaderboardUserScores API
+                score_dict["rank"] = -1;  // Rank not provided by QueryLeaderboardUserScores API
                 // Note: Rank is not provided by QueryLeaderboardUserScores API
                 // Results are returned for users with scores, in arbitrary order
 
