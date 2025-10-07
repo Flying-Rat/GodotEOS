@@ -147,9 +147,9 @@ This repository **IS** a complete demo project showcasing all EOS features! You 
 
 #### Demo GIFs
 
-![Achievement Stats Animation](screenshots/gifs/godoteos_achievement_stats.gif)
-
 ![Authentication Flow](screenshots/gifs/godoteos_auth.gif)
+
+![Achievement Stats Animation](screenshots/gifs/godoteos_achievement_stats.gif)
 
 ![Friends Interface](screenshots/gifs/godoteos_friends.gif)
 
