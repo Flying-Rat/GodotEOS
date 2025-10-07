@@ -73,16 +73,6 @@ The root project (`project.godot`) provides a comprehensive demo showcasing all 
 2. Enable the `GodotEOS` plugin in Project Settings → Plugins.
 3. Run the project (scenes/demos/demo_menu.tscn) to access the full demo menu with authentication, achievements, leaderboards, friends, and more.
 
-#### Showcase
-
-![Achievement Stats Animation](../screenshots/gifs/godoteos_achievement_stats.gif)
-
-![Authentication Flow](../screenshots/gifs/godoteos_auth.gif)
-
-![Friends Interface](../screenshots/gifs/godoteos_friends.gif)
-
-![Leaderboards Interaction](../screenshots/gifs/godoteos_leaderboards.gif)
-
 Setup helper scripts
 --------------------
 - `.\setup_gdextension.ps1` - Designed to automate common steps on Windows: copy EOS DLLs into the demo, prepare build environment, and optionally run SCons. Run with ExecutionPolicy Bypass if needed:
