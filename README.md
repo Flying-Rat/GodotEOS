@@ -55,28 +55,57 @@ extends Node
 func _ready():
     # Connect to EOS signals
     EpicOS.login_completed.connect(_on_login_completed)
-    EpicOS.achievement_unlocked.connect(_on_achievement_unlocked)
+    EpicOS.achievements_unlocked_completed.connect(_on_achievements_unlocked)
 
-    # Initialize EOS
-    EpicOS.initialize()
+    # Initialize EOS with your Epic credentials
+    var config = {
+        "product_name": "YourGameName",
+        "product_version": "1.0.0",
+        "product_id": "your_product_id_here",
+        "sandbox_id": "your_sandbox_id_here",
+        "deployment_id": "your_deployment_id_here",
+        "client_id": "your_client_id_here",
+        "client_secret": "your_client_secret_here"
+    }
+    EpicOS.initialize(config)
 
 func _on_login_completed(success: bool, user_info: Dictionary):
     if success:
-        print("Login successful: ", user_info.display_name)
+        print("Login successful: ", EpicOS.get_current_username())
     else:
         print("Login failed")
+
+func _on_achievements_unlocked(success: bool, unlocked_achievement_ids: Array):
+    print("Achievements unlocked: ", unlocked_achievement_ids)
 ```
 
 ## 🎯 Quick Start
 
 ### Authentication
 ```gdscript
-# Login with Epic Games account
-EpicOS.login()
+# Initialize EOS with your credentials
+var config = {
+    "product_id": "your_product_id",
+    "sandbox_id": "your_sandbox_id",
+    "deployment_id": "your_deployment_id",
+    "client_id": "your_client_id",
+    "client_secret": "your_client_secret"
+}
+EpicOS.initialize(config)
+
+# Login with Epic Games account portal (recommended for production)
+EpicOS.login_with_account_portal()
+
+# Alternative login methods:
+# Login with Epic Games email and password
+EpicOS.login_with_epic_account("user@example.com", "password")
+
+# Development-only login (for testing without real accounts)
+EpicOS.login_with_dev("DevPlayerName")
 
 # Check if user is logged in
-if EpicOS.is_logged_in():
-    print("User is authenticated")
+if EpicOS.is_user_logged_in():
+    print("User is authenticated: ", EpicOS.get_current_username())
 ```
 
 ### Achievements
@@ -85,47 +114,66 @@ if EpicOS.is_logged_in():
 EpicOS.unlock_achievement("first_victory")
 
 # Query achievement progress
-EpicOS.query_achievements()
+EpicOS.query_player_achievements()
 ```
 
 ### Statistics
 ```gdscript
 # Update a player statistic
-EpicOS.update_stat("games_played", 1)
+EpicOS.ingest_achievement_stat("games_played", 1)
 
 # Get current stats
-var stats = EpicOS.get_stats()
-print("Games played: ", stats.games_played)
+var stats = EpicOS.get_achievement_stats()
+for stat in stats:
+    if stat.stat_name == "games_played":
+        print("Games played: ", stat.current_value)
 ```
 
 ### Leaderboards
 ```gdscript
 # Submit a score
-EpicOS.submit_score("high_scores", 1500)
+EpicOS.ingest_stat("high_score", 1500)
 
 # Get leaderboard data
-EpicOS.get_leaderboard("high_scores", 10)  # Top 10 scores
+EpicOS.query_leaderboard_ranks("high_scores", 10)  # Top 10 scores
 ```
 
 ## 📡 API Reference
 
 ### Signals
 - `login_completed(success: bool, user_info: Dictionary)`
-- `achievement_unlocked(achievement_id: String)`
-- `stats_updated(stats: Dictionary)`
-- `leaderboard_retrieved(leaderboard_data: Array)`
+- `logout_completed(success: bool)`
+- `achievement_definitions_completed(success: bool, definitions: Array)`
+- `player_achievements_completed(success: bool, achievements: Array)`
+- `achievements_unlocked_completed(success: bool, unlocked_achievement_ids: Array)`
+- `achievement_stats_completed(success: bool, stats: Array)`
+- `stats_ingested(success: bool, stat_names: Array)`
+- `leaderboard_definitions_completed(success: bool, definitions: Array)`
+- `leaderboard_ranks_completed(success: bool, ranks: Array)`
+- `leaderboard_user_scores_completed(success: bool, user_scores: Dictionary)`
+- `friends_query_completed(success: bool, friends_list: Array)`
+- `user_info_query_completed(success: bool, user_info: Dictionary)`
 
 ### Methods
-- `initialize()` - Initialize the EOS SDK
-- `login()` - Authenticate with Epic Games
+- `initialize(config: Dictionary = {})` - Initialize the EOS SDK with configuration
+- `login_with_account_portal()` - Authenticate with Epic Games account portal
+- `login_with_epic_account(email: String, password: String)` - Login with email/password
+- `login_with_device_id(display_name: String)` - Login with device ID
+- `login_with_dev(display_name: String)` - Login with developer credentials
 - `logout()` - Sign out the current user
-- `is_logged_in() -> bool` - Check authentication status
-- `unlock_achievement(id: String)` - Unlock an achievement
-- `query_achievements()` - Retrieve achievement data
-- `update_stat(id: String, value: int)` - Update a statistic
-- `get_stats() -> Dictionary` - Get current statistics
-- `submit_score(board_id: String, score: int)` - Submit leaderboard score
-- `get_leaderboard(board_id: String, count: int)` - Get leaderboard entries
+- `is_user_logged_in() -> bool` - Check authentication status
+- `get_current_username() -> String` - Get current user's display name
+- `unlock_achievement(achievement_id: String)` - Unlock an achievement
+- `unlock_achievements(achievement_ids: Array)` - Unlock multiple achievements
+- `query_player_achievements()` - Query player's achievement progress
+- `query_achievement_definitions()` - Query all achievement definitions
+- `ingest_achievement_stat(stat_name: String, amount: int)` - Update achievement statistic
+- `query_achievement_stats()` - Query achievement statistics
+- `query_leaderboard_ranks(leaderboard_id: String, limit: int = 100)` - Query leaderboard ranks
+- `ingest_stat(stat_name: String, value: int)` - Submit a statistic for leaderboards
+- `ingest_stats(stats: Dictionary)` - Submit multiple statistics
+- `query_friends()` - Query user's friends list
+- `query_user_info(target_user_id: String)` - Query information about a user
 
 ## 🎮 Demo Project
 
