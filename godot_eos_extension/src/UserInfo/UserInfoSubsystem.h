@@ -76,11 +76,18 @@ private:
         EOS_EpicAccountId target_user_id;
     };
 
+    // Phase 3: Context for Product ID queries
+    struct QueryProductIdContext {
+        UserInfoSubsystem* subsystem;
+        EOS_EpicAccountId epic_account_id;
+    };
+
     // Callback callable
     Callable user_info_query_callback;
 
     // EOS callbacks
     static void EOS_CALL on_query_user_info_complete(const EOS_UserInfo_QueryUserInfoCallbackInfo* data);
+    static void EOS_CALL on_product_id_query_complete(const EOS_Connect_QueryExternalAccountMappingsCallbackInfo* data);
 
     // Helper methods
     Dictionary copy_user_info_to_dictionary(EOS_EpicAccountId local_user_id, EOS_EpicAccountId target_user_id);
