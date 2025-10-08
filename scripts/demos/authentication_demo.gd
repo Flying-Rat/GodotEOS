@@ -23,7 +23,9 @@ extends Control
 @onready var dev_login_button: Button = $"VBoxContainer/LoginVBoxContainer/EpicAccountContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel#OtherMethodsContainer/VBoxContainer_LoginSection_LoginGrid_OtherMethodsPanel_OtherMethodsContainer#DevContainer/DevLoginButton"
 @onready var logout_button: Button = $VBoxContainer/HBoxContainer/VBoxContainer/LogoutButton
 
-@onready var output_text: RichTextLabel = $VBoxContainer/OutputSection/OutputText
+@onready var output_text: RichTextLabel = $VBoxContainer/OutputPanel/VBoxContainer/OutputScrollContainer/OutputText
+@onready var auto_scroll_checkbox: CheckButton = $VBoxContainer/OutputPanel/VBoxContainer/OutputHeaderHBox/AutoScrollCheckbox
+@onready var clear_log_button: Button = $VBoxContainer/OutputPanel/VBoxContainer/OutputHeaderHBox/ClearLogButton
 @onready var back_button: Button = $VBoxContainer/HBoxContainer/VBoxContainer/BackButton
 
 # ============================================================================
@@ -45,6 +47,10 @@ func _ready():
 	dev_login_button.pressed.connect(_on_dev_login_button_pressed)
 	logout_button.pressed.connect(_on_logout_button_pressed)
 	back_button.pressed.connect(_on_back_button_pressed)
+
+	# Connect output controls
+	auto_scroll_checkbox.toggled.connect(_on_auto_scroll_toggled)
+	clear_log_button.pressed.connect(_on_clear_log_pressed)
 
 	# Connect EpicOS signals
 	if EpicOS:
@@ -74,16 +80,16 @@ func _ready():
 func _on_init_button_pressed():
 	_log_message("[color=yellow]🔧 InitializePlatform() - Setting up EOS platform...[/color]")
 
-	# Example configuration - replace with your actual Epic Games credentials
-	var config = {
-		"product_name": "GodotEOS Demo",
-		"product_version": "1.0.0",
-		"product_id": "your_product_id_here",  # Get from Epic Developer Portal
-		"sandbox_id": "your_sandbox_id_here",  # Get from Epic Developer Portal
-		"deployment_id": "your_deployment_id_here",  # Get from Epic Developer Portal
-		"client_id": "your_client_id_here",  # Get from Epic Developer Portal
-		"client_secret": "your_client_secret_here"  # Get from Epic Developer Portal
-	}
+	var config = { 
+    	"product_name": "Rat-ical Racers", 
+    	"product_version": "1.0.0", 
+    	"product_id": "b6de3252b15e4788bef3916c30b722c5", 
+    	"sandbox_id": "p-4qk84cb8wnupy4yjpzzelvsemyq8py", 
+    	"deployment_id": "d94a05975baa43a5ad5103c12a97a0b3", 
+    	"client_id": "xyza7891h0KCGiva2k7qyQPpNfgLiDAM", 
+    	"client_secret": "0RMgyWBrZNv+JQ49iQhEj9vqCU7Xn9qAvF2DYLd7oIs",
+    	"encryption_key": "1111111111111111111111111111111111111111111111111111111" # Optional but recommended 
+ 		} 
 
 	if EpicOS:
 		is_platform_initialized = EpicOS.initialize(config)
@@ -211,6 +217,16 @@ func _update_user_info():
 		user_info_label.text = "Username: N/A"
 		account_info_label.text = "Epic Account ID: N/A"
 		product_user_label.text = "Product User ID: N/A"
+
+# ============================================================================
+# OUTPUT CONTROL HANDLERS
+# ============================================================================
+
+func _on_auto_scroll_toggled(button_pressed: bool):
+	output_text.scroll_following = button_pressed
+
+func _on_clear_log_pressed():
+	output_text.clear()
 
 # ============================================================================
 # UTILITY FUNCTIONS

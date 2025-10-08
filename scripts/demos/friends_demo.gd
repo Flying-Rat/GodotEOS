@@ -14,7 +14,9 @@ extends Control
 @onready var friends_list: ItemList = $VBoxContainer/FriendsSection/FriendsListPanel/FriendsListContainer/FriendsList
 @onready var selected_friend_label: Label = $VBoxContainer/FriendsSection/FriendDetailsPanel/FriendDetailsContainer/FriendDetailsLabel
 @onready var friend_info_text: RichTextLabel = $VBoxContainer/FriendsSection/FriendDetailsPanel/FriendDetailsContainer/FriendInfoScrollContainer/FriendInfoText
-@onready var output_text: RichTextLabel = $VBoxContainer/OutputSection/OutputText
+@onready var output_text: RichTextLabel = $VBoxContainer/OutputPanel/VBoxContainer/OutputScrollContainer/OutputText
+@onready var auto_scroll_checkbox: CheckButton = $VBoxContainer/OutputPanel/VBoxContainer/OutputHeaderHBox/AutoScrollCheckbox
+@onready var clear_log_button: Button = $VBoxContainer/OutputPanel/VBoxContainer/OutputHeaderHBox/ClearLogButton
 @onready var back_button: Button = $VBoxContainer/HeaderContainer/BackButton
 
 # ============================================================================
@@ -33,6 +35,10 @@ func _ready():
 	query_friends_button.pressed.connect(_on_query_friends_button_pressed)
 	query_friend_info_button.pressed.connect(_on_query_friend_info_button_pressed)
 	back_button.pressed.connect(_on_back_button_pressed)
+
+	# Connect output controls
+	auto_scroll_checkbox.toggled.connect(_on_auto_scroll_toggled)
+	clear_log_button.pressed.connect(_on_clear_log_pressed)
 
 	# Connect friends list selection
 	friends_list.item_selected.connect(_on_friends_list_item_selected)
@@ -224,6 +230,16 @@ func _update_ui_state():
 	var friends_available = platform_initialized and is_logged_in
 	query_friends_button.disabled = not friends_available
 	query_friend_info_button.disabled = not friends_available or selected_friend_id.is_empty()
+
+# ============================================================================
+# OUTPUT CONTROL HANDLERS
+# ============================================================================
+
+func _on_auto_scroll_toggled(button_pressed: bool):
+	output_text.scroll_following = button_pressed
+
+func _on_clear_log_pressed():
+	output_text.clear()
 
 # ============================================================================
 # UTILITY FUNCTIONS
