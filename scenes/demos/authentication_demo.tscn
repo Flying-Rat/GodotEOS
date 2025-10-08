@@ -206,13 +206,6 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 bbcode_enabled = true
 text = "[color=green]Welcome to the EpicOS Authentication Demo![/color]
-
-This demo shows how to:
-1. Initialize the EOS platform
-2. Use different login methods
-3. Check authentication status
-4. Logout
-
 [color=yellow]Note: You need valid Epic Games credentials configured in the initialize() method.[/color]
 "
 scroll_following = true

@@ -197,12 +197,6 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 bbcode_enabled = true
 text = "[color=green]Welcome to the EpicOS Friends Demo![/color]
-
-This demo shows how to:
-1. Query your friends list
-2. Get detailed information about friends
-3. Handle friends-related callbacks
-
 [color=yellow]Note: You must be logged in to use friends features.[/color]
 "
 scroll_following = true

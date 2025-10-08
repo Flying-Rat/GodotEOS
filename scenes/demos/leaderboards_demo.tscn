@@ -197,46 +197,50 @@ size_flags_vertical = 3
 custom_minimum_size = Vector2(0, 5)
 layout_mode = 2
 
-[node name="OutputSection" type="VBoxContainer" parent="VBoxContainer"]
+[node name="OutputPanel" type="MarginContainer" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 250)
 layout_mode = 2
-size_flags_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
 
-[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/OutputSection"]
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/OutputPanel"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="OutputHeaderHBox" type="HBoxContainer" parent="VBoxContainer/OutputPanel/VBoxContainer"]
 layout_mode = 2
 
-[node name="OutputLabel" type="Label" parent="VBoxContainer/OutputSection/HBoxContainer"]
+[node name="OutputLabel" type="Label" parent="VBoxContainer/OutputPanel/VBoxContainer/OutputHeaderHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 1
+theme_override_font_sizes/font_size = 16
 text = "Output Log"
 
-[node name="AutoScrollToggle" type="CheckButton" parent="VBoxContainer/OutputSection/HBoxContainer"]
+[node name="AutoScrollCheckbox" type="CheckButton" parent="VBoxContainer/OutputPanel/VBoxContainer/OutputHeaderHBox"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 8
 button_pressed = true
 text = "Auto-scroll"
 
-[node name="ClearLogButton" type="Button" parent="VBoxContainer/OutputSection/HBoxContainer"]
+[node name="ClearLogButton" type="Button" parent="VBoxContainer/OutputPanel/VBoxContainer/OutputHeaderHBox"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 8
-text = "Clear log"
+text = "Clear Log"
 
-[node name="OutputText" type="RichTextLabel" parent="VBoxContainer/OutputSection"]
-custom_minimum_size = Vector2(0, 200)
+[node name="OutputScrollContainer" type="ScrollContainer" parent="VBoxContainer/OutputPanel/VBoxContainer"]
+clip_contents = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="OutputText" type="RichTextLabel" parent="VBoxContainer/OutputPanel/VBoxContainer/OutputScrollContainer"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 bbcode_enabled = true
 text = "[color=green]Welcome to the EpicOS Leaderboards Demo![/color]
-
-This demo shows how to:
-1. Query leaderboard definitions from Epic Games
-2. Query leaderboard ranks and scores
-3. Submit statistics for leaderboards
-4. Handle leaderboard-related callbacks
-
 [color=yellow]Note: You must be logged in to use leaderboard features.[/color]
 "
 scroll_following = true

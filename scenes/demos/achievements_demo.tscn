@@ -293,4 +293,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 bbcode_enabled = true
+text = "[color=green]Welcome to the EpicOS Achievements Demo![/color]
+[color=yellow]Note: You must be logged in to use achievement features.[/color]
+"
 scroll_following = true
