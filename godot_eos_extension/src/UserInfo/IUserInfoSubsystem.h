@@ -77,6 +77,44 @@ public:
      * @param callback The callable to invoke when user info query completes
      */
     virtual void SetUserInfoQueryCallback(const Callable& callback) = 0;
+
+    // Phase 1: User cache methods
+
+    /**
+     * @brief Notify subsystem that player info has been updated.
+     * 
+     * Called when user information changes (login, friend query, etc.).
+     * Triggers caching and automatic Product ID resolution if needed.
+     * 
+     * @param epic_id The EOS_EpicAccountId of the user
+     * @param product_id Optional Product User ID (if known)
+     * @param is_local_user True if this is the authenticated user
+     */
+    virtual void UpdateUserCache(EOS_EpicAccountId epic_id, EOS_ProductUserId product_id = nullptr, bool is_local_user = false) = 0;
+
+    /**
+     * @brief Get cached Product User ID for a user.
+     * 
+     * @param epic_id The EOS_EpicAccountId to lookup
+     * @return Product User ID as String, or empty if not cached
+     */
+    virtual String GetUserProductId(EOS_EpicAccountId epic_id) = 0;
+
+    /**
+     * @brief Check if Product ID is cached for a user.
+     * 
+     * @param epic_id The EOS_EpicAccountId to check
+     * @return true if Product ID is available in cache
+     */
+    virtual bool IsProductIdCached(EOS_EpicAccountId epic_id) = 0;
+
+    /**
+     * @brief Get full user cache entry.
+     * 
+     * @param epic_id The EOS_EpicAccountId to lookup
+     * @return Dictionary with all cached user data
+     */
+    virtual Dictionary GetCachedUserData(EOS_EpicAccountId epic_id) = 0;
 };
 
 } // namespace godot

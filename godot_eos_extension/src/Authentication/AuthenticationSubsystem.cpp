@@ -619,8 +619,12 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 			}
 		}
 	} else {
-		// Handle specific error cases with helpful messages
-		String error_msg = "AuthenticationSubsystem: auth_login_callback - Login failed with error: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
+		// Provide sanitized error messages for production to prevent information leakage
+		String error_msg = "AuthenticationSubsystem: auth_login_callback - Login failed";
+
+		// Only include detailed error information in debug builds
+#ifdef DEBUG_ENABLED
+		error_msg += " with error: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
 
 		switch (data->ResultCode) {
 			case EOS_EResult::EOS_InvalidCredentials:
@@ -642,14 +646,20 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 				error_msg += " - Please check your Epic Games account credentials and internet connection.";
 				break;
 		}
+#endif
 
 		UtilityFunctions::printerr(error_msg);
 
-		// Emit failure signal
+		// Emit failure signal with sanitized error info
 		if (instance->login_callback.is_valid()) {
 			Dictionary user_info;
 			user_info["error_code"] = static_cast<int64_t>(data->ResultCode);
+#ifndef DEBUG_ENABLED
+			// In production, don't expose detailed error messages to client code
+			user_info["error_message"] = "Login failed. Please check your credentials and try again.";
+#else
 			user_info["error_message"] = error_msg;
+#endif
 			instance->login_callback.call(false, user_info);
 		}
 	}
@@ -718,7 +728,11 @@ void EOS_CALL AuthenticationSubsystem::connect_login_callback(const EOS_Connect_
 			UtilityFunctions::printerr("AuthenticationSubsystem: Login callback is not valid - cannot emit success signal");
 		}
 	} else {
-		String error_msg = "Connect login failed: ";
+		String error_msg = "Connect login failed";
+
+		// Only include detailed error information in debug builds
+#ifdef DEBUG_ENABLED
+		error_msg += ": ";
 
 		// Provide more descriptive error messages for Connect login
 		switch (data->ResultCode) {
@@ -750,6 +764,8 @@ void EOS_CALL AuthenticationSubsystem::connect_login_callback(const EOS_Connect_
 				error_msg += String::num_int64(static_cast<int64_t>(data->ResultCode));
 				break;
 		}
+#endif
+
 		UtilityFunctions::printerr(error_msg);
 
 		// Connect failed, but Auth succeeded - still emit login signal but without product_user_id
