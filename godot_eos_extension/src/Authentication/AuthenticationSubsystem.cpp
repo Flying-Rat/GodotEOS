@@ -338,6 +338,12 @@ void AuthenticationSubsystem::finalize_logout_if_ready() {
 		local_user_id = nullptr;
 		epic_account_id = nullptr;
 		display_name = "";
+
+		// PHASE 2: Clear user from UserInfo cache
+		auto userinfo = Get<IUserInfoSubsystem>();
+		if (userinfo) {
+			userinfo->ClearCache();  // Or add ClearLocalUser() method
+		}
 	} else {
 		String error_details;
 		if (auth_logout_attempted) {
@@ -551,6 +557,13 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 		// Query user info to get the real display name using UserInfo subsystem
 		auto userinfo = Get<IUserInfoSubsystem>();
 		if (userinfo) {
+			// PHASE 2: Notify UserInfo subsystem about current user
+			userinfo->UpdateUserCache(
+				UserId.AccountId,  // epic_id
+				nullptr,           // product_id (not available yet)
+				true               // is_local_user
+			);
+
 			// Try to get cached user info first (might be available immediately after login)
 			instance->display_name = userinfo->GetUserDisplayName(UserId.AccountId, UserId.AccountId);
 
@@ -708,6 +721,16 @@ void EOS_CALL AuthenticationSubsystem::connect_login_callback(const EOS_Connect_
 	if (data->ResultCode == EOS_EResult::EOS_Success) {
 		// Set Product User ID directly from handle
 		authIterface->SetProductUserId(data->LocalUserId);
+
+		// PHASE 2: Update UserInfo cache with Product ID
+		auto userinfo = Get<IUserInfoSubsystem>();
+		if (userinfo) {
+			userinfo->UpdateUserCache(
+				authIterface->GetEpicAccountId(),  // epic_id
+				data->LocalUserId,                  // product_id
+				true                                // is_local_user
+			);
+		}
 
 		// Now both Auth and Connect logins are complete, emit the signal
 		Dictionary user_info;
