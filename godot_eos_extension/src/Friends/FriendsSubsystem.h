@@ -48,7 +48,6 @@ private:
 
     // Static callback for friends query
     static void EOS_CALL on_friends_query_complete(const EOS_Friends_QueryFriendsCallbackInfo* data);
-    static void EOS_CALL on_query_external_account_mappings(const EOS_Connect_QueryExternalAccountMappingsCallbackInfo *data);
 
     // Helper methods
     void update_friends_list();

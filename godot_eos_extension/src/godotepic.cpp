@@ -46,6 +46,8 @@ void GodotEOS::_bind_methods() {
 
 	//WIP: User Info methods
 	ClassDB::bind_method(D_METHOD("query_user_info", "target_user_id"), &GodotEOS::query_user_info);
+	ClassDB::bind_method(D_METHOD("force_query_product_id"), &GodotEOS::force_query_product_id);
+	ClassDB::bind_method(D_METHOD("force_query_product_id_for_user", "epic_account_id"), &GodotEOS::force_query_product_id_for_user);
 	ClassDB::bind_method(D_METHOD("get_user_info", "target_user_id"), &GodotEOS::get_user_info);
 
 	// Achievements methods
@@ -435,6 +437,44 @@ Dictionary GodotEOS::get_user_info(const String& target_user_id) {
 	EOS_EpicAccountId target_id = FAccountHelpers::EpicAccountIDFromString(target_user_id.utf8().get_data());
 
 	return user_info->GetCachedUserInfo(local_id, target_id);
+}
+
+void GodotEOS::force_query_product_id() {
+	auto user_info = Get<IUserInfoSubsystem>();
+	if (!user_info) {
+		UtilityFunctions::push_warning("UserInfoSubsystem not available");
+		return;
+	}
+
+	auto auth = Get<IAuthenticationSubsystem>();
+	if (!auth) {
+		UtilityFunctions::push_warning("AuthenticationSubsystem not available");
+		return;
+	}
+
+	EOS_EpicAccountId current_user_id = auth->GetEpicAccountId();
+	if (!current_user_id) {
+		UtilityFunctions::push_warning("No authenticated user");
+		return;
+	}
+
+	if (!user_info->ForceQueryProductId(current_user_id)) {
+		UtilityFunctions::printerr("UserInfoSubsystem force query product ID failed");
+	}
+}
+
+void GodotEOS::force_query_product_id_for_user(const String& epic_account_id) {
+	auto user_info = Get<IUserInfoSubsystem>();
+	if (!user_info) {
+		UtilityFunctions::push_warning("UserInfoSubsystem not available");
+		return;
+	}
+
+	EOS_EpicAccountId target_id = FAccountHelpers::EpicAccountIDFromString(epic_account_id.utf8().get_data());
+
+	if (!user_info->ForceQueryProductId(target_id)) {
+		UtilityFunctions::printerr("UserInfoSubsystem force query product ID failed for user: " + epic_account_id);
+	}
 }
 
 // Achievements methods

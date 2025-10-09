@@ -279,6 +279,28 @@ func query_user_info(target_user_id: String):
 		return
 
 	_godot_epic.query_user_info(target_user_id)
+
+func force_query_product_id():
+	"""Force re-query Product ID for the current user, allowing manual re-querying"""
+	if _debug_mode:
+		print("EpicOS: force_query_product_id() called")
+
+	if not _initialized:
+		print("EpicOS: Error - Not initialized. Call initialize() first.")
+		return
+
+	_godot_epic.force_query_product_id()
+
+func force_query_product_id_for_user(epic_account_id: String):
+	"""Force re-query Product ID for a specific user, allowing manual re-querying"""
+	if _debug_mode:
+		print("EpicOS: force_query_product_id_for_user() called for: ", epic_account_id)
+
+	if not _initialized:
+		print("EpicOS: Error - Not initialized. Call initialize() first.")
+		return
+
+	_godot_epic.force_query_product_id_for_user(epic_account_id)
 # =============================================================================
 # ACHIEVEMENTS METHODS
 # =============================================================================

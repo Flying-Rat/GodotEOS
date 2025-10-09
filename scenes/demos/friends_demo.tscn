@@ -78,6 +78,11 @@ layout_mode = 2
 disabled = true
 text = "2. Query Selected Friend Info"
 
+[node name="QueryProductIdButton" type="Button" parent="VBoxContainer/ActionsSection"]
+layout_mode = 2
+disabled = true
+text = "3. Query Product ID"
+
 [node name="HSeparator3" type="HSeparator" parent="VBoxContainer"]
 layout_mode = 2
 

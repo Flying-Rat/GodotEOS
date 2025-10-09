@@ -115,6 +115,17 @@ public:
      * @return Dictionary with all cached user data
      */
     virtual Dictionary GetCachedUserData(EOS_EpicAccountId epic_id) = 0;
+
+    /**
+     * @brief Force re-query of Product ID for a user.
+     * 
+     * Resets the query flag and initiates a new Product ID query,
+     * allowing manual re-querying even after previous failures.
+     * 
+     * @param epic_id The EOS_EpicAccountId to query
+     * @return true if query was initiated successfully
+     */
+    virtual bool ForceQueryProductId(EOS_EpicAccountId epic_id) = 0;
 };
 
 } // namespace godot

@@ -11,13 +11,6 @@
 
 using namespace godot;
 
-struct QueryExternalAccountMappingsContext {
-    FriendsSubsystem* subsystem;
-    std::vector<godot::String> OutstandingExternalAccountsToQueryStrings;
-    std::vector<const char*> OutstandingExternalAccountsToQueryChars;
-    std::vector<EOS_EpicAccountId> OutstandingExternalAccountsToQueryEpicIDs;
-};
-
 FriendsSubsystem::FriendsSubsystem()
     : friends_cached(false) {
 }
@@ -115,6 +108,12 @@ Dictionary FriendsSubsystem::GetFriendInfo(const String& friend_id) const {
             friend_info["id"] = friend_id;
             friend_info["display_name"] = display_name;
 
+            // NEW: Add Product ID from cache
+            String product_id = userinfo->GetUserProductId(target_user_id);
+            if (!product_id.is_empty()) {
+                friend_info["product_id"] = product_id;
+            }
+
             // Get additional user info if needed
             Dictionary user_info = userinfo->GetCachedUserInfo(auth->GetEpicAccountId(), target_user_id);
             if (user_info.has("country")) {
@@ -140,11 +139,16 @@ Dictionary FriendsSubsystem::GetFriendInfo(const String& friend_id) const {
 }
 
 String FriendsSubsystem::GetFriendProductId(const String& friend_id) const {
-    Dictionary friend_info = GetFriendInfo(friend_id);
-    if (friend_info.has("product_id")) {
-        return friend_info["product_id"];
+    auto userinfo = Get<IUserInfoSubsystem>();
+    if (!userinfo) {
+        return "";
     }
-    return "";
+
+    EOS_EpicAccountId epic_id = FAccountHelpers::EpicAccountIDFromString(
+        friend_id.utf8().get_data()
+    );
+
+    return userinfo->GetUserProductId(epic_id);
 }
 
 bool FriendsSubsystem::QueryFriendInfo(const String& friend_id) {
@@ -250,9 +254,7 @@ void FriendsSubsystem::update_friends_list() {
 
     int32_t friends_count = EOS_Friends_GetFriendsCount(friends_handle, &count_options);
 
-    std::vector<godot::String> OutstandingExternalAccountsToQueryStrings;
-	std::vector<const char*> OutstandingExternalAccountsToQueryChars;
-    std::vector<EOS_EpicAccountId> OutstandingExternalAccountsToQueryEpicIDs;
+    auto userinfo = Get<IUserInfoSubsystem>();
 
     for (int32_t i = 0; i < friends_count; i++) {
         EOS_Friends_GetFriendAtIndexOptions friend_options = {};
@@ -264,34 +266,16 @@ void FriendsSubsystem::update_friends_list() {
         if (friend_id) {
             Dictionary friend_info = create_friend_info_dict(friend_id);
             friends_list.append(friend_info);
+
+            // NEW: Notify UserInfo about this friend
+            if (userinfo) {
+                userinfo->UpdateUserCache(
+                    friend_id,  // epic_id
+                    nullptr,    // product_id (will be queried automatically)
+                    false       // is_local_user
+                );
+            }
         }
-
-        String friend_id_str = FAccountHelpers::EpicAccountIDToString(friend_id);
-        OutstandingExternalAccountsToQueryStrings.push_back(friend_id_str);
-        OutstandingExternalAccountsToQueryChars.push_back(friend_id_str.utf8().get_data());
-        OutstandingExternalAccountsToQueryEpicIDs.push_back(friend_id);
-    }
-
-    // Get ProductUserId for each friend
-    EOS_HConnect connect_handle = EOS_Platform_GetConnectInterface(platform->GetPlatformHandle());
-    if (connect_handle) {
-        auto context = new QueryExternalAccountMappingsContext{this, 
-            std::move(OutstandingExternalAccountsToQueryStrings), 
-            std::move(OutstandingExternalAccountsToQueryChars),
-            std::move(OutstandingExternalAccountsToQueryEpicIDs)
-        };
-
-        EOS_Connect_QueryExternalAccountMappingsOptions mapping_options = {};
-        mapping_options.ApiVersion = EOS_CONNECT_GETPRODUCTUSERIDMAPPING_API_LATEST;
-        mapping_options.LocalUserId = auth->GetProductUserId();
-        mapping_options.AccountIdType = EOS_EExternalAccountType::EOS_EAT_EPIC;
-
-        mapping_options.ExternalAccountIdCount = context->OutstandingExternalAccountsToQueryChars.size();
-        mapping_options.ExternalAccountIds = context->OutstandingExternalAccountsToQueryChars.data();
-
-        UtilityFunctions::print("FriendsSubsystem: Querying external account mappings for " + String::num_int64(mapping_options.ExternalAccountIdCount) + " friends");
-
-        EOS_Connect_QueryExternalAccountMappings(connect_handle, &mapping_options, context, on_query_external_account_mappings);
     }
 
     friends_cached = true;
@@ -349,57 +333,6 @@ Dictionary FriendsSubsystem::create_friend_info_dict(EOS_EpicAccountId friend_id
     }
 
     return friend_info;
-}
-
-void EOS_CALL FriendsSubsystem::on_query_external_account_mappings(const EOS_Connect_QueryExternalAccountMappingsCallbackInfo* data)
-{
-    if (!data || !data->ClientData) {
-        return;
-    }
-
-    QueryExternalAccountMappingsContext* context = static_cast<QueryExternalAccountMappingsContext*>(data->ClientData);
-    FriendsSubsystem* subsystem = context->subsystem;
-
-
-    if (data->ResultCode == EOS_EResult::EOS_Success) {
-        UtilityFunctions::print("FriendsSubsystem: External account mappings query successful");
-
-        std::vector<FEpicAccountId> MappingsReceived;
-        for (const FEpicAccountId& NextId : context->OutstandingExternalAccountsToQueryEpicIDs)
-        {
-            EOS_Connect_GetExternalAccountMappingsOptions Options = {};
-            Options.ApiVersion = EOS_CONNECT_GETEXTERNALACCOUNTMAPPINGS_API_LATEST;
-            Options.AccountIdType = EOS_EExternalAccountType::EOS_EAT_EPIC;
-            Options.LocalUserId = Get<IAuthenticationSubsystem>()->GetProductUserId();
-            String NextIdString = FAccountHelpers::EpicAccountIDToString(NextId);
-            Options.TargetExternalUserId = NextIdString.utf8().get_data();
-
-            EOS_HConnect ConnectHandle = EOS_Platform_GetConnectInterface(Get<IPlatformSubsystem>()->GetPlatformHandle());
-            EOS_ProductUserId NewMapping = EOS_Connect_GetExternalAccountMapping(ConnectHandle, &Options);
-            if (NewMapping)
-            {
-                // Update the friends_list with the product_id
-                String friend_id_str = FAccountHelpers::EpicAccountIDToString(NextId);
-                String product_id_str = FAccountHelpers::ProductUserIDToString(NewMapping);
-                for (int i = 0; i < subsystem->friends_list.size(); i++) {
-                    Dictionary friend_dict = subsystem->friends_list[i];
-                    if (friend_dict["id"] == friend_id_str) {
-                        friend_dict["product_id"] = product_id_str;
-                        subsystem->friends_list[i] = friend_dict; // update the array
-                        UtilityFunctions::print("FriendsSubsystem: Updated friend " + friend_id_str + " with product_id " + product_id_str);
-                        break;
-                    }
-                }
-            }
-        }    
-        
-
-    } else {
-        String error_msg = "FriendsSubsystem: External account mappings query failed: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
-        UtilityFunctions::printerr(error_msg);
-    }
-
-    delete context;
 }
 
 

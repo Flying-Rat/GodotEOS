@@ -11,6 +11,7 @@ extends Control
 @onready var status_label: Label = $VBoxContainer/HeaderContainer/StatusPanel/StatusContainer/StatusLabel
 @onready var query_friends_button: Button = $VBoxContainer/ActionsSection/QueryFriendsButton
 @onready var query_friend_info_button: Button = $VBoxContainer/ActionsSection/QueryFriendInfoButton
+@onready var query_product_id_button: Button = $VBoxContainer/ActionsSection/QueryProductIdButton
 @onready var friends_list: ItemList = $VBoxContainer/FriendsSection/FriendsListPanel/FriendsListContainer/FriendsList
 @onready var selected_friend_label: Label = $VBoxContainer/FriendsSection/FriendDetailsPanel/FriendDetailsContainer/FriendDetailsLabel
 @onready var friend_info_text: RichTextLabel = $VBoxContainer/FriendsSection/FriendDetailsPanel/FriendDetailsContainer/FriendInfoScrollContainer/FriendInfoText
@@ -34,6 +35,7 @@ func _ready():
 	# Connect button signals
 	query_friends_button.pressed.connect(_on_query_friends_button_pressed)
 	query_friend_info_button.pressed.connect(_on_query_friend_info_button_pressed)
+	query_product_id_button.pressed.connect(_on_query_product_id_button_pressed)
 	back_button.pressed.connect(_on_back_button_pressed)
 
 	# Connect output controls
@@ -63,6 +65,7 @@ func _ready():
 		_log_message("[color=yellow]📋 INSTRUCTIONS:[/color]")
 		_log_message("[color=white]1. Click 'Query Friends List' to get your friends[/color]")
 		_log_message("[color=white]2. Select a friend and click 'Query Selected Friend Info' to get their details[/color]")
+		_log_message("[color=white]3. Or click 'Query Product ID' to specifically fetch the Product User ID[/color]")
 		_log_message("")
 		_log_message("[color=yellow]Please use the buttons above to test friends functions[/color]")
 	else:
@@ -90,6 +93,24 @@ func _on_query_friend_info_button_pressed():
 		EpicOS.query_user_info(selected_friend_id)
 	else:
 		_log_message("[color=red]✗ EpicOS not available[/color]")
+
+func _on_query_product_id_button_pressed():
+	if selected_friend_id.is_empty():
+		_log_message("[color=yellow]🔗 ForceQueryProductId() - Force re-querying Product ID for current user[/color]")
+
+		if EpicOS:
+			# Force re-query the Product ID for the current user, allowing multiple attempts
+			EpicOS.force_query_product_id()
+		else:
+			_log_message("[color=red]✗ EpicOS not available[/color]")
+	else:
+		_log_message("[color=yellow]🔗 ForceQueryProductIdForUser() - Force re-querying Product ID for selected friend: " + selected_friend_id + "[/color]")
+
+		if EpicOS:
+			# Force re-query the Product ID for the selected friend
+			EpicOS.force_query_product_id_for_user(selected_friend_id)
+		else:
+			_log_message("[color=red]✗ EpicOS not available[/color]")
 
 func _on_back_button_pressed():
 	get_tree().change_scene_to_file("res://scenes/demos/demo_menu.tscn")
@@ -199,10 +220,24 @@ func _update_friend_details(target_user_id: String):
 	if friend_data.is_empty():
 		details_text = "[color=gray]No detailed information available.\nSelect a friend and click 'Query Selected Friend Info'.[/color]"
 	else:
-		# Display all available friend information, excluding target_user_id as it's redundant with id
+		# Display Epic Account ID prominently
+		var epic_id = friend_data.get("id", "Unknown")
+		details_text += "[color=yellow]Epic Account ID:[/color] [color=white]" + str(epic_id) + "[/color]\n"
+
+		# Display Product User ID prominently
+		var product_id = friend_data.get("product_id", "Not available")
+		if product_id != "Not available":
+			details_text += "[color=yellow]Product User ID:[/color] [color=white]" + str(product_id) + "[/color]\n"
+		else:
+			details_text += "[color=yellow]Product User ID:[/color] [color=gray]" + str(product_id) + "[/color]\n"
+
+		details_text += "\n[color=cyan]Additional Information:[/color]\n"
+
+		# Display all other friend information, excluding id and product_id as they're shown above
 		for key in friend_data:
-			var value = str(friend_data[key])
-			details_text += "[color=yellow]" + key + ":[/color] " + value + "\n"
+			if key != "id" and key != "product_id":
+				var value = str(friend_data[key])
+				details_text += "[color=yellow]" + key + ":[/color] " + value + "\n"
 
 	friend_info_text.text = details_text
 

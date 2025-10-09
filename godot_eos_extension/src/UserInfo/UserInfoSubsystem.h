@@ -42,6 +42,7 @@ public:
     virtual String GetUserProductId(EOS_EpicAccountId epic_id) override;
     virtual bool IsProductIdCached(EOS_EpicAccountId epic_id) override;
     virtual Dictionary GetCachedUserData(EOS_EpicAccountId epic_id) override;
+    virtual bool ForceQueryProductId(EOS_EpicAccountId epic_id) override;
 
 private:
     // EOS handles
@@ -56,11 +57,13 @@ private:
         String country;
         String preferred_language;
         bool is_local_user;  // True if this is the authenticated user
+        bool product_id_queried;  // True if we've already attempted to query Product ID
 
         UserCacheEntry()
             : epic_account_id(nullptr)
             , product_user_id(nullptr)
-            , is_local_user(false) {}
+            , is_local_user(false)
+            , product_id_queried(false) {}
     };
 
     // Phase 1: User cache - vector of user entries
