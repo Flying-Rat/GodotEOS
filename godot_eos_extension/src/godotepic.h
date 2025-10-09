@@ -119,6 +119,7 @@ private:
 	void on_leaderboard_user_scores_completed(bool success, const Dictionary& user_scores);
 	void on_friends_query_completed(bool success, const Array& friends_list);
 	void on_user_info_query_completed(bool success, const Dictionary& user_info);
+	void on_user_cache_updated(bool success, const String& epic_account_id, const Dictionary& user_data);
 };
 
 }

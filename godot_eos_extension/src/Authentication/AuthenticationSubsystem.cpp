@@ -570,7 +570,7 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 			if (instance->display_name.is_empty()) {
 				// Not cached yet, query it explicitly
 				UtilityFunctions::print("AuthenticationSubsystem: Querying user info for display name...");
-				userinfo->QueryUserInfo(UserId.AccountId, UserId.AccountId);
+				userinfo->QueryUserInfo(UserId.AccountId);
 			}
 		}
 
@@ -730,6 +730,9 @@ void EOS_CALL AuthenticationSubsystem::connect_login_callback(const EOS_Connect_
 				data->LocalUserId,                  // product_id
 				true                                // is_local_user
 			);
+
+			// Retry any failed Product ID queries for friends now that Connect login is complete
+			userinfo->RetryFriendProductIdQueries();
 		}
 
 		// Now both Auth and Connect logins are complete, emit the signal

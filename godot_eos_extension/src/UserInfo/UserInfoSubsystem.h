@@ -30,12 +30,13 @@ public:
     virtual const char* GetSubsystemName() const override { return "UserInfoSubsystem"; }
 
     // IUserInfoSubsystem interface
-    virtual bool QueryUserInfo(EOS_EpicAccountId local_user_id, EOS_EpicAccountId target_user_id) override;
+    virtual bool QueryUserInfo(EOS_EpicAccountId target_user_id) override;
     virtual Dictionary GetCachedUserInfo(EOS_EpicAccountId local_user_id, EOS_EpicAccountId target_user_id) override;
     virtual String GetUserDisplayName(EOS_EpicAccountId local_user_id, EOS_EpicAccountId target_user_id) override;
     virtual bool IsUserInfoCached(EOS_EpicAccountId local_user_id, EOS_EpicAccountId target_user_id) override;
     virtual void ClearCache() override;
     virtual void SetUserInfoQueryCallback(const Callable& callback) override;
+    virtual void SetUserCacheUpdateCallback(const Callable& callback) override;
 
     // Phase 1: User cache interface
     virtual void UpdateUserCache(EOS_EpicAccountId epic_id, EOS_ProductUserId product_id = nullptr, bool is_local_user = false) override;
@@ -87,6 +88,7 @@ private:
 
     // Callback callable
     Callable user_info_query_callback;
+    Callable user_cache_update_callback;
 
     // EOS callbacks
     static void EOS_CALL on_query_user_info_complete(const EOS_UserInfo_QueryUserInfoCallbackInfo* data);
@@ -99,6 +101,7 @@ private:
     void query_product_id_for_user(EOS_EpicAccountId epic_id);
     UserCacheEntry* find_cache_entry(EOS_EpicAccountId epic_id);
     const UserCacheEntry* find_cache_entry(EOS_EpicAccountId epic_id) const;
+    void RetryFriendProductIdQueries();
 };
 
 } // namespace godot

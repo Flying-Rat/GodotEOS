@@ -28,7 +28,7 @@ public:
      * @param target_user_id The EOS_EpicAccountId of the user to query
      * @return true if query was initiated successfully
      */
-    virtual bool QueryUserInfo(EOS_EpicAccountId local_user_id, EOS_EpicAccountId target_user_id) = 0;
+    virtual bool QueryUserInfo(EOS_EpicAccountId target_user_id) = 0;
 
     /**
      * @brief Get cached user information.
@@ -78,6 +78,16 @@ public:
      */
     virtual void SetUserInfoQueryCallback(const Callable& callback) = 0;
 
+    /**
+     * @brief Set the callback for user cache updates.
+     * 
+     * The callback will be called with (String epic_account_id, Dictionary user_data)
+     * whenever user cache data is updated (e.g., Product ID found).
+     * 
+     * @param callback The callable to invoke when user cache is updated
+     */
+    virtual void SetUserCacheUpdateCallback(const Callable& callback) = 0;
+
     // Phase 1: User cache methods
 
     /**
@@ -126,6 +136,14 @@ public:
      * @return true if query was initiated successfully
      */
     virtual bool ForceQueryProductId(EOS_EpicAccountId epic_id) = 0;
+
+    /**
+     * @brief Retry Product ID queries for all cached friends.
+     * 
+     * Called when Connect login completes to retry any failed Product ID queries
+     * for friends that were cached before Connect login was available.
+     */
+    virtual void RetryFriendProductIdQueries() = 0;
 };
 
 } // namespace godot

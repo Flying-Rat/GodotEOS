@@ -174,7 +174,7 @@ bool FriendsSubsystem::QueryFriendInfo(const String& friend_id) {
     }
 
     // Use UserInfoSubsystem to query user info
-    if (!userinfo->QueryUserInfo(auth->GetEpicAccountId(), target_user_id)) {
+    if (!userinfo->QueryUserInfo(target_user_id)) {
         UtilityFunctions::printerr("FriendsSubsystem: Failed to initiate user info query");
         return false;
     }
@@ -209,7 +209,7 @@ bool FriendsSubsystem::QueryAllFriendsInfo() {
         EOS_EpicAccountId target_user_id = FAccountHelpers::EpicAccountIDFromString(friend_id.utf8().get_data());
         if (target_user_id) {
             // Query for caching
-            if (userinfo->QueryUserInfo(local_user_id, target_user_id)) {
+            if (userinfo->QueryUserInfo(target_user_id)) {
                 query_count++;
             }
         }

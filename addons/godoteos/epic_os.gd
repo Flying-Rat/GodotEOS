@@ -24,6 +24,7 @@ signal friends_query_completed(success: bool, friends_list: Array)
 
 # User Info signals
 signal user_info_query_completed(success: bool, user_info: Dictionary)
+signal user_cache_updated(success: bool, epic_account_id: String, user_data: Dictionary)
 
 var _godot_epic: GodotEOS = null
 var _initialized: bool = false
@@ -65,6 +66,7 @@ func _setup_signal_connections():
 
 		# Connect user info signals
 		_godot_epic.connect("user_info_updated", _on_user_info_query_completed)
+		_godot_epic.connect("user_cache_updated", _on_user_cache_updated)
 
 func initialize(config: Dictionary = {}) -> bool:
 	"""Initialize the EOS SDK with configuration options"""
@@ -563,6 +565,12 @@ func _on_user_info_query_completed(success: bool, user_info: Dictionary):
 	if _debug_mode:
 		print("EpicOS: User info query completed - Success: ", success, " Info: ", user_info)
 	user_info_query_completed.emit(success, user_info)
+
+func _on_user_cache_updated(success: bool, epic_account_id: String, user_data: Dictionary):
+	"""Handle user cache updates (e.g., Product ID found)"""
+	if _debug_mode:
+		print("EpicOS: User cache updated - Success: ", success, ", Epic ID: ", epic_account_id, " Data: ", user_data)
+	user_cache_updated.emit(success, epic_account_id, user_data)
 
 # =============================================================================
 # PROCESS HANDLING - Integrates with GDExtension ticking

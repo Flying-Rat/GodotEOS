@@ -98,6 +98,7 @@ void GodotEOS::_bind_methods() {
 
 	// User Info callback
 	ClassDB::bind_method(D_METHOD("on_user_info_query_completed", "success", "user_info"), &GodotEOS::on_user_info_query_completed);
+	ClassDB::bind_method(D_METHOD("on_user_cache_updated", "success", "epic_account_id", "user_data"), &GodotEOS::on_user_cache_updated);
 
 	// Authentication signals
 	ADD_SIGNAL(MethodInfo("login_completed", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::DICTIONARY, "user_info")));
@@ -120,6 +121,7 @@ void GodotEOS::_bind_methods() {
 
 	// User Info signals
 	ADD_SIGNAL(MethodInfo("user_info_updated", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::DICTIONARY, "user_info")));
+	ADD_SIGNAL(MethodInfo("user_cache_updated", PropertyInfo(Variant::BOOL, "success"), PropertyInfo(Variant::STRING, "epic_account_id"), PropertyInfo(Variant::DICTIONARY, "user_data")));
 }
 
 GodotEOS::GodotEOS() {
@@ -409,10 +411,8 @@ void GodotEOS::query_user_info(const String& target_user_id) {
 		return;
 	}
 
-	EOS_EpicAccountId local_id = auth->GetEpicAccountId();
 	EOS_EpicAccountId target_id = FAccountHelpers::EpicAccountIDFromString(target_user_id.utf8().get_data());
-
-	if (!user_info->QueryUserInfo(local_id, target_id)) {
+	if (!user_info->QueryUserInfo(target_id)) {
 		UtilityFunctions::printerr("UserInfoSubsystem query user info failed");
 		Dictionary empty_info;
 		on_user_info_query_completed(false, empty_info);
@@ -974,6 +974,10 @@ void GodotEOS::setup_user_info_callbacks() {
 		// Create callable that binds to our instance method
 		Callable user_info_callback(this, "on_user_info_query_completed");
 		user_info->SetUserInfoQueryCallback(user_info_callback);
+
+		// Set up user cache update callback
+		Callable user_cache_callback(this, "on_user_cache_updated");
+		user_info->SetUserCacheUpdateCallback(user_cache_callback);
 	} else {
 		UtilityFunctions::printerr("Failed to set up user info callbacks - UserInfoSubsystem not available");
 	}
@@ -1114,4 +1118,11 @@ void GodotEOS::on_user_info_query_completed(bool success, const Dictionary& user
 
 	// Emit the user_info_updated signal
 	emit_signal("user_info_updated", success, user_info);
+}
+
+void GodotEOS::on_user_cache_updated(bool success, const String& epic_account_id, const Dictionary& user_data) {
+	UtilityFunctions::print("GodotEOS: User cache updated - Success: " + String(success ? "true" : "false") + ", Epic ID: " + epic_account_id);
+
+	// Emit the user_cache_updated signal
+	emit_signal("user_cache_updated", success, epic_account_id, user_data);
 }

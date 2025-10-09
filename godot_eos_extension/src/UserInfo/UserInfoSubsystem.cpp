@@ -61,12 +61,13 @@ void UserInfoSubsystem::Shutdown() {
     UtilityFunctions::print("UserInfoSubsystem: Shutdown complete");
 }
 
-bool UserInfoSubsystem::QueryUserInfo(EOS_EpicAccountId local_user_id, EOS_EpicAccountId target_user_id) {
+bool UserInfoSubsystem::QueryUserInfo(EOS_EpicAccountId target_user_id) {
     if (!userinfo_handle) {
         UtilityFunctions::printerr("UserInfoSubsystem: Not initialized");
         return false;
     }
 
+    EOS_EpicAccountId local_user_id = Get<IAuthenticationSubsystem>()->GetEpicAccountId();
     if (!EOS_EpicAccountId_IsValid(local_user_id)) {
         UtilityFunctions::printerr("UserInfoSubsystem: Invalid local user ID");
         return false;
@@ -169,6 +170,10 @@ void UserInfoSubsystem::SetUserInfoQueryCallback(const Callable& callback) {
     user_info_query_callback = callback;
 }
 
+void UserInfoSubsystem::SetUserCacheUpdateCallback(const Callable& callback) {
+    user_cache_update_callback = callback;
+}
+
 // Phase 1: User cache implementation
 
 void UserInfoSubsystem::UpdateUserCache(EOS_EpicAccountId epic_id, EOS_ProductUserId product_id, bool is_local_user) {
@@ -177,7 +182,7 @@ void UserInfoSubsystem::UpdateUserCache(EOS_EpicAccountId epic_id, EOS_ProductUs
     }
 
     String epic_id_str = FAccountHelpers::EpicAccountIDToString(epic_id);
-    String product_id_str = product_id && EOS_ProductUserId_IsValid(product_id) ? FAccountHelpers::ProductUserIDToString(product_id) : "null";
+    String product_id_str = FAccountHelpers::ProductUserIDToString(product_id);
 
     UtilityFunctions::print(vformat("UserInfoSubsystem: UpdateUserCache called - Epic ID: %s, Product ID: %s, Is Local User: %s", epic_id_str, product_id_str, is_local_user ? "true" : "false"));
 
@@ -188,6 +193,7 @@ void UserInfoSubsystem::UpdateUserCache(EOS_EpicAccountId epic_id, EOS_ProductUs
         // Create new entry
         UserCacheEntry new_entry;
         new_entry.epic_account_id = epic_id;
+        new_entry.product_user_id = product_id;
         new_entry.is_local_user = is_local_user;
         user_cache.push_back(new_entry);
         entry = &user_cache.back();
@@ -195,34 +201,28 @@ void UserInfoSubsystem::UpdateUserCache(EOS_EpicAccountId epic_id, EOS_ProductUs
 
     // Update entry
     entry->is_local_user = is_local_user;
-
-    // Update Product ID if provided
-    if (product_id && EOS_ProductUserId_IsValid(product_id)) {
-        entry->product_user_id = product_id;
-        entry->product_id_queried = true;  // Successfully resolved
-    } else if (product_id == nullptr) {
-        // Explicitly setting to nullptr means we've checked and found no mapping
-        entry->product_user_id = nullptr;
-        entry->product_id_queried = true;  // Mark as queried to prevent infinite loops
-    }
+    entry->product_user_id = product_id;
 
     // Query user info if not already cached
     if (entry->display_name.is_empty()) {
-        auto auth = Get<IAuthenticationSubsystem>();
-        if (auth && auth->IsLoggedIn()) {
-            QueryUserInfo(auth->GetEpicAccountId(), epic_id);
+        if (Get<IAuthenticationSubsystem>()->IsLoggedIn()) {
+            QueryUserInfo(epic_id);
         }
     }
 
     // Query Product ID if needed and not already attempted
     // Skip querying for local user since Product ID comes from Connect login
-    if (!entry->product_user_id && !entry->product_id_queried && !is_local_user) {
+    // Also skip if local user doesn't have a valid Product User ID (Connect login not completed)
+    auto auth_check = Get<IAuthenticationSubsystem>();
+    EOS_ProductUserId local_product_id = auth_check ? auth_check->GetProductUserId() : nullptr;
+    if (!entry->product_user_id && !entry->product_id_queried && !is_local_user && EOS_ProductUserId_IsValid(local_product_id)) {
         UtilityFunctions::print(vformat("UserInfoSubsystem: UpdateUserCache - Triggering Product ID query for Epic ID %s", epic_id_str));
         query_product_id_for_user(epic_id);
     } else {
         String reason = "already has Product ID";
         if (!entry->product_user_id && entry->product_id_queried) reason = "already queried";
         if (is_local_user) reason = "is local user";
+        if (!EOS_ProductUserId_IsValid(local_product_id)) reason = "Connect login not completed";
         UtilityFunctions::print(vformat("UserInfoSubsystem: UpdateUserCache - Skipping Product ID query for Epic ID %s (%s)", epic_id_str, reason));
     }
 }
@@ -259,16 +259,13 @@ Dictionary UserInfoSubsystem::GetCachedUserData(EOS_EpicAccountId epic_id) {
     const UserCacheEntry* entry = find_cache_entry(epic_id);
     if (entry) {
         result["epic_account_id"] = FAccountHelpers::EpicAccountIDToString(entry->epic_account_id);
+        result["product_user_id"] = FAccountHelpers::ProductUserIDToString(entry->product_user_id);
         result["display_name"] = entry->display_name;
         result["nickname"] = entry->nickname;
         result["country"] = entry->country;
         result["preferred_language"] = entry->preferred_language;
         result["is_local_user"] = entry->is_local_user;
         result["product_id_queried"] = entry->product_id_queried;  // Debug info
-
-        if (entry->product_user_id && EOS_ProductUserId_IsValid(entry->product_user_id)) {
-            result["product_user_id"] = FAccountHelpers::ProductUserIDToString(entry->product_user_id);
-        }
     }
 
     return result;
@@ -296,6 +293,37 @@ bool UserInfoSubsystem::ForceQueryProductId(EOS_EpicAccountId epic_id) {
     return true;
 }
 
+void UserInfoSubsystem::RetryFriendProductIdQueries() {
+    UtilityFunctions::print("UserInfoSubsystem: RetryFriendProductIdQueries called - retrying Product ID queries for cached friends");
+
+    auto auth = Get<IAuthenticationSubsystem>();
+    if (!auth || !auth->IsLoggedIn()) {
+        UtilityFunctions::print("UserInfoSubsystem: RetryFriendProductIdQueries - Authentication not available, skipping");
+        return;
+    }
+
+    EOS_ProductUserId local_product_id = auth->GetProductUserId();
+    if (!EOS_ProductUserId_IsValid(local_product_id)) {
+        UtilityFunctions::print("UserInfoSubsystem: RetryFriendProductIdQueries - Connect login not completed, skipping");
+        return;
+    }
+
+    int retry_count = 0;
+    for (auto& entry : user_cache) {
+        // Only retry for friends (not local user) that haven't been successfully queried yet
+        if (!entry.is_local_user && !entry.product_user_id && entry.product_id_queried) {
+            // Reset the flag and retry
+            entry.product_id_queried = false;
+            String epic_id_str = FAccountHelpers::EpicAccountIDToString(entry.epic_account_id);
+            UtilityFunctions::print(vformat("UserInfoSubsystem: RetryFriendProductIdQueries - Retrying Product ID query for friend: %s", epic_id_str));
+            query_product_id_for_user(entry.epic_account_id);
+            retry_count++;
+        }
+    }
+
+    UtilityFunctions::print(vformat("UserInfoSubsystem: RetryFriendProductIdQueries - Initiated %d retry queries", retry_count));
+}
+
 // Phase 1: Cache helper methods
 
 UserInfoSubsystem::UserCacheEntry* UserInfoSubsystem::find_cache_entry(EOS_EpicAccountId epic_id) {
@@ -305,8 +333,10 @@ UserInfoSubsystem::UserCacheEntry* UserInfoSubsystem::find_cache_entry(EOS_EpicA
 
     String epic_id_str = FAccountHelpers::EpicAccountIDToString(epic_id);
 
-    for (auto& entry : user_cache) {
-        if (FAccountHelpers::EpicAccountIDToString(entry.epic_account_id) == epic_id_str) {
+    for (auto& entry : user_cache) 
+    {
+        if (FAccountHelpers::EpicAccountIDToString(entry.epic_account_id) == epic_id_str) 
+        {
             return &entry;
         }
     }
@@ -321,8 +351,10 @@ const UserInfoSubsystem::UserCacheEntry* UserInfoSubsystem::find_cache_entry(EOS
 
     String epic_id_str = FAccountHelpers::EpicAccountIDToString(epic_id);
 
-    for (const auto& entry : user_cache) {
-        if (FAccountHelpers::EpicAccountIDToString(entry.epic_account_id) == epic_id_str) {
+    for (const auto& entry : user_cache) 
+    {
+        if (FAccountHelpers::EpicAccountIDToString(entry.epic_account_id) == epic_id_str) 
+        {
             return &entry;
         }
     }
@@ -351,6 +383,13 @@ void UserInfoSubsystem::query_product_id_for_user(EOS_EpicAccountId epic_id) {
         return;
     }
 
+    // Check if Connect login has completed (we need a valid Product User ID)
+    EOS_ProductUserId local_product_id = auth->GetProductUserId();
+    if (!EOS_ProductUserId_IsValid(local_product_id)) {
+        UtilityFunctions::print(vformat("UserInfoSubsystem: query_product_id_for_user - Connect login not completed (no valid Product User ID) for Epic ID %s, returning early", epic_id_str));
+        return;
+    }
+
     auto platform = Get<IPlatformSubsystem>();
     if (!platform || !platform->GetPlatformHandle()) {
         UtilityFunctions::print(vformat("UserInfoSubsystem: query_product_id_for_user - Platform not available or invalid handle for Epic ID %s, returning early", epic_id_str));
@@ -375,7 +414,7 @@ void UserInfoSubsystem::query_product_id_for_user(EOS_EpicAccountId epic_id) {
 
     EOS_Connect_QueryExternalAccountMappingsOptions options = {};
     options.ApiVersion = EOS_CONNECT_QUERYEXTERNALACCOUNTMAPPINGS_API_LATEST;
-    options.LocalUserId = auth->GetProductUserId();
+    options.LocalUserId = local_product_id;
     options.AccountIdType = EOS_EExternalAccountType::EOS_EAT_EPIC;
     options.ExternalAccountIds = account_chars.data();
     options.ExternalAccountIdCount = 1;
@@ -403,7 +442,7 @@ Dictionary UserInfoSubsystem::copy_user_info_to_dictionary(EOS_EpicAccountId loc
     if (copy_result == EOS_EResult::EOS_Success && user_info) {
         
         // Add target user ID to the result
-        result["target_user_id"] = FAccountHelpers::EpicAccountIDToString(target_user_id);
+        result["epic_account_id"] = FAccountHelpers::EpicAccountIDToString(target_user_id);
         
         // Extract display name
         if (user_info->DisplayName && strlen(user_info->DisplayName) > 0) {
@@ -464,16 +503,20 @@ void EOS_CALL UserInfoSubsystem::on_query_user_info_complete(const EOS_UserInfo_
 
             // Phase 3: Query Product ID if needed and not already cached
             // Skip querying for local user since Product ID comes from Connect login
-            if (!entry->product_user_id && !entry->product_id_queried && !entry->is_local_user) {
+            // Also skip if local user doesn't have a valid Product User ID (Connect login not completed)
+            auto auth_check = Get<IAuthenticationSubsystem>();
+            EOS_ProductUserId local_product_id = auth_check ? auth_check->GetProductUserId() : nullptr;
+            if (!entry->product_user_id && !entry->product_id_queried && !entry->is_local_user && EOS_ProductUserId_IsValid(local_product_id)) {
                 UtilityFunctions::print(vformat("UserInfoSubsystem: on_query_user_info_complete - Triggering Product ID query for Epic ID %s (is_local_user: %s)",
                     target_epic_id, entry->is_local_user ? "true" : "false"));
                 subsystem->query_product_id_for_user(context->target_user_id);
             } else {
-                UtilityFunctions::print(vformat("UserInfoSubsystem: on_query_user_info_complete - Skipping Product ID query for Epic ID %s (has_product_id: %s, queried: %s, is_local_user: %s)",
-                    target_epic_id, 
-                    entry->product_user_id ? "true" : "false",
-                    entry->product_id_queried ? "true" : "false",
-                    entry->is_local_user ? "true" : "false"));
+                String reason = "already has Product ID";
+                if (!entry->product_user_id && entry->product_id_queried) reason = "already queried";
+                if (entry->is_local_user) reason = "is local user";
+                if (!EOS_ProductUserId_IsValid(local_product_id)) reason = "Connect login not completed";
+                UtilityFunctions::print(vformat("UserInfoSubsystem: on_query_user_info_complete - Skipping Product ID query for Epic ID %s (%s)",
+                    target_epic_id, reason));
             }
         }
 
@@ -516,6 +559,13 @@ void EOS_CALL UserInfoSubsystem::on_product_id_query_complete(const EOS_Connect_
     // Remove from pending queries
     subsystem->pending_product_id_queries.erase(epic_id_str);
     UtilityFunctions::print(vformat("UserInfoSubsystem: on_product_id_query_complete - Removed Epic ID %s from pending queries", epic_id_str));
+
+    // Mark that we've attempted to query the Product ID for this user
+    UserCacheEntry* entry = subsystem->find_cache_entry(epic_id);
+    if (entry) {
+        entry->product_id_queried = true;
+        UtilityFunctions::print(vformat("UserInfoSubsystem: on_product_id_query_complete - Marked Product ID as queried for Epic ID %s", epic_id_str));
+    }
 
     if (data->ResultCode != EOS_EResult::EOS_Success) {
         UtilityFunctions::print(vformat("UserInfoSubsystem: Failed to query Product ID for Epic ID %s: %s",
@@ -572,6 +622,11 @@ void EOS_CALL UserInfoSubsystem::on_product_id_query_complete(const EOS_Connect_
         
         subsystem->UpdateUserCache(epic_id, product_id, is_local_user);
         UtilityFunctions::print(vformat("UserInfoSubsystem: Successfully cached Product ID for Epic ID %s", epic_id_str));
+
+        // Emit success callback
+        if (subsystem->user_cache_update_callback.is_valid()) {
+            subsystem->user_cache_update_callback.call(true, epic_id_str, subsystem->GetCachedUserData(epic_id));
+        }
     } else {
         // This is not necessarily an error - the Epic Account may not have a Product User ID mapping
         UtilityFunctions::print(vformat("UserInfoSubsystem: No Product ID mapping found for Epic ID %s (this is normal if the account hasn't used Connect login)", epic_id_str));
@@ -583,6 +638,11 @@ void EOS_CALL UserInfoSubsystem::on_product_id_query_complete(const EOS_Connect_
                              FAccountHelpers::EpicAccountIDToString(auth_check->GetEpicAccountId()) == epic_id_str);
         
         subsystem->UpdateUserCache(epic_id, nullptr, is_local_user);
+
+        // Emit failure callback
+        if (subsystem->user_cache_update_callback.is_valid()) {
+            subsystem->user_cache_update_callback.call(false, epic_id_str, subsystem->GetCachedUserData(epic_id));
+        }
     }
 
     delete context;

@@ -51,6 +51,7 @@ func _ready():
 		EpicOS.user_info_query_completed.connect(_on_friend_info_query_completed)
 		EpicOS.login_completed.connect(_on_login_status_changed)
 		EpicOS.logout_completed.connect(_on_logout_status_changed)
+		EpicOS.user_cache_updated.connect(_on_user_cache_updated)
 
 	# Enable debug mode for detailed logging
 	if EpicOS:
@@ -150,9 +151,9 @@ func _on_friend_info_query_completed(success: bool, friend_info: Dictionary):
 		_log_message("[color=green]✓ QueryUserInfo() completed![/color]")
 
 		# Update cached friend data with new info
-		var target_user_id = friend_info.get("target_user_id", "")
+		var epic_account_id = friend_info.get("epic_account_id", "")
 		for i in range(cached_friends.size()):
-			if cached_friends[i].get("id", "") == target_user_id:
+			if cached_friends[i].get("id", "") == epic_account_id:
 				# Update only the user info fields, preserving existing data like status
 				cached_friends[i]["display_name"] = friend_info.get("display_name", cached_friends[i].get("display_name", ""))
 				cached_friends[i]["nickname"] = friend_info.get("nickname", cached_friends[i].get("nickname", ""))
@@ -164,9 +165,9 @@ func _on_friend_info_query_completed(success: bool, friend_info: Dictionary):
 		_refresh_friends_display()
 
 		# Update display if this is the selected friend
-		if not selected_friend_id.is_empty() and target_user_id == selected_friend_id:
+		if not selected_friend_id.is_empty() and epic_account_id == selected_friend_id:
 			# Find the updated friend data in cached_friends
-			_update_friend_details(target_user_id)
+			_update_friend_details(epic_account_id)
 	else:
 		_log_message("[color=red]✗ Friend info query failed![/color]")
 
@@ -182,6 +183,25 @@ func _on_logout_status_changed(success: bool):
 		selected_friend_id = ""
 		_refresh_friends_display()
 	_update_ui_state()
+
+func _on_user_cache_updated(success: bool, epic_id: String, user_data: Dictionary):
+	_log_message("[color=blue]📦 User cache updated for: " + epic_id + " (success: " + str(success) + ")[/color]")
+	
+	# Update cached_friends with the new user data (especially Product ID)
+	for i in range(cached_friends.size()):
+		if cached_friends[i].get("id", "") == epic_id:
+			# Update the Product ID and any other cached user info
+			if user_data.has("product_user_id"):
+				cached_friends[i]["product_user_id"] = user_data["product_user_id"]
+				_log_message("[color=blue]Updated Product User ID for friend: " + epic_id + "[/color]")
+			break
+	
+	# If this is the currently selected friend, refresh their details
+	if selected_friend_id == epic_id:
+		_refresh_selected_friend_details()
+	
+	# Refresh the friends list in case display names or other info changed
+	_refresh_friends_display()
 
 # ============================================================================
 # DISPLAY UPDATE FUNCTIONS
@@ -208,10 +228,14 @@ func _refresh_friends_display():
 
 	_log_message("[color=cyan]Displayed " + str(cached_friends.size()) + " friends[/color]")
 
-func _update_friend_details(target_user_id: String):
+func _refresh_selected_friend_details():
+	if not selected_friend_id.is_empty():
+		_update_friend_details(selected_friend_id)
+
+func _update_friend_details(epic_account_id: String):
 	var friend_data = {}
 	for friend in cached_friends:
-		if friend.get("id", "") == target_user_id:
+		if friend.get("id", "") == epic_account_id:
 			friend_data = friend
 			break
 
@@ -225,17 +249,18 @@ func _update_friend_details(target_user_id: String):
 		details_text += "[color=yellow]Epic Account ID:[/color] [color=white]" + str(epic_id) + "[/color]\n"
 
 		# Display Product User ID prominently
-		var product_id = friend_data.get("product_id", "Not available")
-		if product_id != "Not available":
-			details_text += "[color=yellow]Product User ID:[/color] [color=white]" + str(product_id) + "[/color]\n"
+		var product_user_id = friend_data.get("product_user_id", "NULL")
+		if product_user_id != "NULL":
+			details_text += "[color=yellow]Product User ID:[/color] [color=white]" + str(product_user_id) + "[/color]\n"
 		else:
-			details_text += "[color=yellow]Product User ID:[/color] [color=gray]" + str(product_id) + "[/color]\n"
+			details_text += "[color=yellow]Product User ID:[/color] [color=gray]" + str(product_user_id) + "[/color]\n"
+			_log_message("[color=orange]⚠ Product User ID not available yet. It may take time to be fetched from EOS.[/color]")
 
 		details_text += "\n[color=cyan]Additional Information:[/color]\n"
 
-		# Display all other friend information, excluding id and product_id as they're shown above
+		# Display all other friend information, excluding id and product_user_id as they're shown above
 		for key in friend_data:
-			if key != "id" and key != "product_id":
+			if key != "id" and key != "product_user_id":
 				var value = str(friend_data[key])
 				details_text += "[color=yellow]" + key + ":[/color] " + value + "\n"
 
@@ -265,6 +290,7 @@ func _update_ui_state():
 	var friends_available = platform_initialized and is_logged_in
 	query_friends_button.disabled = not friends_available
 	query_friend_info_button.disabled = not friends_available or selected_friend_id.is_empty()
+	query_product_id_button.disabled = not friends_available
 
 # ============================================================================
 # OUTPUT CONTROL HANDLERS
