@@ -109,7 +109,7 @@ func _on_query_product_id_button_pressed():
 
 		if EpicOS:
 			# Force re-query the Product ID for the selected friend
-			EpicOS.force_query_product_id_for_user(selected_friend_id)
+			EpicOS.force_query_product_id(selected_friend_id)
 		else:
 			_log_message("[color=red]✗ EpicOS not available[/color]")
 

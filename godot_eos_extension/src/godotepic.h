@@ -63,8 +63,7 @@ public:
 	// User Info methods
 	void query_user_info(const String& target_user_id);
 	Dictionary get_user_info(const String& target_user_id);
-	void force_query_product_id();
-	void force_query_product_id_for_user(const String& epic_account_id);
+	void force_query_product_id(const String& epic_account_id = "");
 
 	// Achievements methods
 	void query_achievement_definitions();
