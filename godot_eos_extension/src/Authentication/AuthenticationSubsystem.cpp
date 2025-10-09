@@ -565,7 +565,7 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 			);
 
 			// Try to get cached user info first (might be available immediately after login)
-			instance->display_name = userinfo->GetUserDisplayName(UserId.AccountId, UserId.AccountId);
+			instance->display_name = userinfo->GetUserDisplayName(UserId.AccountId);
 
 			if (instance->display_name.is_empty()) {
 				// Not cached yet, query it explicitly

@@ -31,9 +31,9 @@ public:
 
     // IUserInfoSubsystem interface
     virtual bool QueryUserInfo(EOS_EpicAccountId target_user_id) override;
-    virtual Dictionary GetCachedUserInfo(EOS_EpicAccountId local_user_id, EOS_EpicAccountId target_user_id) override;
-    virtual String GetUserDisplayName(EOS_EpicAccountId local_user_id, EOS_EpicAccountId target_user_id) override;
-    virtual bool IsUserInfoCached(EOS_EpicAccountId local_user_id, EOS_EpicAccountId target_user_id) override;
+    virtual Dictionary GetCachedUserInfo(EOS_EpicAccountId target_user_id) override;
+    virtual String GetUserDisplayName(EOS_EpicAccountId target_user_id) override;
+    virtual bool IsUserInfoCached(EOS_EpicAccountId target_user_id) override;
     virtual void ClearCache() override;
     virtual void SetUserInfoQueryCallback(const Callable& callback) override;
     virtual void SetUserCacheUpdateCallback(const Callable& callback) override;

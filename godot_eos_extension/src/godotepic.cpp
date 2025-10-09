@@ -426,17 +426,9 @@ Dictionary GodotEOS::get_user_info(const String& target_user_id) {
 		return Dictionary();
 	}
 
-	// Get the local user ID from authentication subsystem
-	auto auth = Get<IAuthenticationSubsystem>();
-	if (!auth) {
-		UtilityFunctions::push_warning("AuthenticationSubsystem not available");
-		return Dictionary();
-	}
-
-	EOS_EpicAccountId local_id = auth->GetEpicAccountId();
 	EOS_EpicAccountId target_id = FAccountHelpers::EpicAccountIDFromString(target_user_id.utf8().get_data());
 
-	return user_info->GetCachedUserInfo(local_id, target_id);
+	return user_info->GetCachedUserInfo(target_id);
 }
 
 void GodotEOS::force_query_product_id() {

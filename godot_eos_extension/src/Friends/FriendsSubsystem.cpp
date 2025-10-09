@@ -102,7 +102,7 @@ Dictionary FriendsSubsystem::GetFriendInfo(const String& friend_id) const {
     auto userinfo = Get<IUserInfoSubsystem>();
     if (userinfo) {
         // Get display name using convenience method
-        String display_name = userinfo->GetUserDisplayName(auth->GetEpicAccountId(), target_user_id);
+        String display_name = userinfo->GetUserDisplayName(target_user_id);
 
         if (!display_name.is_empty()) {
             friend_info["id"] = friend_id;
@@ -115,7 +115,7 @@ Dictionary FriendsSubsystem::GetFriendInfo(const String& friend_id) const {
             }
 
             // Get additional user info if needed
-            Dictionary user_info = userinfo->GetCachedUserInfo(auth->GetEpicAccountId(), target_user_id);
+            Dictionary user_info = userinfo->GetCachedUserInfo(target_user_id);
             if (user_info.has("country")) {
                 friend_info["country"] = user_info["country"];
             }
@@ -297,7 +297,7 @@ Dictionary FriendsSubsystem::create_friend_info_dict(EOS_EpicAccountId friend_id
     // Use UserInfoSubsystem to get display name
     auto userinfo = Get<IUserInfoSubsystem>();
     if (userinfo) {
-        String display_name = userinfo->GetUserDisplayName(auth->GetEpicAccountId(), friend_id);
+        String display_name = userinfo->GetUserDisplayName(friend_id);
         if (!display_name.is_empty()) {
             friend_info["display_name"] = display_name;
         }

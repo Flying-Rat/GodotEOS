@@ -35,11 +35,10 @@ public:
      * 
      * Returns cached user info if available. Does not trigger a query.
      * 
-     * @param local_user_id The EOS_EpicAccountId of the local user
      * @param target_user_id The EOS_EpicAccountId of the user to get info for
      * @return Dictionary containing user info (display_name, nickname, country, etc.) or empty if not cached
      */
-    virtual Dictionary GetCachedUserInfo(EOS_EpicAccountId local_user_id, EOS_EpicAccountId target_user_id) = 0;
+    virtual Dictionary GetCachedUserInfo(EOS_EpicAccountId target_user_id) = 0;
 
     /**
      * @brief Get user's display name.
@@ -48,20 +47,18 @@ public:
      * Falls back to nickname if display name is not available.
      * Returns empty string if user info is not cached.
      * 
-     * @param local_user_id The EOS_EpicAccountId of the local user
      * @param target_user_id The EOS_EpicAccountId of the user to get name for
      * @return The user's display name, nickname, or empty string if not cached
      */
-    virtual String GetUserDisplayName(EOS_EpicAccountId local_user_id, EOS_EpicAccountId target_user_id) = 0;
+    virtual String GetUserDisplayName(EOS_EpicAccountId target_user_id) = 0;
 
     /**
      * @brief Check if user info is cached.
      * 
-     * @param local_user_id The EOS_EpicAccountId of the local user
      * @param target_user_id The EOS_EpicAccountId of the user to check
      * @return true if user info is cached and available
      */
-    virtual bool IsUserInfoCached(EOS_EpicAccountId local_user_id, EOS_EpicAccountId target_user_id) = 0;
+    virtual bool IsUserInfoCached(EOS_EpicAccountId target_user_id) = 0;
 
     /**
      * @brief Clear all cached user information.

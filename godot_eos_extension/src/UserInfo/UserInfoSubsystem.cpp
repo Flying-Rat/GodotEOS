@@ -96,20 +96,25 @@ bool UserInfoSubsystem::QueryUserInfo(EOS_EpicAccountId target_user_id) {
     return true;
 }
 
-Dictionary UserInfoSubsystem::GetCachedUserInfo(EOS_EpicAccountId local_user_id, EOS_EpicAccountId target_user_id) {
+Dictionary UserInfoSubsystem::GetCachedUserInfo(EOS_EpicAccountId target_user_id) {
     if (!userinfo_handle) {
         return Dictionary();
     }
 
-    if (!EOS_EpicAccountId_IsValid(local_user_id) || !EOS_EpicAccountId_IsValid(target_user_id)) {
+    EOS_EpicAccountId local_user_id = Get<IAuthenticationSubsystem>()->GetEpicAccountId();
+    if (!EOS_EpicAccountId_IsValid(local_user_id)) {
+        return Dictionary();
+    }
+
+    if (!EOS_EpicAccountId_IsValid(target_user_id)) {
         return Dictionary();
     }
 
     return copy_user_info_to_dictionary(local_user_id, target_user_id);
 }
 
-String UserInfoSubsystem::GetUserDisplayName(EOS_EpicAccountId local_user_id, EOS_EpicAccountId target_user_id) {
-    Dictionary user_info = GetCachedUserInfo(local_user_id, target_user_id);
+String UserInfoSubsystem::GetUserDisplayName(EOS_EpicAccountId target_user_id) {
+    Dictionary user_info = GetCachedUserInfo(target_user_id);
     
     if (user_info.is_empty()) {
         return "Unknown";
@@ -130,12 +135,17 @@ String UserInfoSubsystem::GetUserDisplayName(EOS_EpicAccountId local_user_id, EO
     return "Unknown";
 }
 
-bool UserInfoSubsystem::IsUserInfoCached(EOS_EpicAccountId local_user_id, EOS_EpicAccountId target_user_id) {
+bool UserInfoSubsystem::IsUserInfoCached(EOS_EpicAccountId target_user_id) {
     if (!userinfo_handle) {
         return false;
     }
 
-    if (!EOS_EpicAccountId_IsValid(local_user_id) || !EOS_EpicAccountId_IsValid(target_user_id)) {
+    EOS_EpicAccountId local_user_id = Get<IAuthenticationSubsystem>()->GetEpicAccountId();
+    if (!EOS_EpicAccountId_IsValid(local_user_id)) {
+        return false;
+    }
+
+    if (!EOS_EpicAccountId_IsValid(target_user_id)) {
         return false;
     }
 
