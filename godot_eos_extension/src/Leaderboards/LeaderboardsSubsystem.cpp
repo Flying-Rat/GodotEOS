@@ -4,6 +4,7 @@
 #include "../Authentication/IAuthenticationSubsystem.h"
 #include "../Authentication/AuthenticationSubsystem.h"
 #include "../Utils/AccountHelpers.h"
+#include "../Utils/Logger.h"
 #include <eos_sdk.h>
 #include <eos_leaderboards.h>
 #include <godot_cpp/core/error_macros.hpp>
@@ -34,29 +35,29 @@ LeaderboardsSubsystem::~LeaderboardsSubsystem() {
 }
 
 bool LeaderboardsSubsystem::Init() {
-    UtilityFunctions::print("LeaderboardsSubsystem: Initializing...");
+    Logger::Info("LeaderboardsSubsystem: Initializing...");
 
     // Get and validate platform
     auto platform = Get<IPlatformSubsystem>();
     if (!platform || !platform->IsOnline()) {
-        UtilityFunctions::printerr("LeaderboardsSubsystem: Platform not available or offline");
+        Logger::Error("LeaderboardsSubsystem: Platform not available or offline");
         return false;
     }
 
     EOS_HPlatform platform_handle = platform->GetPlatformHandle();
     if (!platform_handle) {
-        UtilityFunctions::printerr("LeaderboardsSubsystem: Invalid platform handle");
+        Logger::Error("LeaderboardsSubsystem: Invalid platform handle");
         return false;
     }
 
     leaderboards_handle = EOS_Platform_GetLeaderboardsInterface(platform_handle);
 
     if (!leaderboards_handle) {
-        UtilityFunctions::printerr("LeaderboardsSubsystem: Failed to get leaderboards interface");
+        Logger::Error("LeaderboardsSubsystem: Failed to get leaderboards interface");
         return false;
     }
 
-    UtilityFunctions::print("LeaderboardsSubsystem: Initialized successfully");
+    Logger::Info("LeaderboardsSubsystem: Initialized successfully");
     return true;
 }
 
@@ -70,12 +71,12 @@ void LeaderboardsSubsystem::Shutdown() {
     leaderboard_ranks.clear();
     leaderboard_user_scores.clear();
 
-    UtilityFunctions::print("LeaderboardsSubsystem: Shutdown complete");
+    Logger::Info("LeaderboardsSubsystem: Shutdown complete");
 }
 
 bool LeaderboardsSubsystem::QueryLeaderboardDefinitions() {
     if (!leaderboards_handle) {
-        UtilityFunctions::push_warning("LeaderboardsSubsystem: Not initialized");
+        Logger::Warning("LeaderboardsSubsystem: Not initialized");
         return false;
     }
 
@@ -92,18 +93,18 @@ bool LeaderboardsSubsystem::QueryLeaderboardDefinitions() {
     options.LocalUserId = auth->GetProductUserId();
 
     EOS_Leaderboards_QueryLeaderboardDefinitions(leaderboards_handle, &options, this, on_query_leaderboard_definitions_complete);
-    UtilityFunctions::print("LeaderboardsSubsystem: Starting leaderboard definitions query");
+    Logger::Info("LeaderboardsSubsystem: Starting leaderboard definitions query");
     return true;
 }
 
 bool LeaderboardsSubsystem::QueryLeaderboardRanks(const String& leaderboard_id, int limit) {
     if (!leaderboards_handle) {
-        UtilityFunctions::printerr("LeaderboardsSubsystem: Not initialized");
+        Logger::Error("LeaderboardsSubsystem: Not initialized");
         return false;
     }
 
     if (leaderboard_id.is_empty()) {
-        UtilityFunctions::push_warning("LeaderboardsSubsystem: Invalid leaderboard ID");
+        Logger::Warning("LeaderboardsSubsystem: Invalid leaderboard ID");
         return false;
     }
 
@@ -115,7 +116,7 @@ bool LeaderboardsSubsystem::QueryLeaderboardRanks(const String& leaderboard_id, 
     EOS_ProductUserId local_user = auth->GetProductUserId();
 
     if (!TValidateAccount<EOS_ProductUserId>::IsValid(local_user)) {
-        UtilityFunctions::printerr("LeaderboardsSubsystem: Invalid local user Product User ID");
+        Logger::Error("LeaderboardsSubsystem: Invalid local user Product User ID");
         return false;
     }
 
@@ -123,8 +124,8 @@ bool LeaderboardsSubsystem::QueryLeaderboardRanks(const String& leaderboard_id, 
     context->subsystem = this;
     context->leaderboard_id = leaderboard_id.utf8().get_data();
 
-    UtilityFunctions::print("LeaderboardsSubsystem: Querying ranks for leaderboard ID: " + leaderboard_id + " (limit: " + String::num_int64(limit) + ")");
-    UtilityFunctions::print("LeaderboardsSubsystem: Local user: " + FAccountHelpers::ProductUserIDToString(local_user));
+    Logger::Info("LeaderboardsSubsystem: Querying ranks for leaderboard ID: " + leaderboard_id + " (limit: " + String::num_int64(limit) + ")");
+    Logger::Info("LeaderboardsSubsystem: Local user: " + FAccountHelpers::ProductUserIDToString(local_user));
 
     EOS_Leaderboards_QueryLeaderboardRanksOptions query_ranks_options = {};
     query_ranks_options.ApiVersion = EOS_LEADERBOARDS_QUERYLEADERBOARDRANKS_API_LATEST;
@@ -133,22 +134,22 @@ bool LeaderboardsSubsystem::QueryLeaderboardRanks(const String& leaderboard_id, 
 
     EOS_Leaderboards_QueryLeaderboardRanks(leaderboards_handle, &query_ranks_options, context.get(), on_query_leaderboard_ranks_complete);
 
-    UtilityFunctions::print("LeaderboardsSubsystem: Query submitted to EOS SDK, waiting for callback...");
+    Logger::Info("LeaderboardsSubsystem: Query submitted to EOS SDK, waiting for callback...");
 
     context.release();
     return true;
 }
 
 bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard_id, const Array& user_ids) {
-    UtilityFunctions::print("LeaderboardsSubsystem: QueryLeaderboardUserScores called for leaderboard '" + leaderboard_id + "' with " + String::num_int64(user_ids.size()) + " users");
+    Logger::Info("LeaderboardsSubsystem: QueryLeaderboardUserScores called for leaderboard '" + leaderboard_id + "' with " + String::num_int64(user_ids.size()) + " users");
 
     if (!leaderboards_handle) {
-        UtilityFunctions::printerr("LeaderboardsSubsystem: Not initialized");
+        Logger::Error("LeaderboardsSubsystem: Not initialized");
         return false;
     }
 
     if (leaderboard_id.is_empty() || user_ids.size() == 0) {
-        UtilityFunctions::push_warning("LeaderboardsSubsystem: Invalid leaderboard ID or user IDs");
+        Logger::Warning("LeaderboardsSubsystem: Invalid leaderboard ID or user IDs");
         return false;
     }
 
@@ -158,7 +159,7 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
 
     // Check if leaderboard definitions have been queried
     if (leaderboard_definitions.size() == 0) {
-        UtilityFunctions::push_warning("LeaderboardsSubsystem: Leaderboard definitions not available. Call QueryLeaderboardDefinitions() first.");
+        Logger::Warning("LeaderboardsSubsystem: Leaderboard definitions not available. Call QueryLeaderboardDefinitions() first.");
         return false;
     }
 
@@ -175,14 +176,14 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
     }
 
     if (!found) {
-        UtilityFunctions::push_warning("LeaderboardsSubsystem: Leaderboard definition not found for ID: " + leaderboard_id);
+        Logger::Warning("LeaderboardsSubsystem: Leaderboard definition not found for ID: " + leaderboard_id);
         return false;
     }
 
     auto auth = Get<IAuthenticationSubsystem>();
     
     String stat_name = leaderboard_def["stat_name"];
-    UtilityFunctions::print("LeaderboardsSubsystem: Found leaderboard definition with stat name: " + stat_name);
+    Logger::Info("LeaderboardsSubsystem: Found leaderboard definition with stat name: " + stat_name);
 
     std::unique_ptr<LeaderboardUserScoresQueryContext> context = std::make_unique<LeaderboardUserScoresQueryContext>();
     context->subsystem = this;
@@ -203,12 +204,12 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
         EOS_ProductUserId product_user_id = FAccountHelpers::ProductUserIDFromString(String(user_ids[UserIndex]).utf8().get_data());
         if (!TValidateAccount<EOS_ProductUserId>::IsValid(product_user_id)) 
         {
-            UtilityFunctions::push_warning("LeaderboardsSubsystem: Invalid Product User ID: " + String(user_ids[UserIndex]));
+            Logger::Warning("LeaderboardsSubsystem: Invalid Product User ID: " + String(user_ids[UserIndex]));
             return false;
         }
         else 
         {
-            UtilityFunctions::print("LeaderboardsSubsystem: Querying score for user: " + String(user_ids[UserIndex]));
+            Logger::Info("LeaderboardsSubsystem: Querying score for user: " + String(user_ids[UserIndex]));
         }
 
         UserData[UserIndex] = product_user_id;
@@ -229,7 +230,7 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
 	QueryUserScoresOptions.EndTime = EOS_LEADERBOARDS_TIME_UNDEFINED;
     QueryUserScoresOptions.LocalUserId = auth->GetProductUserId();
 
-    UtilityFunctions::print("LeaderboardsSubsystem: Submitting leaderboard user scores query with stat '" + stat_name + "' and aggregation type Sum");
+    Logger::Info("LeaderboardsSubsystem: Submitting leaderboard user scores query with stat '" + stat_name + "' and aggregation type Sum");
 
     EOS_Leaderboards_QueryLeaderboardUserScores(leaderboards_handle, &QueryUserScoresOptions, context.get(), on_query_leaderboard_user_scores_complete);
 
@@ -266,7 +267,7 @@ void LeaderboardsSubsystem::SetLeaderboardUserScoresCallback(const Callable& cal
 bool LeaderboardsSubsystem::validate_user_authentication() const {
     auto auth = Get<IAuthenticationSubsystem>();
     if (!auth || !auth->IsLoggedIn()) {
-        UtilityFunctions::push_warning("LeaderboardsSubsystem: User not authenticated");
+        Logger::Warning("LeaderboardsSubsystem: User not authenticated");
         return false;
     }
     return true;
@@ -285,7 +286,7 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_definitions_complete(c
 
         uint32_t definitions_count = EOS_Leaderboards_GetLeaderboardDefinitionCount(self->leaderboards_handle, &count_options);
 
-        UtilityFunctions::print("LeaderboardsSubsystem: Retrieved " + String::num_int64(definitions_count) + " leaderboard definitions");
+        Logger::Info("LeaderboardsSubsystem: Retrieved " + String::num_int64(definitions_count) + " leaderboard definitions");
 
         for (uint32_t i = 0; i < definitions_count; i++) {
             const EOS_Leaderboards_CopyLeaderboardDefinitionByIndexOptions copy_options = { EOS_LEADERBOARDS_COPYLEADERBOARDDEFINITIONBYINDEX_API_LATEST, i };
@@ -305,13 +306,13 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_definitions_complete(c
 
                 String leaderboard_id_str = definition_dict["leaderboard_id"];
                 String stat_name_str = definition_dict["stat_name"];
-                UtilityFunctions::print("LeaderboardsSubsystem: Found leaderboard - ID: " + leaderboard_id_str + ", Stat: " + stat_name_str);
+                Logger::Info("LeaderboardsSubsystem: Found leaderboard - ID: " + leaderboard_id_str + ", Stat: " + stat_name_str);
 
                 EOS_Leaderboards_Definition_Release(definition);
             }
         }
 
-        UtilityFunctions::print("LeaderboardsSubsystem: Leaderboard definitions query completed successfully");
+        Logger::Info("LeaderboardsSubsystem: Leaderboard definitions query completed successfully");
 
         // Call the callback if set
         if (self->leaderboard_definitions_callback.is_valid()) {
@@ -320,7 +321,7 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_definitions_complete(c
         }
     } else {
         String error_msg = "LeaderboardsSubsystem: Leaderboard definitions query failed with error code: " + String::num_int64(static_cast<int64_t>(Data->ResultCode));
-        UtilityFunctions::printerr(error_msg);
+        Logger::Error(error_msg);
 
         // Call the callback with failure
         if (self->leaderboard_definitions_callback.is_valid()) {
@@ -354,7 +355,7 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_ranks_complete(const E
 
         uint32_t records_count = EOS_Leaderboards_GetLeaderboardRecordCount(self->leaderboards_handle, &count_options);
 
-        UtilityFunctions::print("LeaderboardsSubsystem: Retrieved " + String::num_int64(records_count) + " leaderboard records");
+        Logger::Info("LeaderboardsSubsystem: Retrieved " + String::num_int64(records_count) + " leaderboard records");
 
         for (uint32_t i = 0; i < records_count; i++) {
             EOS_Leaderboards_CopyLeaderboardRecordByIndexOptions copy_options = {};
@@ -379,7 +380,7 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_ranks_complete(const E
             }
         }
 
-        UtilityFunctions::print("LeaderboardsSubsystem: Leaderboard ranks query completed successfully");
+        Logger::Info("LeaderboardsSubsystem: Leaderboard ranks query completed successfully");
 
         // Call the callback if set
         if (self->leaderboard_ranks_callback.is_valid()) {
@@ -388,7 +389,7 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_ranks_complete(const E
         }
     } else {
         String error_msg = "LeaderboardsSubsystem: Leaderboard ranks query failed with error code: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
-        UtilityFunctions::printerr(error_msg);
+        Logger::Error(error_msg);
 
         // Call the callback with failure
         if (self->leaderboard_ranks_callback.is_valid()) {
@@ -400,21 +401,21 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_ranks_complete(const E
 
 void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_user_scores_complete(const EOS_Leaderboards_OnQueryLeaderboardUserScoresCompleteCallbackInfo* data) {
 
-    UtilityFunctions::print("LeaderboardsSubsystem: on_query_leaderboard_user_scores_complete called");
+    Logger::Info("LeaderboardsSubsystem: on_query_leaderboard_user_scores_complete called");
     if (!data) {
-        UtilityFunctions::print("LeaderboardsSubsystem: on_query_leaderboard_user_scores_complete received null data");
+        Logger::Info("LeaderboardsSubsystem: on_query_leaderboard_user_scores_complete received null data");
         return;
     }
 
     std::unique_ptr<LeaderboardUserScoresQueryContext> context(static_cast<LeaderboardUserScoresQueryContext*>(data->ClientData));
     if (!context) {
-        UtilityFunctions::print("LeaderboardsSubsystem: on_query_leaderboard_user_scores_complete received null context");
+        Logger::Info("LeaderboardsSubsystem: on_query_leaderboard_user_scores_complete received null context");
         return;
     }
 
     LeaderboardsSubsystem* self = context->subsystem;
     if (!self) {
-        UtilityFunctions::print("LeaderboardsSubsystem: on_query_leaderboard_user_scores_complete received null subsystem");
+        Logger::Info("LeaderboardsSubsystem: on_query_leaderboard_user_scores_complete received null subsystem");
         return;
     }
 
@@ -424,10 +425,10 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_user_scores_complete(c
         self->leaderboard_user_scores.clear();
 
         // Log requested users for debugging
-        UtilityFunctions::print("LeaderboardsSubsystem: Requested scores for " + String::num_int64(context->user_ids.size()) + " users");
+        Logger::Info("LeaderboardsSubsystem: Requested scores for " + String::num_int64(context->user_ids.size()) + " users");
         for (size_t i = 0; i < context->user_ids.size(); i++) {
             String user_id_str = FAccountHelpers::ProductUserIDToString(context->user_ids[i]);
-            UtilityFunctions::print("LeaderboardsSubsystem: Requested user: " + user_id_str);
+            Logger::Info("LeaderboardsSubsystem: Requested user: " + user_id_str);
         }
 
         std::string StatName = context->stat_name;
@@ -438,7 +439,7 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_user_scores_complete(c
 
         uint32_t scores_count = EOS_Leaderboards_GetLeaderboardUserScoreCount(self->leaderboards_handle, &LeaderboardUserScoresCountOptions);
 
-        UtilityFunctions::print("LeaderboardsSubsystem: Retrieved " + String::num_int64(scores_count) + " user scores (only users with stats are returned)");
+        Logger::Info("LeaderboardsSubsystem: Retrieved " + String::num_int64(scores_count) + " user scores (only users with stats are returned)");
 
         for (uint32_t i = 0; i < scores_count; i++) {
             EOS_Leaderboards_CopyLeaderboardUserScoreByIndexOptions copy_options = {};
@@ -461,12 +462,12 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_user_scores_complete(c
                 // Results are returned for users with scores, in arbitrary order
 
                 self->leaderboard_user_scores[user_id] = score_dict;
-                UtilityFunctions::print("LeaderboardsSubsystem: Found score for user " + user_id + ": " + String::num_int64(user_score->Score));
+                Logger::Info("LeaderboardsSubsystem: Found score for user " + user_id + ": " + String::num_int64(user_score->Score));
                 EOS_Leaderboards_LeaderboardUserScore_Release(user_score);
             }
         }
 
-        UtilityFunctions::print("LeaderboardsSubsystem: Leaderboard user scores query completed successfully");
+        Logger::Info("LeaderboardsSubsystem: Leaderboard user scores query completed successfully");
 
         // Iterate through all leaderboard definitions and print score counts
         for (int i = 0; i < self->leaderboard_definitions.size(); i++) {
@@ -480,7 +481,7 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_user_scores_complete(c
 
             uint32_t count = EOS_Leaderboards_GetLeaderboardUserScoreCount(self->leaderboards_handle, &options);
 
-            UtilityFunctions::print("Leaderboard '" + leaderboard_id + "' (stat: " + stat_name + ") has " + String::num_int64(count) + " user scores");
+            Logger::Info("Leaderboard '" + leaderboard_id + "' (stat: " + stat_name + ") has " + String::num_int64(count) + " user scores");
         }
 
         // Call the callback if set
@@ -490,7 +491,7 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_user_scores_complete(c
         }
     } else {
         String error_msg = "LeaderboardsSubsystem: Leaderboard user scores query failed with error code: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
-        UtilityFunctions::printerr(error_msg);
+        Logger::Error(error_msg);
 
         // Call the callback with failure
         if (self->leaderboard_user_scores_callback.is_valid()) {

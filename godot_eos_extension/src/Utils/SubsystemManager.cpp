@@ -1,5 +1,6 @@
 #include "SubsystemManager.h"
 #include "Platform/IPlatformSubsystem.h"
+#include "Utils/Logger.h"
 #include <cstdint>
 #include <vector>
 
@@ -17,38 +18,37 @@ SubsystemManager* SubsystemManager::GetInstance() {
 
 bool SubsystemManager::InitializeAll() {
     if (initialized) {
-        UtilityFunctions::print("SubsystemManager: Already initialized");
+        Logger::Info("SubsystemManager: Already initialized");
         return true;
     }
 
     if (subsystems.empty()) {
-        UtilityFunctions::print("SubsystemManager: No subsystems registered");
+        Logger::Info("SubsystemManager: No subsystems registered");
         initialized = true; // Empty is still "initialized"
         return true;
     }
 
-    UtilityFunctions::print(
-        "SubsystemManager: Initializing ", static_cast<int64_t>(subsystems.size()), " subsystems...");
+    Logger::Info(vformat("SubsystemManager: Initializing %d subsystems...", subsystems.size()));
 
     // Initialize subsystems in registration order
     for (auto& [type_index, subsystem] : subsystems) {
         const std::string& name = subsystem_names[type_index];
 
-        UtilityFunctions::print("SubsystemManager: Initializing subsystem: ", name.c_str());
+        Logger::Info(vformat("SubsystemManager: Initializing subsystem: %s", name.c_str()));
 
         if (!subsystem->Init()) {
-            UtilityFunctions::printerr("SubsystemManager: Failed to initialize subsystem: ", name.c_str());
+            Logger::Error(vformat("SubsystemManager: Failed to initialize subsystem: %s", name.c_str()));
 
             // Shutdown all previously initialized subsystems
             ShutdownAll();
             return false;
         }
 
-        UtilityFunctions::print("SubsystemManager: Successfully initialized subsystem: ", name.c_str());
+        Logger::Info(vformat("SubsystemManager: Successfully initialized subsystem: %s", name.c_str()));
     }
 
     initialized = true;
-    UtilityFunctions::print("SubsystemManager: All subsystems initialized successfully");
+    Logger::Info("SubsystemManager: All subsystems initialized successfully");
     return true;
 }
 
@@ -68,7 +68,7 @@ void SubsystemManager::ShutdownAll() {
         return; // Nothing to do
     }
 
-    UtilityFunctions::print("SubsystemManager: Shutting down subsystems...");
+    Logger::Info("SubsystemManager: Shutting down subsystems...");
 
     // Shutdown subsystems in dependency order - dependent subsystems first
     // Order: FriendsSubsystem, LeaderboardsSubsystem, AchievementsSubsystem, AuthenticationSubsystem, UserInfoSubsystem, then PlatformSubsystem last
@@ -87,7 +87,7 @@ void SubsystemManager::ShutdownAll() {
     for (const std::string& name : shutdown_order) {
         for (auto& [type_index, subsystem] : subsystems) {
             if (subsystem_names[type_index] == name) {
-                UtilityFunctions::print("SubsystemManager: Shutting down subsystem: ", name.c_str());
+                Logger::Info(vformat("SubsystemManager: Shutting down subsystem: %s", name.c_str()));
                 subsystem->Shutdown();
                 break;
             }
@@ -105,13 +105,13 @@ void SubsystemManager::ShutdownAll() {
             }
         }
         if (!already_shutdown) {
-            UtilityFunctions::print("SubsystemManager: Shutting down remaining subsystem: ", name.c_str());
+            Logger::Info(vformat("SubsystemManager: Shutting down remaining subsystem: %s", name.c_str()));
             subsystem->Shutdown();
         }
     }
 
     initialized = false;
-    UtilityFunctions::print("SubsystemManager: All subsystems shut down");
+    Logger::Info("SubsystemManager: All subsystems shut down");
 }
 
 bool SubsystemManager::IsHealthy() const {
@@ -126,7 +126,7 @@ bool SubsystemManager::IsHealthy() const {
 
 void SubsystemManager::ResetForReinitialization() {
     if (initialized && !IsHealthy()) {
-        UtilityFunctions::print("SubsystemManager: Resetting for reinitialization - shutting down unhealthy subsystems");
+        Logger::Info("SubsystemManager: Resetting for reinitialization - shutting down unhealthy subsystems");
         ShutdownAll();
     }
 }

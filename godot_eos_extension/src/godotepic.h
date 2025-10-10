@@ -15,6 +15,7 @@
 #include <eos_achievements.h>
 #include "Utils/EpicInitOptions.h"
 #include "Utils/SubsystemManager.h"
+#include "Utils/Logger.h"
 #include "Friends/IFriendsSubsystem.h"
 
 namespace godot {
@@ -24,6 +25,7 @@ class GodotEOS : public Object {
 
 private:
 	static GodotEOS* instance;
+	bool debug_mode;
 
 	// EOS logging callback
 	static void EOS_CALL logging_callback(const EOS_LogMessage* message);
@@ -94,6 +96,9 @@ public:
 	// Status methods
 	bool is_platform_initialized() const;
 	EOS_HPlatform get_platform_handle() const;
+
+	// Debug mode
+	void set_debug_mode(bool enabled);
 
 private:
 	// Helper methods

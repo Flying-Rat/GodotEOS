@@ -4,6 +4,7 @@
 #include <eos_achievements.h>
 #include <godot_cpp/core/error_macros.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
+#include "../Utils/Logger.h"
 
 namespace godot {
 
@@ -14,12 +15,12 @@ PlatformSubsystem::~PlatformSubsystem() {
 }
 
 bool PlatformSubsystem::Init() {
-    UtilityFunctions::print("PlatformSubsystem: Initializing...");
+    Logger::Info("PlatformSubsystem: Initializing...");
     // PlatformSubsystem now handles its own initialization
     // The actual EOS SDK initialization happens in initialize() method
     initialized = true;
     online = true;
-    UtilityFunctions::print("PlatformSubsystem: Initialized successfully");
+    Logger::Info("PlatformSubsystem: Initialized successfully");
     return true;
 }
 
@@ -42,12 +43,12 @@ void PlatformSubsystem::Shutdown() {
     EOS_Shutdown();
     initialized = false;
     online = false;
-    UtilityFunctions::print("PlatformSubsystem: Shutdown complete");
+    Logger::Info("PlatformSubsystem: Shutdown complete");
 }
 
 bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
     if (initialized && platform_handle) {
-        UtilityFunctions::printerr("EOS Platform already initialized");
+        Logger::Error("EOS Platform already initialized");
         return true;
     }
 
@@ -67,11 +68,11 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
 
     // Sanity checks before calling EOS_Initialize
     if (!InitOptions.ProductName || strlen(InitOptions.ProductName) == 0) {
-        UtilityFunctions::printerr("InitOptions.ProductName is empty or null");
+        Logger::Error("InitOptions.ProductName is empty or null");
         return false;
     }
     if (!InitOptions.ProductVersion || strlen(InitOptions.ProductVersion) == 0) {
-        UtilityFunctions::printerr("InitOptions.ProductVersion is empty or null");
+        Logger::Error("InitOptions.ProductVersion is empty or null");
         return false;
     }
 
@@ -79,7 +80,7 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
     if (InitResult != EOS_EResult::EOS_Success) {
         const char* result_str = EOS_EResult_ToString(InitResult);
         String error_msg = "Failed to initialize EOS SDK: " + String(result_str) + " (" + String::num_int64(static_cast<int64_t>(InitResult)) + ")";
-        UtilityFunctions::printerr(error_msg);
+        Logger::Error(error_msg);
         return false;
     }
 
@@ -108,10 +109,10 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
     platform_handle = EOS_Platform_Create(&PlatformOptions);
     if (!platform_handle) {
         // Try to get a more specific error from the last result if available
-        UtilityFunctions::printerr("Failed to create EOS Platform (platform_handle == nullptr)");
+        Logger::Error("Failed to create EOS Platform (platform_handle == nullptr)");
         // EOS_Platform_Create returns nullptr on failure; there's no direct EOS_EResult, but common causes are invalid platform options.
         // Log a friendly troubleshooting hint.
-        UtilityFunctions::printerr("Possible causes: invalid ProductId/SandboxId/DeploymentId, or missing/invalid client credentials.");
+        Logger::Error("Possible causes: invalid ProductId/SandboxId/DeploymentId, or missing/invalid client credentials.");
         EOS_Shutdown();
         return false;
     }
@@ -132,19 +133,43 @@ bool PlatformSubsystem::IsOnline() const {
 }
 
 void PlatformSubsystem::SetLogLevel(int level) {
-    if (!initialized) return;
+    if (!initialized) {
+        Logger::Warning("PlatformSubsystem: Cannot set log level - not initialized");
+        return;
+    }
 
-    EOS_ELogLevel eos_level = EOS_ELogLevel::EOS_LOG_Off;
+    EOS_ELogLevel eos_level = EOS_ELogLevel::EOS_LOG_Warning;
+    String level_name;
+    
     switch (level) {
-        case 0: eos_level = EOS_ELogLevel::EOS_LOG_Off; break;
-        case 1: eos_level = EOS_ELogLevel::EOS_LOG_Error; break;
-        case 2: eos_level = EOS_ELogLevel::EOS_LOG_Warning; break;
-        case 3: eos_level = EOS_ELogLevel::EOS_LOG_Info; break;
-        case 4: eos_level = EOS_ELogLevel::EOS_LOG_Verbose; break;
-        default: eos_level = EOS_ELogLevel::EOS_LOG_Warning; break;
+        case 0: 
+            eos_level = EOS_ELogLevel::EOS_LOG_Off; 
+            level_name = "Off";
+            break;
+        case 1: 
+            eos_level = EOS_ELogLevel::EOS_LOG_Error; 
+            level_name = "Error";
+            break;
+        case 2: 
+            eos_level = EOS_ELogLevel::EOS_LOG_Warning; 
+            level_name = "Warning";
+            break;
+        case 3: 
+            eos_level = EOS_ELogLevel::EOS_LOG_Info; 
+            level_name = "Info";
+            break;
+        case 4: 
+            eos_level = EOS_ELogLevel::EOS_LOG_Verbose; 
+            level_name = "Verbose";
+            break;
+        default: 
+            eos_level = EOS_ELogLevel::EOS_LOG_Warning;
+            level_name = "Warning (default)";
+            break;
     }
 
     EOS_Logging_SetLogLevel(EOS_ELogCategory::EOS_LC_ALL_CATEGORIES, eos_level);
+    Logger::Info("PlatformSubsystem: Log level set to " + level_name);
 }
 
 } // namespace godot

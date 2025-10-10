@@ -80,16 +80,16 @@ func _ready():
 func _on_init_button_pressed():
 	_log_message("[color=yellow]🔧 InitializePlatform() - Setting up EOS platform...[/color]")
 
-	var config = { 
-    	"product_name": "Rat-ical Racers", 
-    	"product_version": "1.0.0", 
-    	"product_id": "b6de3252b15e4788bef3916c30b722c5", 
-    	"sandbox_id": "p-4qk84cb8wnupy4yjpzzelvsemyq8py", 
-    	"deployment_id": "d94a05975baa43a5ad5103c12a97a0b3", 
-    	"client_id": "xyza7891h0KCGiva2k7qyQPpNfgLiDAM", 
-    	"client_secret": "0RMgyWBrZNv+JQ49iQhEj9vqCU7Xn9qAvF2DYLd7oIs",
-    	"encryption_key": "1111111111111111111111111111111111111111111111111111111" # Optional but recommended 
- 		} 
+	# Example configuration - replace with your actual Epic Games credentials
+	var config = {
+		"product_name": "GodotEOS Demo",
+		"product_version": "1.0.0",
+		"product_id": "your_product_id_here",  # Get from Epic Developer Portal
+		"sandbox_id": "your_sandbox_id_here",  # Get from Epic Developer Portal
+		"deployment_id": "your_deployment_id_here",  # Get from Epic Developer Portal
+		"client_id": "your_client_id_here",  # Get from Epic Developer Portal
+		"client_secret": "your_client_secret_here"  # Get from Epic Developer Portal
+	}
 
 	if EpicOS:
 		is_platform_initialized = EpicOS.initialize(config)

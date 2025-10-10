@@ -109,6 +109,8 @@ func initialize(config: Dictionary = {}) -> bool:
 
 	if _initialized:
 		print_rich("[color=green]EpicOS: EOS SDK initialized successfully[/color]")
+		# Apply debug mode setting after initialization
+		_godot_epic.set_debug_mode(_debug_mode)
 	else:
 		print_rich("[color=red]EpicOS: ERROR - Failed to initialize EOS SDK[/color]")
 
@@ -118,6 +120,10 @@ func set_debug_mode(enabled: bool):
 	"""Enable or disable debug logging"""
 	_debug_mode = enabled
 	print("EpicOS: Debug mode ", "enabled" if enabled else "disabled")
+	
+	# Pass debug mode to GDExtension to control EOS SDK log level
+	if _godot_epic:
+		_godot_epic.set_debug_mode(enabled)
 
 func tick(delta: float = 0.0):
 	"""Tick the EOS platform - should be called every frame"""
