@@ -96,22 +96,13 @@ func _on_query_friend_info_button_pressed():
 		_log_message("[color=red]✗ EpicOS not available[/color]")
 
 func _on_query_product_id_button_pressed():
-	if selected_friend_id.is_empty():
-		_log_message("[color=yellow]🔗 ForceQueryProductId() - Force re-querying Product ID for current user[/color]")
+	_log_message("[color=yellow]🔗 ForceQueryProductIdForUser() - Force re-querying Product ID for selected friend: " + selected_friend_id + "[/color]")
 
-		if EpicOS:
-			# Force re-query the Product ID for the current user, allowing multiple attempts
-			EpicOS.force_query_product_id()
-		else:
-			_log_message("[color=red]✗ EpicOS not available[/color]")
+	if EpicOS:
+		# Query the Product ID for the selected friend
+		EpicOS.query_product_id(selected_friend_id)
 	else:
-		_log_message("[color=yellow]🔗 ForceQueryProductIdForUser() - Force re-querying Product ID for selected friend: " + selected_friend_id + "[/color]")
-
-		if EpicOS:
-			# Force re-query the Product ID for the selected friend
-			EpicOS.force_query_product_id(selected_friend_id)
-		else:
-			_log_message("[color=red]✗ EpicOS not available[/color]")
+		_log_message("[color=red]✗ EpicOS not available[/color]")
 
 func _on_back_button_pressed():
 	get_tree().change_scene_to_file("res://scenes/demos/demo_menu.tscn")
@@ -290,7 +281,7 @@ func _update_ui_state():
 	var friends_available = platform_initialized and is_logged_in
 	query_friends_button.disabled = not friends_available
 	query_friend_info_button.disabled = not friends_available or selected_friend_id.is_empty()
-	query_product_id_button.disabled = not friends_available
+	query_product_id_button.disabled = not friends_available or selected_friend_id.is_empty()
 
 # ============================================================================
 # OUTPUT CONTROL HANDLERS

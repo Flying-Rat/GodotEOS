@@ -281,7 +281,7 @@ Dictionary UserInfoSubsystem::GetCachedUserData(EOS_EpicAccountId epic_id) {
     return result;
 }
 
-bool UserInfoSubsystem::ForceQueryProductId(EOS_EpicAccountId epic_id) {
+bool UserInfoSubsystem::QueryProductId(EOS_EpicAccountId epic_id) {
     if (!EOS_EpicAccountId_IsValid(epic_id)) {
         UtilityFunctions::printerr("UserInfoSubsystem: ForceQueryProductId - Invalid Epic Account ID");
         return false;

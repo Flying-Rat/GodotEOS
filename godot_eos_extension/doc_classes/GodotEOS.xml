@@ -343,6 +343,17 @@
 				[b]Note:[/b] This is an internal method and should not be called directly by user code.
 			</description>
 		</method>
+		<method name="on_user_cache_updated">
+			<return type="void" />
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="epic_account_id" type="String" />
+			<param index="2" name="user_data" type="Dictionary" />
+			<description>
+				Internal callback method invoked when user cache is updated with new user information.
+				Emits [signal user_cache_updated] with the success status, Epic Account ID, and user data dictionary.
+				[b]Note:[/b] This is an internal method and should not be called directly by user code.
+			</description>
+		</method>
 		<method name="query_achievement_definitions">
 			<return type="void" />
 			<description>
@@ -415,6 +426,16 @@
 				This retrieves unlock status and progress for all achievements.
 				Results are cached and accessible via [method get_player_achievements]. Emits [signal player_achievements_updated] when complete.
 				[b]Note:[/b] The user must be logged in before calling this method.
+			</description>
+		</method>
+		<method name="query_product_id">
+			<return type="void" />
+			<param index="0" name="epic_account_id" type="String" />
+			<description>
+				Queries the Product User ID associated with a specific Epic Account ID.
+				This retrieves the Product User ID that corresponds to the given Epic Account ID, which is needed for game-specific services like achievements and leaderboards.
+				The Product User ID is cached internally and can be retrieved using [method get_product_user_id] for the current user.
+				[b]Note:[/b] The user must be logged in before calling this method. The [code]epic_account_id[/code] parameter cannot be empty.
 			</description>
 		</method>
 		<method name="query_user_info">
@@ -582,6 +603,18 @@
 				The [code]success[/code] parameter indicates if the query succeeded.
 				The [code]user_info[/code] dictionary contains detailed user information including display name, nickname, country, and preferred language.
 				This signal is triggered by [method query_user_info].
+			</description>
+		</signal>
+		<signal name="user_cache_updated">
+			<param index="0" name="success" type="bool" />
+			<param index="1" name="epic_account_id" type="String" />
+			<param index="2" name="user_data" type="Dictionary" />
+			<description>
+				Emitted when the user cache is updated with new user information.
+				The [code]success[/code] parameter indicates if the cache update succeeded.
+				The [code]epic_account_id[/code] is the Epic Account ID of the user whose information was updated.
+				The [code]user_data[/code] dictionary contains the updated user information including display name and other user details.
+				This signal is triggered internally when user information is cached after queries.
 			</description>
 		</signal>
 	</signals>

@@ -282,19 +282,20 @@ func query_user_info(target_user_id: String):
 
 	_godot_epic.query_user_info(target_user_id)
 
-func force_query_product_id(epic_account_id: String = ""):
-	"""Force re-query Product ID for a specific user, allowing manual re-querying"""
+func query_product_id(epic_account_id: String):
+	"""Query Product ID for a specific user"""
 	if _debug_mode:
-		if epic_account_id.is_empty():
-			print("EpicOS: force_query_product_id() called for current user")
-		else:
-			print("EpicOS: force_query_product_id() called for: ", epic_account_id)
+		print("EpicOS: query_product_id() called for: ", epic_account_id)
 
 	if not _initialized:
 		print("EpicOS: Error - Not initialized. Call initialize() first.")
 		return
 
-	_godot_epic.force_query_product_id(epic_account_id)
+	if epic_account_id.is_empty():
+		print("EpicOS: Error - epic_account_id parameter cannot be empty")
+		return
+
+	_godot_epic.query_product_id(epic_account_id)
 # =============================================================================
 # ACHIEVEMENTS METHODS
 # =============================================================================

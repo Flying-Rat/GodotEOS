@@ -132,7 +132,7 @@ public:
      * @param epic_id The EOS_EpicAccountId to query
      * @return true if query was initiated successfully
      */
-    virtual bool ForceQueryProductId(EOS_EpicAccountId epic_id) = 0;
+    virtual bool QueryProductId(EOS_EpicAccountId epic_id) = 0;
 
     /**
      * @brief Retry Product ID queries for all cached friends.

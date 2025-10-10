@@ -43,7 +43,7 @@ public:
     virtual String GetUserProductId(EOS_EpicAccountId epic_id) override;
     virtual bool IsProductIdCached(EOS_EpicAccountId epic_id) override;
     virtual Dictionary GetCachedUserData(EOS_EpicAccountId epic_id) override;
-    virtual bool ForceQueryProductId(EOS_EpicAccountId epic_id) override;
+    virtual bool QueryProductId(EOS_EpicAccountId epic_id) override;
 
 private:
     // EOS handles
