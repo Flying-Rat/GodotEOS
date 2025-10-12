@@ -48,7 +48,7 @@ void PlatformSubsystem::Shutdown() {
 
 bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
     if (initialized && platform_handle) {
-        Logger::Error("EOS Platform already initialized");
+        Logger::Error("PlatformSubsystem: EOS Platform already initialized");
         return true;
     }
 
@@ -68,11 +68,11 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
 
     // Sanity checks before calling EOS_Initialize
     if (!InitOptions.ProductName || strlen(InitOptions.ProductName) == 0) {
-        Logger::Error("InitOptions.ProductName is empty or null");
+        Logger::Error("PlatformSubsystem: InitOptions.ProductName is empty or null");
         return false;
     }
     if (!InitOptions.ProductVersion || strlen(InitOptions.ProductVersion) == 0) {
-        Logger::Error("InitOptions.ProductVersion is empty or null");
+        Logger::Error("PlatformSubsystem: InitOptions.ProductVersion is empty or null");
         return false;
     }
 
@@ -109,10 +109,10 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
     platform_handle = EOS_Platform_Create(&PlatformOptions);
     if (!platform_handle) {
         // Try to get a more specific error from the last result if available
-        Logger::Error("Failed to create EOS Platform (platform_handle == nullptr)");
+        Logger::Error("PlatformSubsystem: Failed to create EOS Platform (platform_handle == nullptr)");
         // EOS_Platform_Create returns nullptr on failure; there's no direct EOS_EResult, but common causes are invalid platform options.
         // Log a friendly troubleshooting hint.
-        Logger::Error("Possible causes: invalid ProductId/SandboxId/DeploymentId, or missing/invalid client credentials.");
+        Logger::Error("PlatformSubsystem: Possible causes: invalid ProductId/SandboxId/DeploymentId, or missing/invalid client credentials.");
         EOS_Shutdown();
         return false;
     }
@@ -120,7 +120,7 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
     initialized = true;
     online = true;
     // IPlatform::set(this); // Removed - using subsystem architecture instead
-    WARN_PRINT("EOS Platform initialized successfully");
+    Logger::Warning("PlatformSubsystem: EOS Platform initialized successfully");
     return true;
 }
 

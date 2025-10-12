@@ -178,7 +178,7 @@ void GodotEOS::cleanup_singleton() {
 }
 
 bool GodotEOS::initialize_platform(const Dictionary& options) {
-	Logger::Info("Starting EOS Platform initialization");
+	Logger::Info("GodotEOS: Starting EOS Platform initialization");
 
 	// Convert dictionary to init options
 	EpicInitOptions init_options = _dict_to_init_options(options);
@@ -233,7 +233,7 @@ EOS_HPlatform GodotEOS::get_platform_handle() const {
 
 // Authentication methods
 void GodotEOS::login_with_epic_account(const String& email, const String& password) {
-	Logger::Info("Starting Epic account login");
+	Logger::Info("GodotEOS: Starting Epic account login");
 
 	auto auth = Get<IAuthenticationSubsystem>();
 	if (!auth) {
@@ -255,7 +255,7 @@ void GodotEOS::login_with_epic_account(const String& email, const String& passwo
 }
 
 void GodotEOS::login_with_account_portal() {
-	Logger::Info("Starting Account Portal login");
+	Logger::Info("GodotEOS: Starting Account Portal login");
 
 	auto auth = Get<IAuthenticationSubsystem>();
 	if (!auth) {
@@ -273,7 +273,7 @@ void GodotEOS::login_with_account_portal() {
 }
 
 void GodotEOS::login_with_dev(const String& display_name) {
-	Logger::Info("Starting dev login");
+	Logger::Info("GodotEOS: Starting dev login");
 
 	auto auth = Get<IAuthenticationSubsystem>();
 	if (!auth) {
@@ -295,7 +295,7 @@ void GodotEOS::login_with_dev(const String& display_name) {
 }
 
 void GodotEOS::login_with_device_id(const String& display_name) {
-	Logger::Info("Starting device ID login");
+	Logger::Info("GodotEOS: Starting device ID login");
 
 	auto auth = Get<IAuthenticationSubsystem>();
 	if (!auth) {
@@ -828,7 +828,7 @@ bool GodotEOS::_validate_init_options(const EpicInitOptions& options) {
 	}
 
 	if (options.encryption_key.is_empty()) {
-		WARN_PRINT("Encryption key not set - data will not be encrypted");
+		Logger::Warning("GodotEOS: Encryption key not set - data will not be encrypted");
 	}
 
 	return valid;

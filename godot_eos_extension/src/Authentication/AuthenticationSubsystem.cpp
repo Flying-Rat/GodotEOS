@@ -564,7 +564,7 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 			if (instance->display_name.is_empty()) {
 				// Not cached yet, query it explicitly
 				Logger::Info("AuthenticationSubsystem: Querying user info for display name...");
-				userinfo->QueryUserInfo(UserId.AccountId);
+				userinfo->QueryUserInfo(data->LocalUserId);
 			}
 		}
 
@@ -572,7 +572,7 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 		EOS_Auth_CopyUserAuthTokenOptions CopyTokenOptions = { 0 };
 		CopyTokenOptions.ApiVersion = EOS_AUTH_COPYUSERAUTHTOKEN_API_LATEST;
 
-		if (EOS_Auth_CopyUserAuthToken(AuthHandle, &CopyTokenOptions, UserId, &UserAuthToken) == EOS_EResult::EOS_Success)
+		if (EOS_Auth_CopyUserAuthToken(instance->auth_handle, &CopyTokenOptions, data->LocalUserId, &UserAuthToken) == EOS_EResult::EOS_Success)
 		{
 			EOS_Auth_Token_Release(UserAuthToken);
 		}
@@ -582,11 +582,11 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 		}
 
 		// Call connect login here to enable cross-platform features
-		EOS_Auth_Token* ConnectUserAuthToken = nullptr;
-		EOS_Auth_CopyUserAuthTokenOptions ConnectCopyTokenOptions = { 0 };
-		ConnectCopyTokenOptions.ApiVersion = EOS_AUTH_COPYUSERAUTHTOKEN_API_LATEST;
+		EOS_Auth_Token* connect_token = nullptr;
+		EOS_Auth_CopyUserAuthTokenOptions copy_options = { 0 };
+		copy_options.ApiVersion = EOS_AUTH_COPYUSERAUTHTOKEN_API_LATEST;
 
-        if (EOS_Auth_CopyUserAuthToken(AuthHandle, &copy_options, data->LocalUserId, &connect_token) == EOS_EResult::EOS_Success) {
+        if (EOS_Auth_CopyUserAuthToken(instance->auth_handle, &copy_options, data->LocalUserId, &connect_token) == EOS_EResult::EOS_Success) {
             EOS_Connect_Credentials credentials = {};
             credentials.ApiVersion = EOS_CONNECT_CREDENTIALS_API_LATEST;
             credentials.Token = connect_token->AccessToken;
@@ -680,7 +680,7 @@ void EOS_CALL AuthenticationSubsystem::auth_logout_callback(const EOS_Auth_Logou
         instance->is_logged_in = false;
         instance->display_name = "";
 
-        Logger::Info("Logout successful");
+        Logger::Info("AuthenticationSubsystem: Logout successful");
 
         // Note: Logout completion is handled by the caller
     } else {
