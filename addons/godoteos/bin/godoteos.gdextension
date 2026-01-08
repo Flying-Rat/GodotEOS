@@ -5,7 +5,7 @@ compatibility_minimum = "4.3"
 reloadable = true
 
 [icons]
-GodotEOS = "res://addons/godoteos/icon.svg"
+GodotEOS = "res://addons/godoteos/icon.png"
 
 [libraries]
 

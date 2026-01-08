@@ -257,6 +257,11 @@ jobs:
           mkdir -p addons/godoteos/bin/macos
           mkdir -p addons/godoteos/bin/windows
 
+          # Copy icon.png to addons folder
+          if [ -f icon.png ]; then
+            cp icon.png addons/godoteos/icon.png
+          fi
+
           # Copy Linux x86_64 binaries (exclude demo .gdextension and build artifacts)
           if [ -d artifacts/linux/x86_64 ]; then
             find artifacts/linux/x86_64 -type f ! -name "godoteos.gdextension" ! -name "*.exp" ! -name "*.lib" ! -name "*.pdb" -exec cp {} addons/godoteos/bin/linux/ \; || true
