@@ -15,8 +15,6 @@ windows.debug.x86_64 = "res://addons/godoteos/bin/windows/libgodoteos.windows.te
 windows.release.x86_64 = "res://addons/godoteos/bin/windows/libgodoteos.windows.template_release.x86_64.dll"
 linux.debug.x86_64 = "res://addons/godoteos/bin/linux/libgodoteos.linux.template_debug.x86_64.so"
 linux.release.x86_64 = "res://addons/godoteos/bin/linux/libgodoteos.linux.template_release.x86_64.so"
-linux.debug.arm64 = "res://addons/godoteos/bin/linux/libgodoteos.linux.template_debug.arm64.so"
-linux.release.arm64 = "res://addons/godoteos/bin/linux/libgodoteos.linux.template_release.arm64.so"
 
 [dependencies]
 ios.debug = {
