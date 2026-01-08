@@ -95,7 +95,10 @@ jobs:
           fi
           mv "$SDK_DIR" eos_sdk
           rm -rf eos_sdk_tmp eos_sdk.zip
-      - name: Build Mac
+      - name: Build Mac Debug
+        working-directory: godot_eos_extension
+        run: scons platform=macos target=template_debug EOS_SDK_PATH=../eos_sdk
+      - name: Build Mac Release
         working-directory: godot_eos_extension
         run: scons platform=macos target=template_release EOS_SDK_PATH=../eos_sdk
       - name: Upload Mac Artifacts
@@ -144,7 +147,11 @@ jobs:
           if (Test-Path 'eos_sdk') { Remove-Item 'eos_sdk' -Recurse -Force }
           Move-Item -Path $sdkDir.FullName -Destination 'eos_sdk'
           Remove-Item 'eos_sdk_tmp', $archive -Recurse -Force
-      - name: Build Windows x86_64
+      - name: Build Windows x86_64 Debug
+        shell: pwsh
+        working-directory: godot_eos_extension
+        run: scons platform=windows arch=x86_64 target=template_debug EOS_SDK_PATH=../eos_sdk
+      - name: Build Windows x86_64 Release
         shell: pwsh
         working-directory: godot_eos_extension
         run: scons platform=windows arch=x86_64 target=template_release EOS_SDK_PATH=../eos_sdk
@@ -154,9 +161,59 @@ jobs:
           name: godoteos-windows-x86_64
           path: godot_eos_extension/demo/bin/**
 
+  build-linux-arm64:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Verify submodules
+        run: |
+          ls -la godot_eos_extension/
+          ls -la godot_eos_extension/godot-cpp/ || echo "godot-cpp directory not found"
+          if [ ! -f "godot_eos_extension/godot-cpp/SConstruct" ]; then
+            echo "SConstruct not found, reinitializing submodules..."
+            git submodule update --init --recursive --force
+          fi
+      - name: Cache godot-cpp build
+        uses: actions/cache@v4
+        with:
+          path: godot_eos_extension/godot-cpp/bin
+          key: ${{ runner.os }}-arm64-godotcpp-${{ hashFiles('godot_eos_extension/godot-cpp/src/**', 'godot_eos_extension/godot-cpp/SConstruct', 'godot_eos_extension/godot-cpp/Makefile') }}
+          restore-keys: |
+            ${{ runner.os }}-arm64-godotcpp-
+      - name: Download EOS SDK
+        run: |
+          set -euo pipefail
+          curl -L -o eos_sdk.zip "${{ secrets.EOS_SDK_URL }}"
+          rm -rf eos_sdk eos_sdk_tmp
+          unzip -q eos_sdk.zip -d eos_sdk_tmp
+          SDK_DIR=$(find eos_sdk_tmp -mindepth 1 -maxdepth 2 -type d -name SDK -print -quit)
+          if [ -z "$SDK_DIR" ]; then
+            echo "Failed to locate SDK directory inside EOS archive" >&2
+            exit 1
+          fi
+          mv "$SDK_DIR" eos_sdk
+          rm -rf eos_sdk_tmp eos_sdk.zip
+      - name: Install SCons
+        run: sudo apt-get install -y scons
+      - name: Build Linux ARM64 Debug
+        working-directory: godot_eos_extension
+        run: scons platform=linux arch=arm64 target=template_debug EOS_SDK_PATH=../eos_sdk
+      - name: Build Linux ARM64 Release
+        working-directory: godot_eos_extension
+        run: scons platform=linux arch=arm64 target=template_release EOS_SDK_PATH=../eos_sdk
+      - name: Upload Linux ARM64 Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: godoteos-linux-arm64
+          path: godot_eos_extension/demo/bin/**
+
   release:
     needs:
       - build-linux-x86_64
+      - build-linux-arm64
       - build-macos
       - build-windows-x86_64
     runs-on: ubuntu-latest
@@ -164,12 +221,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download Linux artifacts
+      - name: Download Linux x86_64 artifacts
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
           name: godoteos-linux-x86_64
           path: artifacts/linux/x86_64
+
+      - name: Download Linux ARM64 artifacts
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: godoteos-linux-arm64
+          path: artifacts/linux/arm64
 
       - name: Download Mac artifacts
         uses: actions/download-artifact@v4
@@ -193,9 +257,14 @@ jobs:
           mkdir -p addons/godoteos/bin/macos
           mkdir -p addons/godoteos/bin/windows
 
-          # Copy Linux binaries (exclude demo .gdextension and build artifacts)
+          # Copy Linux x86_64 binaries (exclude demo .gdextension and build artifacts)
           if [ -d artifacts/linux/x86_64 ]; then
             find artifacts/linux/x86_64 -type f ! -name "godoteos.gdextension" ! -name "*.exp" ! -name "*.lib" ! -name "*.pdb" -exec cp {} addons/godoteos/bin/linux/ \; || true
+          fi
+
+          # Copy Linux ARM64 binaries (exclude demo .gdextension and build artifacts)
+          if [ -d artifacts/linux/arm64 ]; then
+            find artifacts/linux/arm64 -type f ! -name "godoteos.gdextension" ! -name "*.exp" ! -name "*.lib" ! -name "*.pdb" -exec cp {} addons/godoteos/bin/linux/ \; || true
           fi
 
           # Copy macOS frameworks (need to preserve directory structure)
