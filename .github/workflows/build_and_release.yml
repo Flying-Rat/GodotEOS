@@ -185,23 +185,29 @@ jobs:
           name: godoteos-windows-x86_64
           path: artifacts/windows/x86_64
 
-      - name: Create bin directories in addons
+      - name: Copy downloaded build artifacts into addons
         run: |
+          set -e
+          # Create platform-specific directories
           mkdir -p addons/godoteos/bin/linux
           mkdir -p addons/godoteos/bin/macos
           mkdir -p addons/godoteos/bin/windows
 
-      - name: Copy downloaded build artifacts into addons
-        run: |
-          set -e
+          # Copy Linux binaries (exclude demo .gdextension and build artifacts)
           if [ -d artifacts/linux/x86_64 ]; then
-            cp -a artifacts/linux/x86_64/. addons/godoteos/bin/linux/ || true
+            find artifacts/linux/x86_64 -type f ! -name "godoteos.gdextension" ! -name "*.exp" ! -name "*.lib" ! -name "*.pdb" -exec cp {} addons/godoteos/bin/linux/ \; || true
           fi
+
+          # Copy macOS frameworks (need to preserve directory structure)
           if [ -d artifacts/macos ]; then
-            cp -a artifacts/macos/. addons/godoteos/bin/macos/ || true
+            find artifacts/macos -name "*.framework" -type d -exec cp -r {} addons/godoteos/bin/macos/ \; || true
+            find artifacts/macos -name "*.xcframework" -type d -exec cp -r {} addons/godoteos/bin/macos/ \; || true
+            find artifacts/macos -type f ! -name "godoteos.gdextension" ! -name "*.exp" ! -name "*.lib" ! -name "*.pdb" ! -path "*/.*framework/*" ! -path "*/.*xcframework/*" -exec cp {} addons/godoteos/bin/macos/ \; || true
           fi
+
+          # Copy Windows binaries (exclude demo .gdextension and build artifacts)
           if [ -d artifacts/windows/x86_64 ]; then
-            cp -a artifacts/windows/x86_64/. addons/godoteos/bin/windows/ || true
+            find artifacts/windows/x86_64 -type f ! -name "godoteos.gdextension" ! -name "*.exp" ! -name "*.lib" ! -name "*.pdb" -exec cp {} addons/godoteos/bin/windows/ \; || true
           fi
 
       - name: Show contents of addons/bin for debug
