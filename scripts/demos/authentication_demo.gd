@@ -84,17 +84,26 @@ const CREDENTIALS_PATH := "res://eos_credentials.secrets"
 # ".example" suffix. Keys map 1:1 onto EpicOS.initialize().
 func _load_credentials() -> Dictionary:
 	var file := ConfigFile.new()
-	if file.load(CREDENTIALS_PATH) != OK:
+	var err := file.load(CREDENTIALS_PATH)
+	if err == ERR_FILE_NOT_FOUND:
 		_log_message("[color=red]✗ No credentials found at " + CREDENTIALS_PATH + "[/color]")
 		_log_message("[color=yellow]Copy eos_credentials.secrets.example, fill in your values from the[/color]")
 		_log_message("[color=yellow]Epic Developer Portal, and remove the .example suffix.[/color]")
+		return {}
+	if err != OK:
+		# Most often an unquoted value - ConfigFile needs product_id="abc", not product_id=abc.
+		_log_message("[color=red]✗ " + CREDENTIALS_PATH + " exists but could not be parsed (error " + str(err) + ")[/color]")
+		_log_message("[color=yellow]Every value must be wrapped in double quotes, e.g. product_id=\"abc123\".[/color]")
 		return {}
 
 	var config := {}
 	for key in ["product_name", "product_version", "product_id", "sandbox_id",
 			"deployment_id", "client_id", "client_secret", "encryption_key"]:
-		var value := str(file.get_value("eos", key, ""))
-		if not value.is_empty():
+		var value: Variant = file.get_value("eos", key, "")
+		if typeof(value) != TYPE_STRING:
+			_log_message("[color=red]✗ " + key + " must be a quoted string in " + CREDENTIALS_PATH + "[/color]")
+			return {}
+		if not (value as String).is_empty():
 			config[key] = value
 
 	var missing: PackedStringArray = []

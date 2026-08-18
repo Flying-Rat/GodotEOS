@@ -190,8 +190,13 @@ This repository **IS** a complete demo project showcasing all EOS features! You 
 
 1. Open this project in Godot Engine 4.x
 2. Enable the GodotEOS plugin in Project Settings → Plugins
-3. Run the project (scenes/demos/demo_menu.tscn)
-4. Follow the on-screen instructions to test EOS features
+3. Copy `eos_credentials.secrets.example` to `eos_credentials.secrets` and fill in
+   your Product ID, Sandbox ID, Deployment ID, Client ID and Client Secret from the
+   [Epic Developer Portal](https://dev.epicgames.com/). The file is gitignored, so
+   your credentials stay out of version control. Leave `encryption_key` blank unless
+   you use Player Data Storage or Title Storage.
+4. Run the project (scenes/demos/demo_menu.tscn)
+5. Follow the on-screen instructions to test EOS features
 
 #### Demo Authentication
 
@@ -211,7 +216,7 @@ This repository **IS** a complete demo project showcasing all EOS features! You 
 
 ### Demo Workflow
 
-1. **Initialize**: The demo automatically initializes EOS when started
+1. **Initialize**: Open the Authentication demo and click "Initialize EOS Platform" — it reads the credentials from `eos_credentials.secrets`
 2. **Login**: Click "Login with Epic Games" to authenticate
 3. **Test Features**: Once logged in, use the feature buttons to test different EOS APIs
 4. **Monitor Output**: Watch the output log to see EOS responses and status updates
