@@ -40,6 +40,10 @@ private:
     // itself instead of failing with an opaque EOS_AlreadyConfigured.
     static bool eos_sdk_shutdown_in_process;
 
+    // Set the moment EOS_Initialize succeeds. Guards ShutdownEosSdk so it can
+    // never tear down - and permanently flag - an SDK that was never started.
+    static bool eos_sdk_initialized_in_process;
+
     // Every EOS_Shutdown must go through here, including the failure paths in
     // InitializePlatform - those return before `initialized` is ever set, so
     // the flag would otherwise stay false after the SDK had been torn down.

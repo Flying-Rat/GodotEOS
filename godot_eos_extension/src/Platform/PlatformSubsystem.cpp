@@ -45,8 +45,14 @@ void EOS_CALL platform_logging_callback(const EOS_LogMessage* message) {
 } // namespace
 
 bool PlatformSubsystem::eos_sdk_shutdown_in_process = false;
+bool PlatformSubsystem::eos_sdk_initialized_in_process = false;
 
 void PlatformSubsystem::ShutdownEosSdk() {
+    if (!eos_sdk_initialized_in_process) {
+        // Nothing to tear down. Flagging here would brick EOS for the rest of
+        // the process over an SDK that was never started.
+        return;
+    }
     EOS_Shutdown();
     eos_sdk_shutdown_in_process = true;
 }
@@ -101,6 +107,14 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
         return false;
     }
 
+    // Pure string check, so validate before EOS_Initialize. Failing here leaves
+    // the SDK untouched, which keeps a corrected retry viable.
+    String encryption_key_error = ValidateEncryptionKey(options.encryption_key);
+    if (!encryption_key_error.is_empty()) {
+        Logger::Error("Platform", encryption_key_error);
+        return false;
+    }
+
     // Initialize EOS SDK
     EOS_InitializeOptions InitOptions = {};
     InitOptions.ApiVersion = EOS_INITIALIZE_API_LATEST;
@@ -132,6 +146,7 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
         Logger::Error("Platform", error_msg);
         return false;
     }
+    eos_sdk_initialized_in_process = true;
 
     // Logging must be registered after EOS_Initialize so SDK errors from Platform_Create are visible.
     EOS_EResult log_result = EOS_Logging_SetCallback(platform_logging_callback);
@@ -139,13 +154,6 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
         Logger::Error("Platform", "Failed to set EOS logging callback: " + String(EOS_EResult_ToString(log_result)) + " (" + String::num_int64(static_cast<int64_t>(log_result)) + ")");
     } else {
         EOS_Logging_SetLogLevel(EOS_ELogCategory::EOS_LC_ALL_CATEGORIES, EOS_ELogLevel::EOS_LOG_Verbose);
-    }
-
-    String encryption_key_error = ValidateEncryptionKey(options.encryption_key);
-    if (!encryption_key_error.is_empty()) {
-        Logger::Error("Platform", encryption_key_error);
-        ShutdownEosSdk();
-        return false;
     }
 
     // Create platform instance using provided init options (keep CharString temporaries alive)
