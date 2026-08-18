@@ -12,7 +12,7 @@ config_version=5
 
 config/name="GodotEOS Plugin"
 config/description="Demo project showcasing Godot Epic plugin"
-config/version="1.0.0"
+config/version="1.1.0"
 run/main_scene="res://scenes/demos/demo_menu.tscn"
 config/features=PackedStringArray("4.3", "Forward Plus")
 config/icon="res://icon.svg"
