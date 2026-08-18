@@ -30,10 +30,11 @@ env.Append(CPPPATH=["src/", eos_sdk + "/Include"])
 
 if env["platform"] == "windows":
     if env["arch"] == "x86_32":
-        # The addon manifest declares x86_64 only, so a 32-bit build produces a
-        # binary Godot will never load. EOS SDK 1.19 also dropped the Win32
-        # library entirely. Fail clearly rather than at link time.
-        print("ERROR: arch=x86_32 is not supported - addons/godoteos/bin/godoteos.gdextension declares x86_64 only.")
+        # The .gdextension manifests declare x86_64 only, so a 32-bit build
+        # produces a binary Godot will never load. Fail clearly rather than at
+        # link time. (EOS dropped the Win32 library in SDK 1.19; the vendored
+        # 1.18 still ships it, so the link would otherwise succeed here.)
+        print("ERROR: arch=x86_32 is not supported - the .gdextension manifests declare x86_64 only.")
         Exit(1)
     env.Append(LIBPATH=[eos_sdk + "/Lib"])
     env.Append(LIBS=["EOSSDK-Win64-Shipping"])
