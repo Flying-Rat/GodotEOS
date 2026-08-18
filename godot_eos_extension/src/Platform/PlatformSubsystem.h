@@ -39,6 +39,11 @@ private:
     // initialized again afterwards. Tracked so a later initialize() explains
     // itself instead of failing with an opaque EOS_AlreadyConfigured.
     static bool eos_sdk_shutdown_in_process;
+
+    // Every EOS_Shutdown must go through here, including the failure paths in
+    // InitializePlatform - those return before `initialized` is ever set, so
+    // the flag would otherwise stay false after the SDK had been torn down.
+    static void ShutdownEosSdk();
 };
 
 } // namespace godot

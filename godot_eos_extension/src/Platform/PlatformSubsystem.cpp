@@ -46,6 +46,11 @@ void EOS_CALL platform_logging_callback(const EOS_LogMessage* message) {
 
 bool PlatformSubsystem::eos_sdk_shutdown_in_process = false;
 
+void PlatformSubsystem::ShutdownEosSdk() {
+    EOS_Shutdown();
+    eos_sdk_shutdown_in_process = true;
+}
+
 PlatformSubsystem::PlatformSubsystem() : platform_handle(nullptr), initialized(false), online(false) {}
 
 PlatformSubsystem::~PlatformSubsystem() {
@@ -78,8 +83,7 @@ void PlatformSubsystem::Shutdown() {
         platform_handle = nullptr;
     }
 
-    EOS_Shutdown();
-    eos_sdk_shutdown_in_process = true;
+    ShutdownEosSdk();
     initialized = false;
     online = false;
     Logger::Info("Platform", "Shutdown complete");
@@ -140,7 +144,7 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
     String encryption_key_error = ValidateEncryptionKey(options.encryption_key);
     if (!encryption_key_error.is_empty()) {
         Logger::Error("Platform", encryption_key_error);
-        EOS_Shutdown();
+        ShutdownEosSdk();
         return false;
     }
 
@@ -180,7 +184,7 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
         Logger::Error("Platform", "- product_id, sandbox_id, and deployment_id belong to the same product/sandbox");
         Logger::Error("Platform", "- client_id and client_secret belong to that product");
         Logger::Error("Platform", "- encryption_key is omitted, or exactly 64 hexadecimal characters");
-        EOS_Shutdown();
+        ShutdownEosSdk();
         return false;
     }
 
