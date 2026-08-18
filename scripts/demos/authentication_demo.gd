@@ -88,7 +88,7 @@ func _on_init_button_pressed():
     	"deployment_id": "d94a05975baa43a5ad5103c12a97a0b3", 
     	"client_id": "xyza7891h0KCGiva2k7qyQPpNfgLiDAM", 
     	"client_secret": "0RMgyWBrZNv+JQ49iQhEj9vqCU7Xn9qAvF2DYLd7oIs",
-    	"encryption_key": "1111111111111111111111111111111111111111111111111111111" # Optional but recommended 
+    	"encryption_key": "1111111111111111111111111111111111111111111111111111111111111111"
  		} 
 
 	if EpicOS:

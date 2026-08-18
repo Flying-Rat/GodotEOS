@@ -135,7 +135,7 @@ func _ready():
 		"deployment_id": "your_deployment_id_here",
 		"client_id": "your_client_id_here",
 		"client_secret": "your_client_secret_here",
-		"encryption_key": "1111111111111111111111111111111111111111111111111111111"  # Optional but recommended
+		"encryption_key": "1111111111111111111111111111111111111111111111111111111111111111"
 	}
 
 	# Initialize the EOS platform

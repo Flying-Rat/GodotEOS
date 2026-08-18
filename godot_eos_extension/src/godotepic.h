@@ -25,9 +25,6 @@ class GodotEOS : public Object {
 private:
 	static GodotEOS* instance;
 
-	// EOS logging callback
-	static void EOS_CALL logging_callback(const EOS_LogMessage* message);
-
 protected:
 	static void _bind_methods();
 

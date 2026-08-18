@@ -87,7 +87,8 @@ func initialize(config: Dictionary = {}) -> bool:
 		"sandbox_id": "",  # Required: Get from Epic Developer Portal
 		"deployment_id": "",  # Required: Get from Epic Developer Portal
 		"client_id": "",  # Required: Get from Epic Developer Portal
-		"client_secret": ""  # Required: Get from Epic Developer Portal
+		"client_secret": "",  # Required: Get from Epic Developer Portal
+		"encryption_key": ""  # Required: exactly 64 hexadecimal characters
 	}
 
 	# Merge user config with defaults
@@ -102,6 +103,12 @@ func initialize(config: Dictionary = {}) -> bool:
 			print("EpicOS: Please provide all Epic credentials in the configuration")
 			return false
 
+	var encryption_key := str(default_config["encryption_key"])
+	if encryption_key.length() != 64 or not encryption_key.is_valid_hex_number():
+		print("EpicOS: ERROR - encryption_key must be exactly 64 hexadecimal characters (0-9, a-f)")
+		print("EpicOS: Got encryption_key length: ", encryption_key.length())
+		return false
+
 	print("EpicOS: Initializing EOS SDK...")
 	_initialized = _godot_epic.initialize_platform(default_config)
 
@@ -109,6 +116,7 @@ func initialize(config: Dictionary = {}) -> bool:
 		print_rich("[color=green]EpicOS: EOS SDK initialized successfully[/color]")
 	else:
 		print_rich("[color=red]EpicOS: ERROR - Failed to initialize EOS SDK[/color]")
+		print("EpicOS: Check the Godot output above for the specific field (product_id, sandbox_id, deployment_id, client_id, client_secret, or encryption_key).")
 
 	return _initialized
 

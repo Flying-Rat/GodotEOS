@@ -14,6 +14,7 @@
 #include "Leaderboards/LeaderboardsSubsystem.h"
 #include "Friends/FriendsSubsystem.h"
 #include "UserInfo/UserInfoSubsystem.h"
+#include "Utils/InitOptionsValidation.h"
 #include "Utils/AccountHelpers.h"
 
 using namespace godot;
@@ -183,13 +184,8 @@ bool GodotEOS::initialize_platform(const Dictionary& options) {
 		UtilityFunctions::printerr("EOS Platform initialization failed: Invalid options");
 		return false;
 	}
-	// Setup logging
-	EOS_EResult LogResult = EOS_Logging_SetCallback(logging_callback);
-	if (LogResult == EOS_EResult::EOS_Success) {
-		EOS_Logging_SetLogLevel(EOS_ELogCategory::EOS_LC_ALL_CATEGORIES, EOS_ELogLevel::EOS_LOG_Verbose);
-	}
 
-	// Initialize subsystems
+	// Initialize subsystems (EOS logging is registered after EOS_Initialize inside PlatformSubsystem)
 	if (!initialize_subsystems(init_options)) {
 		return false;
 	}
@@ -565,41 +561,6 @@ Dictionary GodotEOS::get_achievement_stat(const String& stat_name) {
 	return achievements ? achievements->GetStat(stat_name) : Dictionary();
 }
 
-// Static logging callback
-void EOS_CALL GodotEOS::logging_callback(const EOS_LogMessage* message) {
-	if (!message || !message->Message) {
-		return;
-	}
-
-	String log_text = String::utf8(message->Message);
-	String category = message->Category ? String::utf8(message->Category) : "EOS";
-
-	switch (message->Level) {
-		case EOS_ELogLevel::EOS_LOG_Fatal:
-		case EOS_ELogLevel::EOS_LOG_Error:
-			{
-				String log_msg = String("[") + category + "] " + log_text;
-				UtilityFunctions::printerr(log_msg);
-			}
-			break;
-		case EOS_ELogLevel::EOS_LOG_Warning:
-			{
-				String log_msg = String("[") + category + "] " + log_text;
-				WARN_PRINT(log_msg);
-			}
-			break;
-		case EOS_ELogLevel::EOS_LOG_Info:
-		case EOS_ELogLevel::EOS_LOG_Verbose:
-		case EOS_ELogLevel::EOS_LOG_VeryVerbose:
-		default:
-			{
-				String log_msg = String("[") + category + "] " + log_text;
-				UtilityFunctions::print(log_msg);
-			}
-			break;
-	}
-}
-
 // Leaderboards methods
 void GodotEOS::query_leaderboard_definitions() {
 	UtilityFunctions::print("GodotEOS: Starting leaderboard definitions query");
@@ -800,8 +761,10 @@ bool GodotEOS::_validate_init_options(const EpicInitOptions& options) {
 		valid = false;
 	}
 
-	if (options.encryption_key.is_empty()) {
-		WARN_PRINT("Encryption key not set - data will not be encrypted");
+	String encryption_key_error = ValidateEncryptionKey(options.encryption_key);
+	if (!encryption_key_error.is_empty()) {
+		UtilityFunctions::printerr(encryption_key_error);
+		valid = false;
 	}
 
 	return valid;

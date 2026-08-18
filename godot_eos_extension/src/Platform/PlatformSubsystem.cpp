@@ -1,11 +1,47 @@
 #include "PlatformSubsystem.h"
+#include "../Utils/InitOptionsValidation.h"
 #include <eos_sdk.h>
 #include <eos_logging.h>
 #include <eos_achievements.h>
+#include <cstring>
 #include <godot_cpp/core/error_macros.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
+
+#ifdef EOS_PLATFORM_OPTIONS_ENCRYPTIONKEY_LENGTH
+static_assert(kEosEncryptionKeyHexLength == EOS_PLATFORM_OPTIONS_ENCRYPTIONKEY_LENGTH);
+#endif
+
+namespace {
+
+void EOS_CALL platform_logging_callback(const EOS_LogMessage* message) {
+    if (!message || !message->Message) {
+        return;
+    }
+
+    String log_text = String::utf8(message->Message);
+    String category = message->Category ? String::utf8(message->Category) : "EOS";
+    String log_msg = String("[") + category + "] " + log_text;
+
+    switch (message->Level) {
+        case EOS_ELogLevel::EOS_LOG_Fatal:
+        case EOS_ELogLevel::EOS_LOG_Error:
+            UtilityFunctions::printerr(log_msg);
+            break;
+        case EOS_ELogLevel::EOS_LOG_Warning:
+            WARN_PRINT(log_msg);
+            break;
+        case EOS_ELogLevel::EOS_LOG_Info:
+        case EOS_ELogLevel::EOS_LOG_Verbose:
+        case EOS_ELogLevel::EOS_LOG_VeryVerbose:
+        default:
+            UtilityFunctions::print(log_msg);
+            break;
+    }
+}
+
+} // namespace
 
 PlatformSubsystem::PlatformSubsystem() : platform_handle(nullptr), initialized(false), online(false) {}
 
@@ -83,6 +119,21 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
         return false;
     }
 
+    // Logging must be registered after EOS_Initialize so SDK errors from Platform_Create are visible.
+    EOS_EResult log_result = EOS_Logging_SetCallback(platform_logging_callback);
+    if (log_result != EOS_EResult::EOS_Success) {
+        UtilityFunctions::printerr("Failed to set EOS logging callback: " + String(EOS_EResult_ToString(log_result)) + " (" + String::num_int64(static_cast<int64_t>(log_result)) + ")");
+    } else {
+        EOS_Logging_SetLogLevel(EOS_ELogCategory::EOS_LC_ALL_CATEGORIES, EOS_ELogLevel::EOS_LOG_Verbose);
+    }
+
+    String encryption_key_error = ValidateEncryptionKey(options.encryption_key);
+    if (!encryption_key_error.is_empty()) {
+        UtilityFunctions::printerr(encryption_key_error);
+        EOS_Shutdown();
+        return false;
+    }
+
     // Create platform instance using provided init options (keep CharString temporaries alive)
     EOS_Platform_Options PlatformOptions = {};
     PlatformOptions.ApiVersion = EOS_PLATFORM_OPTIONS_API_LATEST;
@@ -94,24 +145,31 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
     godot::CharString deployment_id_cs = options.deployment_id.utf8();
     godot::CharString client_id_cs = options.client_id.utf8();
     godot::CharString client_secret_cs = options.client_secret.utf8();
-    godot::CharString encryption_key_cs = options.encryption_key.utf8();
+    godot::CharString encryption_key_cs;
 
     PlatformOptions.ProductId = product_id_cs.get_data();
     PlatformOptions.SandboxId = sandbox_id_cs.get_data();
     PlatformOptions.DeploymentId = deployment_id_cs.get_data();
     PlatformOptions.ClientCredentials.ClientId = client_id_cs.get_data();
     PlatformOptions.ClientCredentials.ClientSecret = client_secret_cs.get_data();
-    PlatformOptions.EncryptionKey = encryption_key_cs.get_data();
+    // Empty encryption_key must be nullptr. Passing "" makes EOS_Platform_Create fail.
+    if (options.encryption_key.is_empty()) {
+        PlatformOptions.EncryptionKey = nullptr;
+    } else {
+        encryption_key_cs = options.encryption_key.utf8();
+        PlatformOptions.EncryptionKey = encryption_key_cs.get_data();
+    }
     PlatformOptions.OverrideCountryCode = nullptr;
     PlatformOptions.OverrideLocaleCode = nullptr;
 
     platform_handle = EOS_Platform_Create(&PlatformOptions);
     if (!platform_handle) {
-        // Try to get a more specific error from the last result if available
-        UtilityFunctions::printerr("Failed to create EOS Platform (platform_handle == nullptr)");
-        // EOS_Platform_Create returns nullptr on failure; there's no direct EOS_EResult, but common causes are invalid platform options.
-        // Log a friendly troubleshooting hint.
-        UtilityFunctions::printerr("Possible causes: invalid ProductId/SandboxId/DeploymentId, or missing/invalid client credentials.");
+        UtilityFunctions::printerr("Failed to create EOS Platform (EOS_Platform_Create returned nullptr).");
+        UtilityFunctions::printerr("Check the EOS log lines above for the SDK's specific reason.");
+        UtilityFunctions::printerr("If no EOS log named a field, verify each value from the Epic Developer Portal:");
+        UtilityFunctions::printerr("- product_id, sandbox_id, and deployment_id belong to the same product/sandbox");
+        UtilityFunctions::printerr("- client_id and client_secret belong to that product");
+        UtilityFunctions::printerr("- encryption_key is exactly 64 hexadecimal characters");
         EOS_Shutdown();
         return false;
     }
