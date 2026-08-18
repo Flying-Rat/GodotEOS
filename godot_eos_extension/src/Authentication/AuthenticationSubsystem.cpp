@@ -306,10 +306,10 @@ void AuthenticationSubsystem::cleanup_notifications() {
 }
 
 void AuthenticationSubsystem::complete_connect_login(EOS_ProductUserId product_user_id) {
-	local_user_id = product_user_id;
+	SetProductUserId(product_user_id);
 	if (!EOS_ProductUserId_IsValid(product_user_id)) {
 		is_logged_in = false;
-		local_user_id = nullptr;
+		SetProductUserId(nullptr);
 		emit_login_failure(EOS_EResult::EOS_InvalidUser, "Connect login completed without a valid Product User ID");
 		return;
 	}
@@ -700,17 +700,33 @@ void EOS_CALL AuthenticationSubsystem::connect_login_callback(const EOS_Connect_
 		return;
 	}
 
+	if (data->ResultCode == EOS_EResult::EOS_InvalidUser) {
+		if (data->ContinuanceToken == nullptr) {
+			instance->emit_login_failure(data->ResultCode, "Connect login failed: Invalid user (3) - ContinuanceToken missing, cannot create user");
+			return;
+		}
+
+		if (!instance->connect_handle) {
+			instance->emit_login_failure(data->ResultCode, "Connect login failed: Invalid user (3) - Connect handle unavailable, cannot create user");
+			return;
+		}
+
+		EOS_Connect_CreateUserOptions Options = {};
+		Options.ApiVersion = EOS_CONNECT_CREATEUSER_API_LATEST;
+		Options.ContinuanceToken = data->ContinuanceToken;
+
+		Logger::Info("Auth", "Connect InvalidUser - creating product user");
+		// unique_ptr must not delete the heap context; CreateUser reuses it in connect_create_user_callback.
+		EOS_Connect_CreateUser(instance->connect_handle, &Options, ClientData.release(), connect_create_user_callback);
+		return;
+	}
+
 	String error_msg = "Connect login failed: ";
 
 	// Provide more descriptive error messages for Connect login
 	switch (data->ResultCode) {
 		case EOS_EResult::EOS_InvalidParameters:
 			error_msg += "Invalid parameters (10) - Connect login requires valid Epic Account ID from Auth login";
-			break;
-		case EOS_EResult::EOS_InvalidUser:
-			// TODO(CreateUser): EOS_Connect_CreateUser for first-time users. ContinuanceToken is on `data`.
-			// Intercept this branch before FConnectLoginContext is unique_ptr-deleted if CreateUser needs it.
-			error_msg += "Invalid user (3) - User may need to be linked or created in Connect service";
 			break;
 		case EOS_EResult::EOS_NotFound:
 			error_msg += "User not found (13) - User account may need to be created in Connect service";
@@ -736,6 +752,33 @@ void EOS_CALL AuthenticationSubsystem::connect_login_callback(const EOS_Connect_
 	}
 	Logger::Error("Auth", error_msg);
 
+	instance->emit_login_failure(data->ResultCode, error_msg);
+}
+
+void EOS_CALL AuthenticationSubsystem::connect_create_user_callback(const EOS_Connect_CreateUserCallbackInfo* data) {
+	if (!data || !data->ClientData) {
+		Logger::Error("Auth", "connect_create_user_callback - ClientData is null");
+		return;
+	}
+
+	std::unique_ptr<FConnectLoginContext> ClientData(static_cast<FConnectLoginContext*>(data->ClientData));
+
+	IAuthenticationSubsystem* authIterface = Get<IAuthenticationSubsystem>();
+	if (authIterface == nullptr) {
+		Logger::Error("Auth", "connect_create_user_callback - Get<IAuthenticationSubsystem>() returned null");
+		return;
+	}
+
+	AuthenticationSubsystem* instance = static_cast<AuthenticationSubsystem*>(authIterface);
+
+	if (data->ResultCode == EOS_EResult::EOS_Success) {
+		Logger::Info("Auth", "Connect CreateUser successful");
+		instance->complete_connect_login(data->LocalUserId);
+		return;
+	}
+
+	String error_msg = "Connect CreateUser failed: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
+	Logger::Error("Auth", error_msg);
 	instance->emit_login_failure(data->ResultCode, error_msg);
 }
 

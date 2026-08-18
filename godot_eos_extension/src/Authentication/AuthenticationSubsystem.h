@@ -80,6 +80,7 @@ private:
     static void EOS_CALL auth_login_callback(const EOS_Auth_LoginCallbackInfo* data);
     static void EOS_CALL auth_logout_callback(const EOS_Auth_LogoutCallbackInfo* data);
     static void EOS_CALL connect_login_callback(const EOS_Connect_LoginCallbackInfo* data);
+    static void EOS_CALL connect_create_user_callback(const EOS_Connect_CreateUserCallbackInfo* data);
 
     static void EOS_CALL on_auth_logout_complete(const EOS_Auth_LogoutCallbackInfo* data);
     static void EOS_CALL on_connect_logout_complete(const EOS_Connect_LogoutCallbackInfo* data);
