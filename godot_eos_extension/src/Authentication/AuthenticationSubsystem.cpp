@@ -93,16 +93,11 @@ void AuthenticationSubsystem::Shutdown() {
     // First, clean up notifications while handles are still valid
     cleanup_notifications();
 
-    // Only logout if we have an active session and platform is still valid
-    auto platform_subsystem = Get<IPlatformSubsystem>();
-    if (platform_subsystem && platform_subsystem->GetPlatformHandle() &&
-        (is_logged_in || EOS_ProductUserId_IsValid(local_user_id) || EOS_EpicAccountId_IsValid(epic_account_id))) {
-        Logger::Info("Auth", "Active session detected, logging out...");
-        Logout();
-    } else {
-        Logger::Info("Auth", "Skipping logout - platform unavailable or no active session");
-    }
-
+    // Deliberately no Logout() here. EOS_Auth_Logout / EOS_Connect_Logout are
+    // async and completions are pumped by EOS_Platform_Tick, but ShutdownAll()
+    // shuts Platform down on this same stack with no further tick - so the
+    // requests would be abandoned in flight. Epic's own sample does not log out
+    // on teardown either. User-initiated logout still goes through Logout().
     is_logged_in = false;
     local_user_id = nullptr;
     epic_account_id = nullptr;
