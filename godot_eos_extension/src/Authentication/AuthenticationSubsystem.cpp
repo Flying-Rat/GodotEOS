@@ -12,11 +12,13 @@
 #include "../Utils/Logger.h"
 
 /**
- * User context passed to EOS_Connect_Login, so we know what AccountId is logging in
+ * Heap-only user context passed to EOS_Connect_Login.
+ * Never pass AuthenticationSubsystem as ClientData — the callback unique_ptr-deletes this type.
+ * AccountId is set for Auth→Connect; Connect-only logins (device_id, exchange_code) leave it null.
  */
 struct FConnectLoginContext
 {
-	EOS_EpicAccountId AccountId;
+	EOS_EpicAccountId AccountId = nullptr;
 };
 
 namespace godot {
@@ -397,7 +399,9 @@ bool AuthenticationSubsystem::perform_device_id_login() {
     options.Credentials = &credentials;
     options.UserLoginInfo = nullptr;
 
-    EOS_Connect_Login(connect_handle, &options, this, connect_login_callback);
+    // Heap context so connect_login_callback unique_ptr-deletes FConnectLoginContext, not this.
+    std::unique_ptr<FConnectLoginContext> ClientData(new FConnectLoginContext);
+    EOS_Connect_Login(connect_handle, &options, ClientData.release(), connect_login_callback);
     return true;
 }
 
@@ -421,7 +425,9 @@ bool AuthenticationSubsystem::perform_exchange_code_login(const String& exchange
     options.Credentials = &credentials;
     options.UserLoginInfo = nullptr;
 
-    EOS_Connect_Login(connect_handle, &options, this, connect_login_callback);
+    // Heap context so connect_login_callback unique_ptr-deletes FConnectLoginContext, not this.
+    std::unique_ptr<FConnectLoginContext> ClientData(new FConnectLoginContext);
+    EOS_Connect_Login(connect_handle, &options, ClientData.release(), connect_login_callback);
     return true;
 }
 
@@ -645,11 +651,12 @@ void EOS_CALL AuthenticationSubsystem::auth_logout_callback(const EOS_Auth_Logou
 }
 
 void EOS_CALL AuthenticationSubsystem::connect_login_callback(const EOS_Connect_LoginCallbackInfo* data) {
-	std::unique_ptr<FConnectLoginContext> ClientData(static_cast<FConnectLoginContext*>(data->ClientData));
-	if (!ClientData) {
+	if (!data || !data->ClientData) {
 		Logger::Error("Auth", "connect_login_callback - ClientData is null");
 		return;
 	}
+
+	std::unique_ptr<FConnectLoginContext> ClientData(static_cast<FConnectLoginContext*>(data->ClientData));
 
 	IAuthenticationSubsystem* authIterface = Get<IAuthenticationSubsystem>();
 	if(authIterface == nullptr) {
