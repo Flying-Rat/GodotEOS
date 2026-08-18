@@ -88,6 +88,12 @@ private:
 
     void finalize_logout_if_ready();
     void reset_logout_state();
+
+    // Shared by Connect login success and CreateUser success (CreateUser added separately).
+    // Sets is_logged_in = true only after EOS_ProductUserId_IsValid(product_user_id).
+    void complete_connect_login(EOS_ProductUserId product_user_id);
+    void emit_login_success();
+    void emit_login_failure(EOS_EResult result_code, const String& error_message);
 };
 
 } // namespace godot

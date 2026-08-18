@@ -124,7 +124,9 @@ bool AuthenticationSubsystem::Login(const String& login_type, const Dictionary& 
         return false;
     }
 
-    if (is_logged_in) {
+    if (is_logged_in && EOS_ProductUserId_IsValid(local_user_id)) {
+        Logger::Info("Auth", "Already logged in with a valid Product User ID");
+        emit_login_success();
         return true;
     }
 
@@ -301,6 +303,52 @@ void AuthenticationSubsystem::cleanup_notifications() {
     }
 
     Logger::Info("Auth", "Notification cleanup complete");
+}
+
+void AuthenticationSubsystem::complete_connect_login(EOS_ProductUserId product_user_id) {
+	local_user_id = product_user_id;
+	if (!EOS_ProductUserId_IsValid(product_user_id)) {
+		is_logged_in = false;
+		local_user_id = nullptr;
+		emit_login_failure(EOS_EResult::EOS_InvalidUser, "Connect login completed without a valid Product User ID");
+		return;
+	}
+
+	is_logged_in = true;
+	emit_login_success();
+}
+
+void AuthenticationSubsystem::emit_login_success() {
+	if (!is_logged_in || !EOS_ProductUserId_IsValid(local_user_id)) {
+		emit_login_failure(EOS_EResult::EOS_InvalidUser, "Login success requested without a valid Product User ID");
+		return;
+	}
+
+	Dictionary user_info;
+	user_info["display_name"] = display_name;
+	user_info["epic_account_id"] = EOS_EpicAccountId_IsValid(epic_account_id) ? FAccountHelpers::EpicAccountIDToString(epic_account_id) : "";
+	user_info["product_user_id"] = FAccountHelpers::ProductUserIDToString(local_user_id);
+
+	if (login_callback.is_valid()) {
+		Logger::Info("Auth", "Login completed successfully");
+		login_callback.call(true, user_info);
+	} else {
+		Logger::Error("Auth", "Login callback is not valid - cannot emit success signal");
+	}
+}
+
+void AuthenticationSubsystem::emit_login_failure(EOS_EResult result_code, const String& error_message) {
+	Dictionary user_info;
+	user_info["error_code"] = static_cast<int64_t>(result_code);
+	user_info["error_message"] = error_message;
+	user_info["epic_account_id"] = EOS_EpicAccountId_IsValid(epic_account_id) ? FAccountHelpers::EpicAccountIDToString(epic_account_id) : "";
+	user_info["product_user_id"] = "";
+
+	if (login_callback.is_valid()) {
+		login_callback.call(false, user_info);
+	} else {
+		Logger::Error("Auth", "Login callback is not valid - cannot emit failure signal");
+	}
 }
 
 void AuthenticationSubsystem::reset_logout_state() {
@@ -515,9 +563,8 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 		// User Logged In event
 		FEpicAccountId UserId = data->LocalUserId;
 
-		// Set user data
+		// Auth succeeded — record Epic Account ID, but do not mark logged in until Connect succeeds.
 		instance->epic_account_id = UserId.AccountId;
-		instance->is_logged_in = true;
 
 		// Query user info to get the real display name using UserInfo subsystem
 		auto userinfo = Get<IUserInfoSubsystem>();
@@ -550,7 +597,8 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 		EOS_Auth_CopyUserAuthTokenOptions ConnectCopyTokenOptions = { 0 };
 		ConnectCopyTokenOptions.ApiVersion = EOS_AUTH_COPYUSERAUTHTOKEN_API_LATEST;
 
-		if (EOS_Auth_CopyUserAuthToken(AuthHandle, &ConnectCopyTokenOptions, UserId, &ConnectUserAuthToken) == EOS_EResult::EOS_Success)
+		const EOS_EResult copy_token_result = EOS_Auth_CopyUserAuthToken(AuthHandle, &ConnectCopyTokenOptions, UserId, &ConnectUserAuthToken);
+		if (copy_token_result == EOS_EResult::EOS_Success)
 		{
 			EOS_Connect_Credentials Credentials = {};
 			Credentials.ApiVersion = EOS_CONNECT_CREDENTIALS_API_LATEST;
@@ -575,19 +623,7 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 		else
 		{
 			Logger::Error("Auth", "Failed to copy Auth Token for Connect login - skipping Connect service");
-
-			// Emit success anyway since Auth login succeeded, but without Connect features
-			Dictionary user_info;
-			user_info["display_name"] = instance->display_name;
-			EOS_EpicAccountId epic_id = instance->GetEpicAccountId();
-			user_info["epic_account_id"] = epic_id ? FAccountHelpers::EpicAccountIDToString(epic_id) : "";
-			user_info["product_user_id"] = "";  // Empty since Connect failed
-
-			if (instance->login_callback.is_valid()) {
-				instance->login_callback.call(true, user_info);
-			} else {
-				Logger::Error("Auth", "login_callback is not valid");
-			}
+			instance->emit_login_failure(copy_token_result, "Failed to copy Auth Token for Connect login - skipping Connect service");
 		}
 	} else {
 		// Handle specific error cases with helpful messages
@@ -615,14 +651,7 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 		}
 
 		Logger::Error("Auth", error_msg);
-
-		// Emit failure signal
-		if (instance->login_callback.is_valid()) {
-			Dictionary user_info;
-			user_info["error_code"] = static_cast<int64_t>(data->ResultCode);
-			user_info["error_message"] = error_msg;
-			instance->login_callback.call(false, user_info);
-		}
+		instance->emit_login_failure(data->ResultCode, error_msg);
 	}
 }
 
@@ -664,77 +693,50 @@ void EOS_CALL AuthenticationSubsystem::connect_login_callback(const EOS_Connect_
 		return;
 	}
 
-	// Get the login callback from the interface
-	Callable login_callback = authIterface->GetLoginCallback();
+	AuthenticationSubsystem* instance = static_cast<AuthenticationSubsystem*>(authIterface);
 
 	if (data->ResultCode == EOS_EResult::EOS_Success) {
-		// Set Product User ID directly from handle
-		authIterface->SetProductUserId(data->LocalUserId);
-
-		// Now both Auth and Connect logins are complete, emit the signal
-		Dictionary user_info;
-		user_info["display_name"] = authIterface->GetDisplayName();
-		EOS_EpicAccountId epic_id = authIterface->GetEpicAccountId();
-		user_info["epic_account_id"] = epic_id ? FAccountHelpers::EpicAccountIDToString(epic_id) : "";
-		EOS_ProductUserId product_user_id = authIterface->GetProductUserId();
-		String product_user_id_str = "";
-		if (EOS_ProductUserId_IsValid(product_user_id)) {
-			product_user_id_str = FAccountHelpers::ProductUserIDToString(product_user_id);
-		}
-		user_info["product_user_id"] = product_user_id_str;
-
-		if (login_callback.is_valid()) {
-			Logger::Info("Auth", "Login completed successfully");
-			login_callback.call(true, user_info);
-		} else {
-			Logger::Error("Auth", "Login callback is not valid - cannot emit success signal");
-		}
-	} else {
-		String error_msg = "Connect login failed: ";
-
-		// Provide more descriptive error messages for Connect login
-		switch (data->ResultCode) {
-			case EOS_EResult::EOS_InvalidParameters:
-				error_msg += "Invalid parameters (10) - Connect login requires valid Epic Account ID from Auth login";
-				break;
-			case EOS_EResult::EOS_InvalidUser:
-				error_msg += "Invalid user (3) - User may need to be linked or created in Connect service";
-				break;
-			case EOS_EResult::EOS_NotFound:
-				error_msg += "User not found (13) - User account may need to be created in Connect service";
-				break;
-			case EOS_EResult::EOS_DuplicateNotAllowed:
-				error_msg += "Duplicate not allowed (15) - User may already be logged in";
-				break;
-			case EOS_EResult::EOS_Connect_ExternalTokenValidationFailed:
-				error_msg += "External token validation failed (7000) - Epic Account ID token was rejected by Connect service. Try using Auth Token instead of Account ID";
-				break;
-			case EOS_EResult::EOS_Connect_InvalidToken:
-				error_msg += "Invalid token (7003) - The provided token is not valid for Connect service";
-				break;
-			case EOS_EResult::EOS_Connect_UnsupportedTokenType:
-				error_msg += "Unsupported token type (7004) - Connect service doesn't support this token type";
-				break;
-			case EOS_EResult::EOS_Connect_AuthExpired:
-				error_msg += "Auth expired (7002) - The authentication token has expired";
-				break;
-			default:
-				error_msg += String::num_int64(static_cast<int64_t>(data->ResultCode));
-				break;
-		}
-		Logger::Error("Auth", error_msg);
-
-		// Connect failed, but Auth succeeded - still emit login signal but without product_user_id
-		Dictionary user_info;
-		user_info["display_name"] = authIterface->GetDisplayName();
-		EOS_EpicAccountId epic_id_failure = authIterface->GetEpicAccountId();
-		user_info["epic_account_id"] = epic_id_failure ? FAccountHelpers::EpicAccountIDToString(epic_id_failure) : "";
-		user_info["product_user_id"] = "";  // Empty since Connect failed
-
-		if (login_callback.is_valid()) {
-			login_callback.call(true, user_info);
-		}
+		instance->complete_connect_login(data->LocalUserId);
+		return;
 	}
+
+	String error_msg = "Connect login failed: ";
+
+	// Provide more descriptive error messages for Connect login
+	switch (data->ResultCode) {
+		case EOS_EResult::EOS_InvalidParameters:
+			error_msg += "Invalid parameters (10) - Connect login requires valid Epic Account ID from Auth login";
+			break;
+		case EOS_EResult::EOS_InvalidUser:
+			// TODO(CreateUser): EOS_Connect_CreateUser for first-time users. ContinuanceToken is on `data`.
+			// Intercept this branch before FConnectLoginContext is unique_ptr-deleted if CreateUser needs it.
+			error_msg += "Invalid user (3) - User may need to be linked or created in Connect service";
+			break;
+		case EOS_EResult::EOS_NotFound:
+			error_msg += "User not found (13) - User account may need to be created in Connect service";
+			break;
+		case EOS_EResult::EOS_DuplicateNotAllowed:
+			error_msg += "Duplicate not allowed (15) - User may already be logged in";
+			break;
+		case EOS_EResult::EOS_Connect_ExternalTokenValidationFailed:
+			error_msg += "External token validation failed (7000) - Epic Account ID token was rejected by Connect service. Try using Auth Token instead of Account ID";
+			break;
+		case EOS_EResult::EOS_Connect_InvalidToken:
+			error_msg += "Invalid token (7003) - The provided token is not valid for Connect service";
+			break;
+		case EOS_EResult::EOS_Connect_UnsupportedTokenType:
+			error_msg += "Unsupported token type (7004) - Connect service doesn't support this token type";
+			break;
+		case EOS_EResult::EOS_Connect_AuthExpired:
+			error_msg += "Auth expired (7002) - The authentication token has expired";
+			break;
+		default:
+			error_msg += String::num_int64(static_cast<int64_t>(data->ResultCode));
+			break;
+	}
+	Logger::Error("Auth", error_msg);
+
+	instance->emit_login_failure(data->ResultCode, error_msg);
 }
 
 
