@@ -745,17 +745,26 @@ func _display_friends_list(friends: Array):
 # ============================================================================
 
 # Achievement signal handlers
-func _on_achievement_definitions_updated(definitions: Array):
+func _on_achievement_definitions_updated(success: bool, definitions: Array):
+	if not success:
+		add_output_line("[color=red]❌ Achievement definitions query failed[/color]")
+		return
 	add_output_line("[color=yellow]🏆 Achievement definitions updated![/color]")
 	_display_achievement_definitions(definitions)
 
 
-func _on_player_achievements_updated(achievements: Array):
+func _on_player_achievements_updated(success: bool, achievements: Array):
+	if not success:
+		add_output_line("[color=red]❌ Player achievements query failed[/color]")
+		return
 	add_output_line("[color=yellow]🎯 Player achievements updated![/color]")
 	_display_player_achievements(achievements)
 
 
-func _on_achievements_unlocked(unlocked_achievement_ids: Array):
+func _on_achievements_unlocked(success: bool, unlocked_achievement_ids: Array):
+	if not success:
+		add_output_line("[color=red]❌ Achievement unlock failed[/color]")
+		return
 	add_output_line("[color=purple]🎉 Achievements unlocked![/color]")
 	if unlocked_achievement_ids.size() > 0:
 		add_output_line("Unlocked achievement IDs: " + str(unlocked_achievement_ids))
@@ -781,19 +790,31 @@ func _on_achievement_stats_updated(success: bool, stats: Array):
 # ============================================================================
 
 # Leaderboard signal handlers
-func _on_leaderboard_definitions_updated(definitions: Array):
+func _on_leaderboard_definitions_updated(success: bool, definitions: Array):
+	if not success:
+		add_output_line("[color=red]❌ Leaderboard definitions query failed[/color]")
+		return
 	add_output_line("[color=cyan]🏁 Leaderboard definitions updated![/color]")
 	_display_leaderboard_definitions(definitions)
 
-func _on_leaderboard_ranks_updated(ranks: Array):
+func _on_leaderboard_ranks_updated(success: bool, ranks: Array):
+	if not success:
+		add_output_line("[color=red]❌ Leaderboard ranks query failed[/color]")
+		return
 	add_output_line("[color=cyan]🏁 Leaderboard ranks updated![/color]")
 	_display_leaderboard_ranks(ranks)
 
-func _on_leaderboard_user_scores_updated(user_scores: Dictionary):
+func _on_leaderboard_user_scores_updated(success: bool, user_scores: Dictionary):
+	if not success:
+		add_output_line("[color=red]❌ Leaderboard user scores query failed[/color]")
+		return
 	add_output_line("[color=cyan]🏁 Leaderboard user scores updated![/color]")
 	_display_leaderboard_user_scores(user_scores)
 
-func _on_stats_ingested(stat_names: Array):
+func _on_stats_ingested(success: bool, stat_names: Array):
+	if not success:
+		add_output_line("[color=red]❌ Stat ingestion failed[/color]")
+		return
 	add_output_line("[color=cyan]🏁 Stats ingested successfully![/color]")
 	if stat_names.size() > 0:
 		add_output_line("Ingested stats: " + str(stat_names))
