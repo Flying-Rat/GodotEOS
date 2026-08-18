@@ -219,10 +219,11 @@ This repository **IS** a complete demo project showcasing all EOS features! You 
 
 ### Demo Project Structure
 
-- `scenes/demos/demo_menu.tscn` - Main demo scene with interactive UI
-- `scripts/main_demo.gd` - Demo logic and UI event handling
+- `scenes/demos/demo_menu.tscn` - Main demo scene, entry point for all demos
+- `scenes/demos/` - One scene per feature: authentication, achievements, friends, leaderboards
+- `scripts/demos/` - Demo logic and UI event handling for each scene
 - `addons/godoteos/` - GodotEOS plugin files
-  - `epic_os.gd` - Main EOS interface singleton (mock implementation)
+  - `epic_os.gd` - Main EOS interface singleton
   - `plugin.cfg` - Plugin configuration
   - `plugin.gd` - Plugin activation/deactivation logic
 
@@ -230,7 +231,7 @@ This repository **IS** a complete demo project showcasing all EOS features! You 
 
 When the plugin is complete, developers can:
 - Copy the `addons/godoteos/` folder to their own projects
-- Use the same API calls demonstrated in `scripts/main_demo.gd`
+- Use the same API calls demonstrated in `scripts/demos/`
 - Reference this demo as a complete integration example
 
 ## 🔧 Building
