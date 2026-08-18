@@ -632,7 +632,14 @@ void GodotEOS::ingest_stat(const String& stat_name, int value) {
 		Logger::Error("Achievements", "AchievementsSubsystem ingest stat failed");
 		Array empty_stats;
 		emit_signal("stats_ingested", false, empty_stats);
+		return;
 	}
+
+	// NOTE: reports submission to EOS, not confirmed ingestion - the
+	// EOS_Stats_IngestStat completion result is not yet plumbed back here.
+	Array submitted;
+	submitted.append(stat_name);
+	emit_signal("stats_ingested", true, submitted);
 }
 
 void GodotEOS::ingest_stats(const Dictionary& stats) {
@@ -648,17 +655,27 @@ void GodotEOS::ingest_stats(const Dictionary& stats) {
 
 	// For multiple stats, call IngestStat for each
 	Array keys = stats.keys();
+	Array submitted;
+	bool all_submitted = true;
 	for (int i = 0; i < keys.size(); i++) {
 		String stat_name = keys[i];
 		Variant stat_value = stats[stat_name];
-		if (stat_value.get_type() == Variant::INT) {
-			if (!achievements->IngestStat(stat_name, (int)stat_value)) {
-				Logger::Error("Achievements", "AchievementsSubsystem ingest stat failed for: " + stat_name);
-			}
+		if (stat_value.get_type() != Variant::INT) {
+			Logger::Error("Achievements", "Skipping non-integer stat value for: " + stat_name);
+			all_submitted = false;
+			continue;
 		}
+		if (!achievements->IngestStat(stat_name, (int)stat_value)) {
+			Logger::Error("Achievements", "AchievementsSubsystem ingest stat failed for: " + stat_name);
+			all_submitted = false;
+			continue;
+		}
+		submitted.append(stat_name);
 	}
-	// Emit signal with the stat names that were ingested
-	emit_signal("stats_ingested", true, keys);
+	// Report only the stats actually submitted to EOS. NOTE: reports submission,
+	// not confirmed ingestion - the EOS_Stats_IngestStat completion result is
+	// not yet plumbed back here.
+	emit_signal("stats_ingested", all_submitted, submitted);
 }
 
 Array GodotEOS::get_leaderboard_definitions() {
@@ -930,7 +947,7 @@ void GodotEOS::on_achievement_definitions_completed(bool success, const Array& d
 		Logger::Error("Achievements", "Achievement definitions query failed");
 	}
 
-	emit_signal("achievement_definitions_updated", true, definitions);
+	emit_signal("achievement_definitions_updated", success, definitions);
 }
 
 void GodotEOS::on_player_achievements_completed(bool success, const Array& achievements) {
@@ -942,7 +959,7 @@ void GodotEOS::on_player_achievements_completed(bool success, const Array& achie
 		Logger::Error("Achievements", "Player achievements query failed");
 	}
 
-	emit_signal("player_achievements_updated", true, achievements);
+	emit_signal("player_achievements_updated", success, achievements);
 }
 
 void GodotEOS::on_achievements_unlocked_completed(bool success, const Array& unlocked_achievement_ids) {
@@ -954,7 +971,7 @@ void GodotEOS::on_achievements_unlocked_completed(bool success, const Array& unl
 		Logger::Error("Achievements", "Achievements unlock failed");
 	}
 
-	emit_signal("achievements_unlocked", true, unlocked_achievement_ids);
+	emit_signal("achievements_unlocked", success, unlocked_achievement_ids);
 }
 
 void GodotEOS::on_achievement_stats_completed(bool success, const Array& stats) {
