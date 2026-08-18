@@ -44,6 +44,8 @@ void EOS_CALL platform_logging_callback(const EOS_LogMessage* message) {
 
 } // namespace
 
+bool PlatformSubsystem::eos_sdk_shutdown_in_process = false;
+
 PlatformSubsystem::PlatformSubsystem() : platform_handle(nullptr), initialized(false), online(false) {}
 
 PlatformSubsystem::~PlatformSubsystem() {
@@ -77,6 +79,7 @@ void PlatformSubsystem::Shutdown() {
     }
 
     EOS_Shutdown();
+    eos_sdk_shutdown_in_process = true;
     initialized = false;
     online = false;
     Logger::Info("Platform", "Shutdown complete");
@@ -86,6 +89,12 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
     if (initialized && platform_handle) {
         Logger::Error("Platform", "EOS Platform already initialized");
         return true;
+    }
+
+    if (eos_sdk_shutdown_in_process) {
+        Logger::Error("Platform", "EOS SDK was already shut down in this process and cannot be initialized again.");
+        Logger::Error("Platform", "Epic's SDK does not support re-initialization after EOS_Shutdown - restart the application to use EOS.");
+        return false;
     }
 
     // Initialize EOS SDK

@@ -34,6 +34,11 @@ private:
     EOS_HPlatform platform_handle;
     bool initialized;
     bool online;
+
+    // EOS_Shutdown is terminal for the whole process - Epic's SDK cannot be
+    // initialized again afterwards. Tracked so a later initialize() explains
+    // itself instead of failing with an opaque EOS_AlreadyConfigured.
+    static bool eos_sdk_shutdown_in_process;
 };
 
 } // namespace godot
