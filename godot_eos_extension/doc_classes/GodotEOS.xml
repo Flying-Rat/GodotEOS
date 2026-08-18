@@ -170,6 +170,7 @@
 				Initializes the EOS platform with the provided configuration options.
 				The options dictionary must contain: [code]product_id[/code], [code]sandbox_id[/code], [code]deployment_id[/code], [code]client_id[/code], and [code]client_secret[/code].
 				Optional fields include: [code]product_name[/code], [code]product_version[/code], and [code]encryption_key[/code].
+				If [code]encryption_key[/code] is set, it must be exactly 64 hexadecimal characters; omit it to pass null to EOS.
 				Returns [code]true[/code] if initialization succeeds, [code]false[/code] otherwise. Must be called before using any EOS functionality.
 			</description>
 		</method>

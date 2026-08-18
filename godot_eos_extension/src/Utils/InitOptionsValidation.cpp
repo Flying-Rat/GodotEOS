@@ -10,9 +10,13 @@ static bool is_hex_char(char32_t c) {
 }
 
 String ValidateEncryptionKey(const String& encryption_key) {
+	if (encryption_key.is_empty()) {
+		return String();
+	}
+
 	if (encryption_key.length() != kEosEncryptionKeyHexLength) {
 		return vformat(
-				"Invalid encryption_key: length is %d; EOS requires exactly %d hexadecimal characters (0-9, a-f, A-F).",
+				"Invalid encryption_key: length is %d; EOS requires exactly %d hexadecimal characters (0-9, a-f, A-F) when set.",
 				encryption_key.length(),
 				kEosEncryptionKeyHexLength);
 	}

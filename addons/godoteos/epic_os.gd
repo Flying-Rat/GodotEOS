@@ -88,7 +88,7 @@ func initialize(config: Dictionary = {}) -> bool:
 		"deployment_id": "",  # Required: Get from Epic Developer Portal
 		"client_id": "",  # Required: Get from Epic Developer Portal
 		"client_secret": "",  # Required: Get from Epic Developer Portal
-		"encryption_key": ""  # Required: exactly 64 hexadecimal characters
+		"encryption_key": ""  # Optional: omit, or exactly 64 hexadecimal characters
 	}
 
 	# Merge user config with defaults
@@ -104,8 +104,8 @@ func initialize(config: Dictionary = {}) -> bool:
 			return false
 
 	var encryption_key := str(default_config["encryption_key"])
-	if encryption_key.length() != 64 or not encryption_key.is_valid_hex_number():
-		print("EpicOS: ERROR - encryption_key must be exactly 64 hexadecimal characters (0-9, a-f)")
+	if not encryption_key.is_empty() and (encryption_key.length() != 64 or not encryption_key.is_valid_hex_number()):
+		print("EpicOS: ERROR - encryption_key is optional; if set, it must be exactly 64 hexadecimal characters (0-9, a-f)")
 		print("EpicOS: Got encryption_key length: ", encryption_key.length())
 		return false
 

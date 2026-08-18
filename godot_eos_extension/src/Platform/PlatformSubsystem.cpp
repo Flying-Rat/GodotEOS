@@ -169,7 +169,7 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
         UtilityFunctions::printerr("If no EOS log named a field, verify each value from the Epic Developer Portal:");
         UtilityFunctions::printerr("- product_id, sandbox_id, and deployment_id belong to the same product/sandbox");
         UtilityFunctions::printerr("- client_id and client_secret belong to that product");
-        UtilityFunctions::printerr("- encryption_key is exactly 64 hexadecimal characters");
+        UtilityFunctions::printerr("- encryption_key is omitted, or exactly 64 hexadecimal characters");
         EOS_Shutdown();
         return false;
     }

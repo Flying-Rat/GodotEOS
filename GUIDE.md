@@ -169,7 +169,7 @@ The `EpicOS.initialize()` method accepts a dictionary with these options:
 | `deployment_id` | String | **Yes** | Deployment configuration ID |
 | `client_id` | String | **Yes** | OAuth client ID |
 | `client_secret` | String | **Yes** | OAuth client secret |
-| `encryption_key` | String | No | 64-character hex encryption key (optional) |
+| `encryption_key` | String | No | Optional. If set, must be exactly 64 hexadecimal characters. |
 
 ## Usage Examples
 
