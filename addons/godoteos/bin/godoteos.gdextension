@@ -15,11 +15,3 @@ windows.debug.x86_64 = "res://addons/godoteos/bin/windows/libgodoteos.windows.te
 windows.release.x86_64 = "res://addons/godoteos/bin/windows/libgodoteos.windows.template_release.x86_64.dll"
 linux.debug.x86_64 = "res://addons/godoteos/bin/linux/libgodoteos.linux.template_debug.x86_64.so"
 linux.release.x86_64 = "res://addons/godoteos/bin/linux/libgodoteos.linux.template_release.x86_64.so"
-
-[dependencies]
-ios.debug = {
-    "res://addons/godoteos/bin/macos/libgodot-cpp.ios.template_debug.xcframework": ""
-}
-ios.release = {
-    "res://addons/godoteos/bin/macos/libgodot-cpp.ios.template_release.xcframework": ""
-}
