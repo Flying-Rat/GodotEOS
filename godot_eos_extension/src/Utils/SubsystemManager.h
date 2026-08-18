@@ -2,6 +2,7 @@
 
 #include "ISubsystem.h"
 #include "Logger.h"
+#include <godot_cpp/variant/variant.hpp>
 #include <typeindex>
 #include <unordered_map>
 #include <memory>
