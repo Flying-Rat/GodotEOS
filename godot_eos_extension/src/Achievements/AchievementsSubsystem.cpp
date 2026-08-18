@@ -218,7 +218,9 @@ Dictionary AchievementsSubsystem::GetAchievementDefinition(const String& achieve
 
     EOS_Achievements_CopyAchievementDefinitionV2ByAchievementIdOptions options = {};
     options.ApiVersion = EOS_ACHIEVEMENTS_COPYACHIEVEMENTDEFINITIONV2BYACHIEVEMENTID_API_LATEST;
-    options.AchievementId = achievement_id.utf8().get_data();
+    // Keep the UTF-8 buffer alive until the EOS call below returns.
+    const CharString achievement_id_utf8 = achievement_id.utf8();
+    options.AchievementId = achievement_id_utf8.get_data();
 
     EOS_Achievements_DefinitionV2* definition = nullptr;
     EOS_EResult eos_result = EOS_Achievements_CopyAchievementDefinitionV2ByAchievementId(achievements_handle, &options, &definition);
@@ -261,7 +263,9 @@ Dictionary AchievementsSubsystem::GetPlayerAchievement(const String& achievement
     EOS_Achievements_CopyPlayerAchievementByAchievementIdOptions options = {};
     options.ApiVersion = EOS_ACHIEVEMENTS_COPYPLAYERACHIEVEMENTBYACHIEVEMENTID_API_LATEST;
     options.TargetUserId = product_user_id;
-    options.AchievementId = achievement_id.utf8().get_data();
+    // Keep the UTF-8 buffer alive until the EOS call below returns.
+    const CharString achievement_id_utf8 = achievement_id.utf8();
+    options.AchievementId = achievement_id_utf8.get_data();
     options.LocalUserId = product_user_id;
 
     EOS_Achievements_PlayerAchievement* achievement = nullptr;

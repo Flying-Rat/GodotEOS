@@ -14,9 +14,22 @@ using namespace godot;
 
 struct QueryExternalAccountMappingsContext {
     FriendsSubsystem* subsystem;
-    std::vector<godot::String> OutstandingExternalAccountsToQueryStrings;
+    // Owning UTF-8 storage. godot::String is UTF-32 internally, so a pointer
+    // cannot be taken into it, and String::utf8() returns a temporary that dies
+    // at the end of the full expression. The buffers must be owned here.
+    std::vector<godot::CharString> OutstandingExternalAccountsToQueryUtf8;
     std::vector<const char*> OutstandingExternalAccountsToQueryChars;
     std::vector<EOS_EpicAccountId> OutstandingExternalAccountsToQueryEpicIDs;
+
+    // Must be called once the context is in its final location - pointers are
+    // only valid when built from this object's own storage, after any move.
+    void RebuildCharPointers() {
+        OutstandingExternalAccountsToQueryChars.clear();
+        OutstandingExternalAccountsToQueryChars.reserve(OutstandingExternalAccountsToQueryUtf8.size());
+        for (const godot::CharString& utf8 : OutstandingExternalAccountsToQueryUtf8) {
+            OutstandingExternalAccountsToQueryChars.push_back(utf8.get_data());
+        }
+    }
 };
 
 FriendsSubsystem::FriendsSubsystem()
@@ -251,8 +264,7 @@ void FriendsSubsystem::update_friends_list() {
 
     int32_t friends_count = EOS_Friends_GetFriendsCount(friends_handle, &count_options);
 
-    std::vector<godot::String> OutstandingExternalAccountsToQueryStrings;
-	std::vector<const char*> OutstandingExternalAccountsToQueryChars;
+    std::vector<godot::CharString> OutstandingExternalAccountsToQueryUtf8;
     std::vector<EOS_EpicAccountId> OutstandingExternalAccountsToQueryEpicIDs;
 
     for (int32_t i = 0; i < friends_count; i++) {
@@ -268,22 +280,29 @@ void FriendsSubsystem::update_friends_list() {
         }
 
         String friend_id_str = FAccountHelpers::EpicAccountIDToString(friend_id);
-        OutstandingExternalAccountsToQueryStrings.push_back(friend_id_str);
-        OutstandingExternalAccountsToQueryChars.push_back(friend_id_str.utf8().get_data());
+        OutstandingExternalAccountsToQueryUtf8.push_back(friend_id_str.utf8());
         OutstandingExternalAccountsToQueryEpicIDs.push_back(friend_id);
+    }
+
+    if (OutstandingExternalAccountsToQueryUtf8.empty()) {
+        Logger::Info("Friends", "No friends to map to product user IDs");
+        friends_cached = true;
+        return;
     }
 
     // Get ProductUserId for each friend
     EOS_HConnect connect_handle = EOS_Platform_GetConnectInterface(platform->GetPlatformHandle());
     if (connect_handle) {
-        auto context = new QueryExternalAccountMappingsContext{this, 
-            std::move(OutstandingExternalAccountsToQueryStrings), 
-            std::move(OutstandingExternalAccountsToQueryChars),
+        auto context = new QueryExternalAccountMappingsContext{this,
+            std::move(OutstandingExternalAccountsToQueryUtf8),
+            {},
             std::move(OutstandingExternalAccountsToQueryEpicIDs)
         };
+        // Build the pointer array from the context's own storage, after the move.
+        context->RebuildCharPointers();
 
         EOS_Connect_QueryExternalAccountMappingsOptions mapping_options = {};
-        mapping_options.ApiVersion = EOS_CONNECT_GETPRODUCTUSERIDMAPPING_API_LATEST;
+        mapping_options.ApiVersion = EOS_CONNECT_QUERYEXTERNALACCOUNTMAPPINGS_API_LATEST;
         mapping_options.LocalUserId = auth->GetProductUserId();
         mapping_options.AccountIdType = EOS_EExternalAccountType::EOS_EAT_EPIC;
 
@@ -373,7 +392,10 @@ void EOS_CALL FriendsSubsystem::on_query_external_account_mappings(const EOS_Con
             Options.AccountIdType = EOS_EExternalAccountType::EOS_EAT_EPIC;
             Options.LocalUserId = Get<IAuthenticationSubsystem>()->GetProductUserId();
             String NextIdString = FAccountHelpers::EpicAccountIDToString(NextId);
-            Options.TargetExternalUserId = NextIdString.utf8().get_data();
+            // Keep the UTF-8 buffer alive for the duration of the EOS call -
+            // String::utf8() returns a temporary that dies at the semicolon.
+            CharString NextIdUtf8 = NextIdString.utf8();
+            Options.TargetExternalUserId = NextIdUtf8.get_data();
 
             EOS_HConnect ConnectHandle = EOS_Platform_GetConnectInterface(Get<IPlatformSubsystem>()->GetPlatformHandle());
             EOS_ProductUserId NewMapping = EOS_Connect_GetExternalAccountMapping(ConnectHandle, &Options);

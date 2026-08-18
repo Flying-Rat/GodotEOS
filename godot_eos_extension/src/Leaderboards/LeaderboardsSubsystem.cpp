@@ -222,7 +222,9 @@ bool LeaderboardsSubsystem::QueryLeaderboardUserScores(const String& leaderboard
     
 	EOS_Leaderboards_UserScoresQueryStatInfo StatInfoData;
     StatInfoData.ApiVersion = EOS_LEADERBOARDS_USERSCORESQUERYSTATINFO_API_LATEST;
-    StatInfoData.StatName = stat_name.utf8().get_data();
+    // Keep the UTF-8 buffer alive until the EOS call below returns.
+    const CharString stat_name_utf8 = stat_name.utf8();
+    StatInfoData.StatName = stat_name_utf8.get_data();
     StatInfoData.Aggregation = EOS_ELeaderboardAggregation::EOS_LA_Sum;
 
     QueryUserScoresOptions.StatInfo = &StatInfoData;
@@ -477,7 +479,9 @@ void EOS_CALL LeaderboardsSubsystem::on_query_leaderboard_user_scores_complete(c
 
             EOS_Leaderboards_GetLeaderboardUserScoreCountOptions options = {0};
             options.ApiVersion = EOS_LEADERBOARDS_GETLEADERBOARDUSERSCORECOUNT_API_LATEST;
-            options.StatName = stat_name.utf8().get_data();
+            // Keep the UTF-8 buffer alive until the EOS call below returns.
+            const CharString stat_name_utf8 = stat_name.utf8();
+            options.StatName = stat_name_utf8.get_data();
 
             uint32_t count = EOS_Leaderboards_GetLeaderboardUserScoreCount(self->leaderboards_handle, &options);
 
