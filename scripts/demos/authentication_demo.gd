@@ -77,19 +77,43 @@ func _ready():
 # BUTTON HANDLERS
 # ============================================================================
 
+const CREDENTIALS_PATH := "res://eos_credentials.secrets"
+
+# Credentials are read from a gitignored file so real values never enter the
+# repository. Copy eos_credentials.secrets.example, fill it in, and drop the
+# ".example" suffix. Keys map 1:1 onto EpicOS.initialize().
+func _load_credentials() -> Dictionary:
+	var file := ConfigFile.new()
+	if file.load(CREDENTIALS_PATH) != OK:
+		_log_message("[color=red]✗ No credentials found at " + CREDENTIALS_PATH + "[/color]")
+		_log_message("[color=yellow]Copy eos_credentials.secrets.example, fill in your values from the[/color]")
+		_log_message("[color=yellow]Epic Developer Portal, and remove the .example suffix.[/color]")
+		return {}
+
+	var config := {}
+	for key in ["product_name", "product_version", "product_id", "sandbox_id",
+			"deployment_id", "client_id", "client_secret", "encryption_key"]:
+		var value := str(file.get_value("eos", key, ""))
+		if not value.is_empty():
+			config[key] = value
+
+	var missing: PackedStringArray = []
+	for required in ["product_id", "sandbox_id", "deployment_id", "client_id", "client_secret"]:
+		if not config.has(required):
+			missing.append(required)
+	if not missing.is_empty():
+		_log_message("[color=red]✗ Missing in " + CREDENTIALS_PATH + ": " + ", ".join(missing) + "[/color]")
+		return {}
+
+	return config
+
+
 func _on_init_button_pressed():
 	_log_message("[color=yellow]🔧 InitializePlatform() - Setting up EOS platform...[/color]")
 
-	var config = { 
-    	"product_name": "Rat-ical Racers", 
-    	"product_version": "1.0.0", 
-    	"product_id": "b6de3252b15e4788bef3916c30b722c5", 
-    	"sandbox_id": "p-4qk84cb8wnupy4yjpzzelvsemyq8py", 
-    	"deployment_id": "d94a05975baa43a5ad5103c12a97a0b3", 
-    	"client_id": "xyza7891h0KCGiva2k7qyQPpNfgLiDAM", 
-    	"client_secret": "0RMgyWBrZNv+JQ49iQhEj9vqCU7Xn9qAvF2DYLd7oIs",
-    	"encryption_key": "1111111111111111111111111111111111111111111111111111111111111111"
- 		} 
+	var config = _load_credentials()
+	if config.is_empty():
+		return
 
 	if EpicOS:
 		is_platform_initialized = EpicOS.initialize(config)
