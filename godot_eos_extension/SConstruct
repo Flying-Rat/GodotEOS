@@ -2,7 +2,7 @@
 import os
 import sys
 
-from SCons.Script import ARGUMENTS, Default, Glob, SConscript, Variables
+from SCons.Script import ARGUMENTS, Default, Exit, Glob, SConscript, Variables
 
 eos_sdk_override = ARGUMENTS.pop("EOS_SDK_PATH", None)
 
@@ -29,8 +29,13 @@ env.Append(CPPPATH=["src/", eos_sdk + "/Include"])
 
 
 if env["platform"] == "windows":
+    if env["arch"] == "x86_32":
+        # The addon manifest declares x86_64 only, so a 32-bit build produces a
+        # binary Godot will never load. EOS SDK 1.19 also dropped the Win32
+        # library entirely. Fail clearly rather than at link time.
+        print("ERROR: arch=x86_32 is not supported - addons/godoteos/bin/godoteos.gdextension declares x86_64 only.")
+        Exit(1)
     env.Append(LIBPATH=[eos_sdk + "/Lib"])
-    # EOS SDK 1.19 no longer ships EOSSDK-Win32-Shipping; x86_64 only.
     env.Append(LIBS=["EOSSDK-Win64-Shipping"])
     # Enable C++ exception handling to fix C4530 warning
     env.Append(CXXFLAGS=["/EHsc"])
