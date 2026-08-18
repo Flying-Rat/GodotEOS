@@ -274,10 +274,15 @@ void FriendsSubsystem::update_friends_list() {
         friend_options.Index = i;
 
         EOS_EpicAccountId friend_id = EOS_Friends_GetFriendAtIndex(friends_handle, &friend_options);
-        if (friend_id) {
-            Dictionary friend_info = create_friend_info_dict(friend_id);
-            friends_list.append(friend_info);
+        if (!friend_id) {
+            // Stringifying a null id yields the literal "NULL", which EOS rejects
+            // and which would take the rest of the batch down with it.
+            Logger::Warning("Friends", "Null friend at index " + String::num_int64(i) + " - skipping");
+            continue;
         }
+
+        Dictionary friend_info = create_friend_info_dict(friend_id);
+        friends_list.append(friend_info);
 
         String friend_id_str = FAccountHelpers::EpicAccountIDToString(friend_id);
         OutstandingExternalAccountsToQueryUtf8.push_back(friend_id_str.utf8());
@@ -293,25 +298,38 @@ void FriendsSubsystem::update_friends_list() {
     // Get ProductUserId for each friend
     EOS_HConnect connect_handle = EOS_Platform_GetConnectInterface(platform->GetPlatformHandle());
     if (connect_handle) {
-        auto context = new QueryExternalAccountMappingsContext{this,
-            std::move(OutstandingExternalAccountsToQueryUtf8),
-            {},
-            std::move(OutstandingExternalAccountsToQueryEpicIDs)
-        };
-        // Build the pointer array from the context's own storage, after the move.
-        context->RebuildCharPointers();
+        // EOS rejects the whole call above EOS_CONNECT_QUERYEXTERNALACCOUNTMAPPINGS_MAX_ACCOUNT_IDS,
+        // so a player over the limit would get no mappings at all rather than a partial
+        // result. Issue one query per chunk, each owning its own context.
+        const size_t total = OutstandingExternalAccountsToQueryUtf8.size();
+        const size_t chunk_size = EOS_CONNECT_QUERYEXTERNALACCOUNTMAPPINGS_MAX_ACCOUNT_IDS;
 
-        EOS_Connect_QueryExternalAccountMappingsOptions mapping_options = {};
-        mapping_options.ApiVersion = EOS_CONNECT_QUERYEXTERNALACCOUNTMAPPINGS_API_LATEST;
-        mapping_options.LocalUserId = auth->GetProductUserId();
-        mapping_options.AccountIdType = EOS_EExternalAccountType::EOS_EAT_EPIC;
+        Logger::Info("Friends", "Querying external account mappings for " + String::num_int64(total)
+            + " friends in " + String::num_int64((total + chunk_size - 1) / chunk_size) + " request(s)");
 
-        mapping_options.ExternalAccountIdCount = context->OutstandingExternalAccountsToQueryChars.size();
-        mapping_options.ExternalAccountIds = context->OutstandingExternalAccountsToQueryChars.data();
+        for (size_t offset = 0; offset < total; offset += chunk_size) {
+            const size_t count = (total - offset < chunk_size) ? (total - offset) : chunk_size;
 
-        Logger::Info("Friends", "Querying external account mappings for " + String::num_int64(mapping_options.ExternalAccountIdCount) + " friends");
+            auto context = new QueryExternalAccountMappingsContext{this, {}, {}, {}};
+            context->OutstandingExternalAccountsToQueryUtf8.assign(
+                OutstandingExternalAccountsToQueryUtf8.begin() + offset,
+                OutstandingExternalAccountsToQueryUtf8.begin() + offset + count);
+            context->OutstandingExternalAccountsToQueryEpicIDs.assign(
+                OutstandingExternalAccountsToQueryEpicIDs.begin() + offset,
+                OutstandingExternalAccountsToQueryEpicIDs.begin() + offset + count);
+            // Build the pointer array from the context's own storage, once it is final.
+            context->RebuildCharPointers();
 
-        EOS_Connect_QueryExternalAccountMappings(connect_handle, &mapping_options, context, on_query_external_account_mappings);
+            EOS_Connect_QueryExternalAccountMappingsOptions mapping_options = {};
+            mapping_options.ApiVersion = EOS_CONNECT_QUERYEXTERNALACCOUNTMAPPINGS_API_LATEST;
+            mapping_options.LocalUserId = auth->GetProductUserId();
+            mapping_options.AccountIdType = EOS_EExternalAccountType::EOS_EAT_EPIC;
+
+            mapping_options.ExternalAccountIdCount = static_cast<uint32_t>(context->OutstandingExternalAccountsToQueryChars.size());
+            mapping_options.ExternalAccountIds = context->OutstandingExternalAccountsToQueryChars.data();
+
+            EOS_Connect_QueryExternalAccountMappings(connect_handle, &mapping_options, context, on_query_external_account_mappings);
+        }
     }
 
     friends_cached = true;
