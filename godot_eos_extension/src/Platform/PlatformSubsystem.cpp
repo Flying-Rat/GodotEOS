@@ -1,11 +1,10 @@
 #include "PlatformSubsystem.h"
 #include "../Utils/InitOptionsValidation.h"
+#include "../Utils/Logger.h"
 #include <eos_sdk.h>
 #include <eos_logging.h>
 #include <eos_achievements.h>
 #include <cstring>
-#include <godot_cpp/core/error_macros.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
 
@@ -22,21 +21,23 @@ void EOS_CALL platform_logging_callback(const EOS_LogMessage* message) {
 
     String log_text = String::utf8(message->Message);
     String category = message->Category ? String::utf8(message->Category) : "EOS";
-    String log_msg = String("[") + category + "] " + log_text;
+    if (category.is_empty()) {
+        category = "EOS";
+    }
 
     switch (message->Level) {
         case EOS_ELogLevel::EOS_LOG_Fatal:
         case EOS_ELogLevel::EOS_LOG_Error:
-            UtilityFunctions::printerr(log_msg);
+            Logger::Error(category, log_text);
             break;
         case EOS_ELogLevel::EOS_LOG_Warning:
-            WARN_PRINT(log_msg);
+            Logger::Warning(category, log_text);
             break;
         case EOS_ELogLevel::EOS_LOG_Info:
         case EOS_ELogLevel::EOS_LOG_Verbose:
         case EOS_ELogLevel::EOS_LOG_VeryVerbose:
         default:
-            UtilityFunctions::print(log_msg);
+            Logger::Info(category, log_text);
             break;
     }
 }
@@ -50,12 +51,12 @@ PlatformSubsystem::~PlatformSubsystem() {
 }
 
 bool PlatformSubsystem::Init() {
-    UtilityFunctions::print("PlatformSubsystem: Initializing...");
+    Logger::Info("Platform", "Initializing...");
     // PlatformSubsystem now handles its own initialization
     // The actual EOS SDK initialization happens in initialize() method
     initialized = true;
     online = true;
-    UtilityFunctions::print("PlatformSubsystem: Initialized successfully");
+    Logger::Info("Platform", "Initialized successfully");
     return true;
 }
 
@@ -78,12 +79,12 @@ void PlatformSubsystem::Shutdown() {
     EOS_Shutdown();
     initialized = false;
     online = false;
-    UtilityFunctions::print("PlatformSubsystem: Shutdown complete");
+    Logger::Info("Platform", "Shutdown complete");
 }
 
 bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
     if (initialized && platform_handle) {
-        UtilityFunctions::printerr("EOS Platform already initialized");
+        Logger::Error("Platform", "EOS Platform already initialized");
         return true;
     }
 
@@ -103,11 +104,11 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
 
     // Sanity checks before calling EOS_Initialize
     if (!InitOptions.ProductName || strlen(InitOptions.ProductName) == 0) {
-        UtilityFunctions::printerr("InitOptions.ProductName is empty or null");
+        Logger::Error("Platform", "InitOptions.ProductName is empty or null");
         return false;
     }
     if (!InitOptions.ProductVersion || strlen(InitOptions.ProductVersion) == 0) {
-        UtilityFunctions::printerr("InitOptions.ProductVersion is empty or null");
+        Logger::Error("Platform", "InitOptions.ProductVersion is empty or null");
         return false;
     }
 
@@ -115,21 +116,21 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
     if (InitResult != EOS_EResult::EOS_Success) {
         const char* result_str = EOS_EResult_ToString(InitResult);
         String error_msg = "Failed to initialize EOS SDK: " + String(result_str) + " (" + String::num_int64(static_cast<int64_t>(InitResult)) + ")";
-        UtilityFunctions::printerr(error_msg);
+        Logger::Error("Platform", error_msg);
         return false;
     }
 
     // Logging must be registered after EOS_Initialize so SDK errors from Platform_Create are visible.
     EOS_EResult log_result = EOS_Logging_SetCallback(platform_logging_callback);
     if (log_result != EOS_EResult::EOS_Success) {
-        UtilityFunctions::printerr("Failed to set EOS logging callback: " + String(EOS_EResult_ToString(log_result)) + " (" + String::num_int64(static_cast<int64_t>(log_result)) + ")");
+        Logger::Error("Platform", "Failed to set EOS logging callback: " + String(EOS_EResult_ToString(log_result)) + " (" + String::num_int64(static_cast<int64_t>(log_result)) + ")");
     } else {
         EOS_Logging_SetLogLevel(EOS_ELogCategory::EOS_LC_ALL_CATEGORIES, EOS_ELogLevel::EOS_LOG_Verbose);
     }
 
     String encryption_key_error = ValidateEncryptionKey(options.encryption_key);
     if (!encryption_key_error.is_empty()) {
-        UtilityFunctions::printerr(encryption_key_error);
+        Logger::Error("Platform", encryption_key_error);
         EOS_Shutdown();
         return false;
     }
@@ -164,12 +165,12 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
 
     platform_handle = EOS_Platform_Create(&PlatformOptions);
     if (!platform_handle) {
-        UtilityFunctions::printerr("Failed to create EOS Platform (EOS_Platform_Create returned nullptr).");
-        UtilityFunctions::printerr("Check the EOS log lines above for the SDK's specific reason.");
-        UtilityFunctions::printerr("If no EOS log named a field, verify each value from the Epic Developer Portal:");
-        UtilityFunctions::printerr("- product_id, sandbox_id, and deployment_id belong to the same product/sandbox");
-        UtilityFunctions::printerr("- client_id and client_secret belong to that product");
-        UtilityFunctions::printerr("- encryption_key is omitted, or exactly 64 hexadecimal characters");
+        Logger::Error("Platform", "Failed to create EOS Platform (EOS_Platform_Create returned nullptr).");
+        Logger::Error("Platform", "Check the EOS log lines above for the SDK's specific reason.");
+        Logger::Error("Platform", "If no EOS log named a field, verify each value from the Epic Developer Portal:");
+        Logger::Error("Platform", "- product_id, sandbox_id, and deployment_id belong to the same product/sandbox");
+        Logger::Error("Platform", "- client_id and client_secret belong to that product");
+        Logger::Error("Platform", "- encryption_key is omitted, or exactly 64 hexadecimal characters");
         EOS_Shutdown();
         return false;
     }
@@ -177,7 +178,7 @@ bool PlatformSubsystem::InitializePlatform(const EpicInitOptions& options) {
     initialized = true;
     online = true;
     // IPlatform::set(this); // Removed - using subsystem architecture instead
-    WARN_PRINT("EOS Platform initialized successfully");
+    Logger::Info("Platform", "EOS Platform initialized successfully");
     return true;
 }
 

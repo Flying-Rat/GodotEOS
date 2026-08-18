@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ISubsystem.h"
-#include <godot_cpp/variant/utility_functions.hpp>
+#include "Logger.h"
 #include <typeindex>
 #include <unordered_map>
 #include <memory>
@@ -69,14 +69,14 @@ public:
 
         // Check for duplicate registration
         if (subsystems.find(type_index) != subsystems.end()) {
-            UtilityFunctions::printerr("Subsystem already registered for interface: ", name.c_str());
+            Logger::Error("Core", String("Subsystem already registered for interface: ") + name.c_str());
             return;
         }
 
         subsystems[type_index] = std::make_unique<ImplType>();
         subsystem_names[type_index] = name;
 
-        UtilityFunctions::print("Registered subsystem: ", name.c_str());
+        Logger::Info("Core", String("Registered subsystem: ") + name.c_str());
     }
 
     /**

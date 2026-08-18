@@ -29,16 +29,23 @@ var _godot_epic: GodotEOS = null
 var _initialized: bool = false
 var _debug_mode: bool = false
 
+func _log(message: String) -> void:
+	print("[GodotEOS] EpicOS: ", message)
+
+func _log_error(message: String) -> void:
+	printerr("[GodotEOS] EpicOS: ", message)
+
+
 func _ready():
-	print("EpicOS: Initializing Epic Online Services...")
+	_log("Initializing Epic Online Services...")
 	# Get the GodotEOS singleton from the GDExtension
 	_godot_epic = GodotEOS.get_singleton()
 	if not _godot_epic:
-		print("EpicOS: ERROR - GodotEOS GDExtension not found!")
-		print("EpicOS: Make sure the GodotEOS extension is properly installed and enabled.")
+		_log_error("GodotEOS GDExtension not found!")
+		_log("Make sure the GodotEOS extension is properly installed and enabled.")
 		return
 
-	print("EpicOS: GodotEOS GDExtension found successfully")
+	_log("GodotEOS GDExtension found successfully")
 	_setup_signal_connections()
 
 func _setup_signal_connections():
@@ -69,14 +76,14 @@ func _setup_signal_connections():
 func initialize(config: Dictionary = {}) -> bool:
 	"""Initialize the EOS SDK with configuration options"""
 	if _debug_mode:
-		print("EpicOS: initialize() called")
+		_log("initialize() called")
 
 	if not _godot_epic:
-		print("EpicOS: ERROR - GodotEOS GDExtension not available")
+		_log_error("GodotEOS GDExtension not available")
 		return false
 
 	if _initialized:
-		print("EpicOS: Already initialized")
+		_log("Already initialized")
 		return true
 
 	# Default configuration - override with your actual Epic credentials
@@ -99,31 +106,31 @@ func initialize(config: Dictionary = {}) -> bool:
 	var required_fields = ["product_id", "sandbox_id", "deployment_id", "client_id", "client_secret"]
 	for field in required_fields:
 		if default_config[field] == "":
-			print("EpicOS: ERROR - Missing required field: ", field)
-			print("EpicOS: Please provide all Epic credentials in the configuration")
+			_log_error("Missing required field: " + str(field))
+			_log("Please provide all Epic credentials in the configuration")
 			return false
 
 	var encryption_key := str(default_config["encryption_key"])
 	if not encryption_key.is_empty() and (encryption_key.length() != 64 or not encryption_key.is_valid_hex_number()):
-		print("EpicOS: ERROR - encryption_key is optional; if set, it must be exactly 64 hexadecimal characters (0-9, a-f)")
-		print("EpicOS: Got encryption_key length: ", encryption_key.length())
+		_log_error("encryption_key is optional; if set, it must be exactly 64 hexadecimal characters (0-9, a-f)")
+		_log("Got encryption_key length: " + str(encryption_key.length()))
 		return false
 
-	print("EpicOS: Initializing EOS SDK...")
+	_log("Initializing EOS SDK...")
 	_initialized = _godot_epic.initialize_platform(default_config)
 
 	if _initialized:
-		print_rich("[color=green]EpicOS: EOS SDK initialized successfully[/color]")
+		_log("EOS SDK initialized successfully")
 	else:
-		print_rich("[color=red]EpicOS: ERROR - Failed to initialize EOS SDK[/color]")
-		print("EpicOS: Check the Godot output above for the specific field (product_id, sandbox_id, deployment_id, client_id, client_secret, or encryption_key).")
+		_log_error("Failed to initialize EOS SDK")
+		_log("Check the Godot output above for the specific field (product_id, sandbox_id, deployment_id, client_id, client_secret, or encryption_key).")
 
 	return _initialized
 
 func set_debug_mode(enabled: bool):
 	"""Enable or disable debug logging"""
 	_debug_mode = enabled
-	print("EpicOS: Debug mode ", "enabled" if enabled else "disabled")
+	_log("Debug mode " + ("enabled" if enabled else "disabled"))
 
 func tick(delta: float = 0.0):
 	"""Tick the EOS platform - should be called every frame"""
@@ -145,12 +152,12 @@ func get_platform_handle():
 func shutdown():
 	"""Shutdown the EOS platform"""
 	if _debug_mode:
-		print("EpicOS: shutdown() called")
+		_log("shutdown() called")
 
 	if _godot_epic and _initialized:
 		_godot_epic.shutdown_platform()
 		_initialized = false
-		print("EpicOS: EOS platform shutdown complete")
+		_log("EOS platform shutdown complete")
 
 # =============================================================================
 # AUTHENTICATION METHODS
@@ -159,10 +166,10 @@ func shutdown():
 func login_with_epic_account(email: String, password: String):
 	"""Authenticate with Epic Games using email and password"""
 	if _debug_mode:
-		print("EpicOS: login_with_epic_account() called")
+		_log("login_with_epic_account() called")
 
 	if not _initialized:
-		print("EpicOS: Error - Not initialized. Call initialize() first.")
+		_log_error("Not initialized. Call initialize() first.")
 		return
 
 	_godot_epic.login_with_epic_account(email, password)
@@ -170,10 +177,10 @@ func login_with_epic_account(email: String, password: String):
 func login_with_account_portal():
 	"""Authenticate with Epic Games using the account portal"""
 	if _debug_mode:
-		print("EpicOS: login_with_account_portal() called")
+		_log("login_with_account_portal() called")
 
 	if not _initialized:
-		print("EpicOS: Error - Not initialized. Call initialize() first.")
+		_log_error("Not initialized. Call initialize() first.")
 		return
 
 	_godot_epic.login_with_account_portal()
@@ -181,10 +188,10 @@ func login_with_account_portal():
 func login_with_device_id(display_name: String):
 	"""Authenticate with Epic Games using device ID"""
 	if _debug_mode:
-		print("EpicOS: login_with_device_id() called")
+		_log("login_with_device_id() called")
 
 	if not _initialized:
-		print("EpicOS: Error - Not initialized. Call initialize() first.")
+		_log_error("Not initialized. Call initialize() first.")
 		return
 
 	_godot_epic.login_with_device_id(display_name)
@@ -192,10 +199,10 @@ func login_with_device_id(display_name: String):
 func login_with_dev(display_name: String):
 	"""Authenticate with Epic Games using developer credentials (for testing)"""
 	if _debug_mode:
-		print("EpicOS: login_with_dev() called")
+		_log("login_with_dev() called")
 
 	if not _initialized:
-		print("EpicOS: Error - Not initialized. Call initialize() first.")
+		_log_error("Not initialized. Call initialize() first.")
 		return
 
 	_godot_epic.login_with_dev(display_name)
@@ -203,10 +210,10 @@ func login_with_dev(display_name: String):
 func logout():
 	"""Sign out the current user"""
 	if _debug_mode:
-		print("EpicOS: logout() called")
+		_log("logout() called")
 
 	if not _initialized:
-		print("EpicOS: Error - Not initialized. Call initialize() first.")
+		_log_error("Not initialized. Call initialize() first.")
 		return
 
 	_godot_epic.logout()
@@ -242,10 +249,10 @@ func get_product_user_id() -> String:
 func query_friends():
 	"""Query the user's friends list"""
 	if _debug_mode:
-		print("EpicOS: query_friends() called")
+		_log("query_friends() called")
 
 	if not _initialized:
-		print("EpicOS: Error - Not initialized. Call initialize() first.")
+		_log_error("Not initialized. Call initialize() first.")
 		return
 
 	_godot_epic.query_friends()
@@ -265,10 +272,10 @@ func get_user_info(target_user_id: String) -> Dictionary:
 func query_all_friends_info():
 	"""Query information about all friends"""
 	if _debug_mode:
-		print("EpicOS: query_all_friends_info() called")
+		_log("query_all_friends_info() called")
 
 	if not _initialized:
-		print("EpicOS: Error - Not initialized. Call initialize() first.")
+		_log_error("Not initialized. Call initialize() first.")
 		return
 
 	_godot_epic.query_all_friends_info()
@@ -280,10 +287,10 @@ func query_all_friends_info():
 func query_user_info(target_user_id: String):
 	"""Query user information for a specific user"""
 	if _debug_mode:
-		print("EpicOS: query_user_info() called for target: ", target_user_id)
+		_log("query_user_info() called for target: " + str(target_user_id))
 
 	if not _initialized:
-		print("EpicOS: Error - Not initialized. Call initialize() first.")
+		_log_error("Not initialized. Call initialize() first.")
 		return
 
 	_godot_epic.query_user_info(target_user_id)
@@ -294,10 +301,10 @@ func query_user_info(target_user_id: String):
 func query_achievement_definitions():
 	"""Query all achievement definitions"""
 	if _debug_mode:
-		print("EpicOS: query_achievement_definitions() called")
+		_log("query_achievement_definitions() called")
 
 	if not _initialized:
-		print("EpicOS: Error - Not initialized. Call initialize() first.")
+		_log_error("Not initialized. Call initialize() first.")
 		return
 
 	_godot_epic.query_achievement_definitions()
@@ -305,10 +312,10 @@ func query_achievement_definitions():
 func query_player_achievements():
 	"""Query the player's achievement progress"""
 	if _debug_mode:
-		print("EpicOS: query_player_achievements() called")
+		_log("query_player_achievements() called")
 
 	if not _initialized:
-		print("EpicOS: Error - Not initialized. Call initialize() first.")
+		_log_error("Not initialized. Call initialize() first.")
 		return
 
 	_godot_epic.query_player_achievements()
@@ -316,10 +323,10 @@ func query_player_achievements():
 func unlock_achievement(achievement_id: String):
 	"""Unlock a single achievement"""
 	if _debug_mode:
-		print("EpicOS: unlock_achievement() called for: ", achievement_id)
+		_log("unlock_achievement() called for: " + str(achievement_id))
 
 	if not _initialized:
-		print("EpicOS: Error - Not initialized. Call initialize() first.")
+		_log_error("Not initialized. Call initialize() first.")
 		return
 
 	_godot_epic.unlock_achievement(achievement_id)
@@ -327,10 +334,10 @@ func unlock_achievement(achievement_id: String):
 func unlock_achievements(achievement_ids: Array):
 	"""Unlock multiple achievements"""
 	if _debug_mode:
-		print("EpicOS: unlock_achievements() called for: ", achievement_ids)
+		_log("unlock_achievements() called for: " + str(achievement_ids))
 
 	if not _initialized:
-		print("EpicOS: Error - Not initialized. Call initialize() first.")
+		_log_error("Not initialized. Call initialize() first.")
 		return
 
 	_godot_epic.unlock_achievements(achievement_ids)
@@ -366,10 +373,10 @@ func get_player_achievement(achievement_id: String) -> Dictionary:
 func ingest_achievement_stat(stat_name: String, amount: int):
 	"""Ingest an achievement statistic"""
 	if _debug_mode:
-		print("EpicOS: ingest_achievement_stat() called for: ", stat_name, " amount: ", amount)
+		_log("ingest_achievement_stat() called for: " + str(stat_name) + " amount: " + str(amount))
 
 	if not _initialized:
-		print("EpicOS: Error - Not initialized. Call initialize() first.")
+		_log_error("Not initialized. Call initialize() first.")
 		return
 
 	_godot_epic.ingest_achievement_stat(stat_name, amount)
@@ -377,10 +384,10 @@ func ingest_achievement_stat(stat_name: String, amount: int):
 func query_achievement_stats():
 	"""Query achievement statistics"""
 	if _debug_mode:
-		print("EpicOS: query_achievement_stats() called")
+		_log("query_achievement_stats() called")
 
 	if not _initialized:
-		print("EpicOS: Error - Not initialized. Call initialize() first.")
+		_log_error("Not initialized. Call initialize() first.")
 		return
 
 	_godot_epic.query_achievement_stats()
@@ -404,10 +411,10 @@ func get_achievement_stat(stat_name: String) -> Dictionary:
 func query_leaderboard_definitions():
 	"""Query all leaderboard definitions"""
 	if _debug_mode:
-		print("EpicOS: query_leaderboard_definitions() called")
+		_log("query_leaderboard_definitions() called")
 
 	if not _initialized:
-		print("EpicOS: Error - Not initialized. Call initialize() first.")
+		_log_error("Not initialized. Call initialize() first.")
 		return
 
 	_godot_epic.query_leaderboard_definitions()
@@ -415,10 +422,10 @@ func query_leaderboard_definitions():
 func query_leaderboard_ranks(leaderboard_id: String, limit: int = 100):
 	"""Query leaderboard ranks"""
 	if _debug_mode:
-		print("EpicOS: query_leaderboard_ranks() called for: ", leaderboard_id, " limit: ", limit)
+		_log("query_leaderboard_ranks() called for: " + str(leaderboard_id) + " limit: " + str(limit))
 
 	if not _initialized:
-		print("EpicOS: Error - Not initialized. Call initialize() first.")
+		_log_error("Not initialized. Call initialize() first.")
 		return
 
 	_godot_epic.query_leaderboard_ranks(leaderboard_id, limit)
@@ -426,10 +433,10 @@ func query_leaderboard_ranks(leaderboard_id: String, limit: int = 100):
 func query_leaderboard_user_scores(leaderboard_id: String, user_ids: Array):
 	"""Query specific user scores for a leaderboard"""
 	if _debug_mode:
-		print("EpicOS: query_leaderboard_user_scores() called for: ", leaderboard_id, " users: ", user_ids)
+		_log("query_leaderboard_user_scores() called for: " + str(leaderboard_id) + " users: " + str(user_ids))
 
 	if not _initialized:
-		print("EpicOS: Error - Not initialized. Call initialize() first.")
+		_log_error("Not initialized. Call initialize() first.")
 		return
 
 	_godot_epic.query_leaderboard_user_scores(leaderboard_id, user_ids)
@@ -437,10 +444,10 @@ func query_leaderboard_user_scores(leaderboard_id: String, user_ids: Array):
 func ingest_stat(stat_name: String, value: int):
 	"""Ingest a single statistic for leaderboards"""
 	if _debug_mode:
-		print("EpicOS: ingest_stat() called for: ", stat_name, " value: ", value)
+		_log("ingest_stat() called for: " + str(stat_name) + " value: " + str(value))
 
 	if not _initialized:
-		print("EpicOS: Error - Not initialized. Call initialize() first.")
+		_log_error("Not initialized. Call initialize() first.")
 		return
 
 	_godot_epic.ingest_stat(stat_name, value)
@@ -448,10 +455,10 @@ func ingest_stat(stat_name: String, value: int):
 func ingest_stats(stats: Dictionary):
 	"""Ingest multiple statistics for leaderboards"""
 	if _debug_mode:
-		print("EpicOS: ingest_stats() called with: ", stats)
+		_log("ingest_stats() called with: " + str(stats))
 
 	if not _initialized:
-		print("EpicOS: Error - Not initialized. Call initialize() first.")
+		_log_error("Not initialized. Call initialize() first.")
 		return
 
 	_godot_epic.ingest_stats(stats)
@@ -481,73 +488,73 @@ func get_leaderboard_user_scores() -> Dictionary:
 func _on_authentication_completed(success: bool, user_info: Dictionary):
 	"""Handle authentication completion"""
 	if _debug_mode:
-		print("EpicOS: Authentication completed - Success: ", success)
+		_log("Authentication completed - Success: " + str(success))
 	login_completed.emit(success, user_info)
 
 func _on_logout_completed(success: bool):
 	"""Handle logout completion"""
 	if _debug_mode:
-		print("EpicOS: Logout completed - Success: ", success)
+		_log("Logout completed - Success: " + str(success))
 	logout_completed.emit(success)
 
 func _on_achievement_definitions_completed(success: bool, definitions: Array):
 	"""Handle achievement definitions query completion"""
 	if _debug_mode:
-		print("EpicOS: Achievement definitions completed - Success: ", success, " Count: ", definitions.size())
+		_log("Achievement definitions completed - Success: " + str(success) + " Count: " + str(definitions.size()))
 	achievement_definitions_completed.emit(success, definitions)
 
 func _on_player_achievements_completed(success: bool, achievements: Array):
 	"""Handle player achievements query completion"""
 	if _debug_mode:
-		print("EpicOS: Player achievements completed - Success: ", success, " Count: ", achievements.size())
+		_log("Player achievements completed - Success: " + str(success) + " Count: " + str(achievements.size()))
 	player_achievements_completed.emit(success, achievements)
 
 func _on_achievements_unlocked_completed(success: bool, unlocked_achievement_ids: Array):
 	"""Handle achievement unlock completion"""
 	if _debug_mode:
-		print("EpicOS: Achievements unlocked completed - Success: ", success, " IDs: ", unlocked_achievement_ids)
+		_log("Achievements unlocked completed - Success: " + str(success) + " IDs: " + str(unlocked_achievement_ids))
 	achievements_unlocked_completed.emit(success, unlocked_achievement_ids)
 
 func _on_achievement_stats_completed(success: bool, stats: Array):
 	"""Handle achievement stats query completion"""
 	if _debug_mode:
-		print("EpicOS: Achievement stats completed - Success: ", success, " Count: ", stats.size())
+		_log("Achievement stats completed - Success: " + str(success) + " Count: " + str(stats.size()))
 	achievement_stats_completed.emit(success, stats)
 
 func _on_stats_ingested(success: bool, stat_names: Array):
 	"""Handle stat ingestion completion"""
 	if _debug_mode:
-		print("EpicOS: Stats ingested - Success: ", success, " Stats: ", stat_names)
+		_log("Stats ingested - Success: " + str(success) + " Stats: " + str(stat_names))
 	stats_ingested.emit(success, stat_names)
 
 func _on_leaderboard_definitions_completed(success: bool, definitions: Array):
 	"""Handle leaderboard definitions query completion"""
 	if _debug_mode:
-		print("EpicOS: Leaderboard definitions completed - Success: ", success, " Count: ", definitions.size())
+		_log("Leaderboard definitions completed - Success: " + str(success) + " Count: " + str(definitions.size()))
 	leaderboard_definitions_completed.emit(success, definitions)
 
 func _on_leaderboard_ranks_completed(success: bool, ranks: Array):
 	"""Handle leaderboard ranks query completion"""
 	if _debug_mode:
-		print("EpicOS: Leaderboard ranks completed - Success: ", success, " Count: ", ranks.size())
+		_log("Leaderboard ranks completed - Success: " + str(success) + " Count: " + str(ranks.size()))
 	leaderboard_ranks_completed.emit(success, ranks)
 
 func _on_leaderboard_user_scores_completed(success: bool, user_scores: Dictionary):
 	"""Handle leaderboard user scores query completion"""
 	if _debug_mode:
-		print("EpicOS: Leaderboard user scores completed - Success: ", success, " Users: ", user_scores.size())
+		_log("Leaderboard user scores completed - Success: " + str(success) + " Users: " + str(user_scores.size()))
 	leaderboard_user_scores_completed.emit(success, user_scores)
 
 func _on_friends_query_completed(success: bool, friends_list: Array):
 	"""Handle friends query completion"""
 	if _debug_mode:
-		print("EpicOS: Friends query completed - Success: ", success, " Count: ", friends_list.size())
+		_log("Friends query completed - Success: " + str(success) + " Count: " + str(friends_list.size()))
 	friends_query_completed.emit(success, friends_list)
 
 func _on_user_info_query_completed(success: bool, user_info: Dictionary):
 	"""Handle user info query completion"""
 	if _debug_mode:
-		print("EpicOS: User info query completed - Success: ", success, " Info: ", user_info)
+		_log("User info query completed - Success: " + str(success) + " Info: " + str(user_info))
 	user_info_query_completed.emit(success, user_info)
 
 # =============================================================================

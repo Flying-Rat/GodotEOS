@@ -10,6 +10,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "../Utils/Logger.h"
 
 namespace godot {
 
@@ -40,35 +41,35 @@ AchievementsSubsystem::~AchievementsSubsystem() {
 }
 
 bool AchievementsSubsystem::Init() {
-    UtilityFunctions::print("AchievementsSubsystem: Initializing...");
+    Logger::Info("Achievements", "Initializing...");
 
     // Get and validate platform
     auto platform = Get<IPlatformSubsystem>();
     if (!platform || !platform->IsOnline()) {
-        UtilityFunctions::printerr("AchievementsSubsystem: Platform not available or offline");
+        Logger::Error("Achievements", "Platform not available or offline");
         return false;
     }
 
     EOS_HPlatform platform_handle = platform->GetPlatformHandle();
     if (!platform_handle) {
-        UtilityFunctions::printerr("AchievementsSubsystem: Invalid platform handle");
+        Logger::Error("Achievements", "Invalid platform handle");
         return false;
     }
 
     achievements_handle = EOS_Platform_GetAchievementsInterface(platform_handle);
     if (!achievements_handle) {
-        UtilityFunctions::printerr("AchievementsSubsystem: Failed to get achievements interface");
+        Logger::Error("Achievements", "Failed to get achievements interface");
         return false;
     }
 
     stats_handle = EOS_Platform_GetStatsInterface(platform_handle);
     if (!stats_handle) {
-        UtilityFunctions::printerr("AchievementsSubsystem: Failed to get stats interface");
+        Logger::Error("Achievements", "Failed to get stats interface");
         return false;
     }
 
     setup_notifications();
-    UtilityFunctions::print("AchievementsSubsystem: Initialized successfully");
+    Logger::Info("Achievements", "Initialized successfully");
     return true;
 }
 
@@ -88,25 +89,25 @@ void AchievementsSubsystem::Shutdown() {
     player_achievements_cached = false;
     stats_cached = false;
 
-    UtilityFunctions::print("AchievementsSubsystem: Shutdown complete");
+    Logger::Info("Achievements", "Shutdown complete");
 }
 
 bool AchievementsSubsystem::QueryAchievementDefinitions() {
     if (!achievements_handle) {
-        UtilityFunctions::push_warning("AchievementsSubsystem: Not initialized");
+        Logger::Warning("Achievements", "Not initialized");
         return false;
     }
 
     // Need Product User ID from AuthenticationSubsystem
     auto auth = Get<IAuthenticationSubsystem>();
     if (!auth || !auth->IsLoggedIn()) {
-        UtilityFunctions::push_warning("AchievementsSubsystem: User not authenticated");
+        Logger::Warning("Achievements", "User not authenticated");
         return false;
     }
 
     EOS_ProductUserId product_user_id = auth->GetProductUserId();
     if (!EOS_ProductUserId_IsValid(product_user_id)) {
-        UtilityFunctions::printerr("AchievementsSubsystem: Invalid Product User ID");
+        Logger::Error("Achievements", "Invalid Product User ID");
         return false;
     }
 
@@ -120,20 +121,20 @@ bool AchievementsSubsystem::QueryAchievementDefinitions() {
 
 bool AchievementsSubsystem::QueryPlayerAchievements() {
     if (!achievements_handle) {
-        UtilityFunctions::push_warning("AchievementsSubsystem: Not initialized");
+        Logger::Warning("Achievements", "Not initialized");
         return false;
     }
 
     // Need Product User ID from AuthenticationSubsystem
     auto auth = Get<IAuthenticationSubsystem>();
     if (!auth || !auth->IsLoggedIn()) {
-        UtilityFunctions::push_warning("AchievementsSubsystem: User not authenticated");
+        Logger::Warning("Achievements", "User not authenticated");
         return false;
     }
 
     EOS_ProductUserId product_user_id = auth->GetProductUserId();
     if (!EOS_ProductUserId_IsValid(product_user_id)) {
-        UtilityFunctions::printerr("AchievementsSubsystem: Invalid Product User ID");
+        Logger::Error("Achievements", "Invalid Product User ID");
         return false;
     }
 
@@ -154,25 +155,25 @@ bool AchievementsSubsystem::UnlockAchievement(const String& achievement_id) {
 
 bool AchievementsSubsystem::UnlockAchievements(const Array& achievement_ids) {
     if (!achievements_handle) {
-        UtilityFunctions::push_warning("AchievementsSubsystem: Not initialized");
+        Logger::Warning("Achievements", "Not initialized");
         return false;
     }
 
     if (achievement_ids.size() == 0) {
-        UtilityFunctions::push_warning("AchievementsSubsystem: No achievement IDs provided");
+        Logger::Warning("Achievements", "No achievement IDs provided");
         return false;
     }
 
     // Need Product User ID from AuthenticationSubsystem
     auto auth = Get<IAuthenticationSubsystem>();
     if (!auth || !auth->IsLoggedIn()) {
-        UtilityFunctions::push_warning("AchievementsSubsystem: User not authenticated");
+        Logger::Warning("Achievements", "User not authenticated");
         return false;
     }
 
     EOS_ProductUserId product_user_id = auth->GetProductUserId();
     if (!EOS_ProductUserId_IsValid(product_user_id)) {
-        UtilityFunctions::push_warning("AchievementsSubsystem: Invalid Product User ID");
+        Logger::Warning("Achievements", "Invalid Product User ID");
         return false;
     }
 
@@ -196,7 +197,7 @@ bool AchievementsSubsystem::UnlockAchievements(const Array& achievement_ids) {
 
     EOS_Achievements_UnlockAchievements(achievements_handle, &options, context.get(), on_unlock_achievements_complete);
     context.release();
-    UtilityFunctions::print("AchievementsSubsystem: Starting achievement unlock operation");
+    Logger::Info("Achievements", "Starting achievement unlock operation");
     return true;
 }
 
@@ -296,30 +297,30 @@ void AchievementsSubsystem::SetAchievementsUnlockedCallback(const Callable& call
 
 bool AchievementsSubsystem::IngestStat(const String& stat_name, int amount) {
     if (!stats_handle) {
-        UtilityFunctions::push_warning("AchievementsSubsystem: Not initialized");
+        Logger::Warning("Achievements", "Not initialized");
         return false;
     }
 
     // Need Product User ID from AuthenticationSubsystem
     auto auth = Get<IAuthenticationSubsystem>();
     if (!auth || !auth->IsLoggedIn()) {
-        UtilityFunctions::push_warning("AchievementsSubsystem: User not authenticated");
+        Logger::Warning("Achievements", "User not authenticated");
         return false;
     }
 
     EOS_ProductUserId product_user_id = auth->GetProductUserId();
     if (!EOS_ProductUserId_IsValid(product_user_id)) {
-        UtilityFunctions::push_warning("AchievementsSubsystem: Invalid Product User ID");
+        Logger::Warning("Achievements", "Invalid Product User ID");
         return false;
     }
 
     if (stat_name.is_empty()) {
-        UtilityFunctions::push_warning("AchievementsSubsystem: Stat name is empty");
+        Logger::Warning("Achievements", "Stat name is empty");
         return false;
     }
 
     if (amount <= 0) {
-        UtilityFunctions::push_warning("AchievementsSubsystem: Amount must be positive");
+        Logger::Warning("Achievements", "Amount must be positive");
         return false;
     }
 
@@ -346,20 +347,20 @@ bool AchievementsSubsystem::IngestStat(const String& stat_name, int amount) {
 
 bool AchievementsSubsystem::QueryStats() {
     if (!stats_handle) {
-        UtilityFunctions::printerr("AchievementsSubsystem: Not initialized");
+        Logger::Error("Achievements", "Not initialized");
         return false;
     }
 
     // Need Product User ID from AuthenticationSubsystem
     auto auth = Get<IAuthenticationSubsystem>();
     if (!auth || !auth->IsLoggedIn()) {
-        UtilityFunctions::printerr("AchievementsSubsystem: User not authenticated");
+        Logger::Error("Achievements", "User not authenticated");
         return false;
     }
 
     EOS_ProductUserId product_user_id = auth->GetProductUserId();
     if (!EOS_ProductUserId_IsValid(product_user_id)) {
-        UtilityFunctions::printerr("AchievementsSubsystem: Invalid Product User ID");
+        Logger::Error("Achievements", "Invalid Product User ID");
         return false;
     }
 
@@ -408,7 +409,7 @@ void AchievementsSubsystem::setup_notifications() {
         achievements_handle, &options, nullptr, on_achievements_unlocked);
 
     if (unlock_notification_id == EOS_INVALID_NOTIFICATIONID) {
-        UtilityFunctions::printerr("AchievementsSubsystem: Failed to register unlock notifications");
+        Logger::Error("Achievements", "Failed to register unlock notifications");
     }
 }
 
@@ -465,12 +466,12 @@ void EOS_CALL AchievementsSubsystem::on_query_definitions_complete(const EOS_Ach
             self->achievement_definitions_callback.call(true, definitions);
         }
     } else {
-        UtilityFunctions::printerr("AchievementsSubsystem: Achievement definitions query failed");
+        Logger::Error("Achievements", "Achievement definitions query failed");
 
         // Call the callback with failure
         if (self->achievement_definitions_callback.is_valid()) {
             Array empty_definitions;
-            UtilityFunctions::print("AchievementsSubsystem: Calling achievement definitions callback with failure (empty definitions)");
+            Logger::Info("Achievements", "Calling achievement definitions callback with failure (empty definitions)");
             self->achievement_definitions_callback.call(false, empty_definitions);
         }
     }
@@ -486,13 +487,13 @@ void EOS_CALL AchievementsSubsystem::on_query_player_achievements_complete(const
         // Get Product User ID from AuthenticationSubsystem
         auto auth = godot::Get<IAuthenticationSubsystem>();
         if (!auth || !auth->IsLoggedIn()) {
-            UtilityFunctions::printerr("AchievementsSubsystem: User not authenticated during player achievements query callback");
+            Logger::Error("Achievements", "User not authenticated during player achievements query callback");
             return;
         }
 
         EOS_ProductUserId product_user_id = auth->GetProductUserId();
         if (!EOS_ProductUserId_IsValid(product_user_id)) {
-            UtilityFunctions::printerr("AchievementsSubsystem: Invalid Product User ID during player achievements query callback");
+            Logger::Error("Achievements", "Invalid Product User ID during player achievements query callback");
             return;
         }
 
@@ -537,12 +538,12 @@ void EOS_CALL AchievementsSubsystem::on_query_player_achievements_complete(const
         }
 
     } else {
-        UtilityFunctions::printerr("AchievementsSubsystem: Player achievements query failed");
+        Logger::Error("Achievements", "Player achievements query failed");
 
         // Call the callback with failure
         if (self->player_achievements_callback.is_valid()) {
             Array empty_achievements;
-            UtilityFunctions::print("AchievementsSubsystem: Calling player achievements callback with failure (empty achievements)");
+            Logger::Info("Achievements", "Calling player achievements callback with failure (empty achievements)");
             self->player_achievements_callback.call(false, empty_achievements);
         }
     }
@@ -570,7 +571,7 @@ void EOS_CALL AchievementsSubsystem::on_unlock_achievements_complete(const EOS_A
             self->achievements_unlocked_callback.call(true, unlocked_ids);
         }
     } else {
-        UtilityFunctions::printerr("AchievementsSubsystem: Achievement unlock failed");
+        Logger::Error("Achievements", "Achievement unlock failed");
 
         // Call the callback with failure
         if (self->achievements_unlocked_callback.is_valid()) {
@@ -584,12 +585,12 @@ void EOS_CALL AchievementsSubsystem::on_achievements_unlocked(const EOS_Achievem
     if (!data) return;
 
     String achievement_id = String(data->AchievementId ? data->AchievementId : "");
-    UtilityFunctions::print("AchievementsSubsystem: Achievement unlocked: " + achievement_id);
+    Logger::Info("Achievements", "Achievement unlocked: " + achievement_id);
 }
 
 void EOS_CALL AchievementsSubsystem::on_ingest_stat_complete(const EOS_Stats_IngestStatCompleteCallbackInfo* data) {
     if (!data || !data->ClientData) {
-        UtilityFunctions::printerr("AchievementsSubsystem: Invalid callback data");
+        Logger::Error("Achievements", "Invalid callback data");
         return;
     }
 
@@ -598,7 +599,7 @@ void EOS_CALL AchievementsSubsystem::on_ingest_stat_complete(const EOS_Stats_Ing
     if (data->ResultCode == EOS_EResult::EOS_Success) {
         // Stat ingested successfully - no need to log
     } else {
-        UtilityFunctions::printerr("AchievementsSubsystem: Failed to ingest stat, error: " + String::num_int64((int64_t)data->ResultCode));
+        Logger::Error("Achievements", "Failed to ingest stat, error: " + String::num_int64((int64_t)data->ResultCode));
     }
 }
 
@@ -642,7 +643,7 @@ void EOS_CALL AchievementsSubsystem::on_query_stats_complete(const EOS_Stats_OnQ
             self->stats_callback.call(true, self->stats);
         }
     } else {
-        UtilityFunctions::printerr("AchievementsSubsystem: Failed to query stats, error: " + String::num_int64((int64_t)data->ResultCode));
+        Logger::Error("Achievements", "Failed to query stats, error: " + String::num_int64((int64_t)data->ResultCode));
 
         if (self->stats_callback.is_valid()) {
             Array empty_stats;

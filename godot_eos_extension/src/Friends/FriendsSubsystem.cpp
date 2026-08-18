@@ -8,6 +8,7 @@
 #include <godot_cpp/core/error_macros.hpp>
 #include <eos_friends.h>
 #include <eos_connect.h>
+#include "../Utils/Logger.h"
 
 using namespace godot;
 
@@ -27,7 +28,7 @@ FriendsSubsystem::~FriendsSubsystem() {
 }
 
 bool FriendsSubsystem::Init() {
-    UtilityFunctions::print("FriendsSubsystem: Initializing");
+    Logger::Info("Friends", "Initializing");
     friends_list.clear();
     friends_cached = false;
     return true;
@@ -38,7 +39,7 @@ void FriendsSubsystem::Tick(float delta_time) {
 }
 
 void FriendsSubsystem::Shutdown() {
-    UtilityFunctions::print("FriendsSubsystem: Shutting down");
+    Logger::Info("Friends", "Shutting down");
     friends_list.clear();
     friends_cached = false;
     friends_query_callback = Callable();
@@ -46,23 +47,23 @@ void FriendsSubsystem::Shutdown() {
 }
 
 bool FriendsSubsystem::QueryFriends() {
-    UtilityFunctions::print("FriendsSubsystem: Starting friends query");
+    Logger::Info("Friends", "Starting friends query");
 
     auto auth = Get<IAuthenticationSubsystem>();
     if (!auth || !auth->IsLoggedIn()) {
-        UtilityFunctions::push_warning("FriendsSubsystem: AuthenticationSubsystem not available or user not logged in");
+        Logger::Warning("Friends", "AuthenticationSubsystem not available or user not logged in");
         return false;
     }
 
     auto platform = Get<IPlatformSubsystem>();
     if (!platform || !platform->GetPlatformHandle()) {
-        UtilityFunctions::printerr("FriendsSubsystem: Platform not initialized");
+        Logger::Error("Friends", "Platform not initialized");
         return false;
     }
 
     EOS_HFriends friends_handle = EOS_Platform_GetFriendsInterface(platform->GetPlatformHandle());
     if (!friends_handle) {
-        UtilityFunctions::printerr("FriendsSubsystem: Failed to get Friends interface");
+        Logger::Error("Friends", "Failed to get Friends interface");
         return false;
     }
 
@@ -76,7 +77,7 @@ bool FriendsSubsystem::QueryFriends() {
 
 Array FriendsSubsystem::GetFriendsList() const {
     if (!friends_cached) {
-        UtilityFunctions::push_warning("FriendsSubsystem: Friends list not cached, call QueryFriends() first");
+        Logger::Warning("Friends", "Friends list not cached, call QueryFriends() first");
         return Array();
     }
 
@@ -88,20 +89,20 @@ Dictionary FriendsSubsystem::GetFriendInfo(const String& friend_id) const {
 
     auto auth = Get<IAuthenticationSubsystem>();
     if (!auth || !auth->IsLoggedIn()) {
-        UtilityFunctions::push_warning("FriendsSubsystem: AuthenticationSubsystem not available or user not logged in");
+        Logger::Warning("Friends", "AuthenticationSubsystem not available or user not logged in");
         return friend_info;
     }
 
     auto platform = Get<IPlatformSubsystem>();
     if (!platform || !platform->GetPlatformHandle()) {
-        UtilityFunctions::printerr("FriendsSubsystem: Platform not initialized");
+        Logger::Error("Friends", "Platform not initialized");
         return friend_info;
     }
 
     // Convert string friend_id to EOS_EpicAccountId
     EOS_EpicAccountId target_user_id = FAccountHelpers::EpicAccountIDFromString(friend_id.utf8().get_data());
     if (!target_user_id) {
-        UtilityFunctions::printerr("FriendsSubsystem: Invalid friend ID format");
+        Logger::Error("Friends", "Invalid friend ID format");
         return friend_info;
     }
 
@@ -133,7 +134,7 @@ Dictionary FriendsSubsystem::GetFriendInfo(const String& friend_id) const {
             friend_info["status"] = "Call QueryFriendInfo() first";
         }
     } else {
-        UtilityFunctions::printerr("FriendsSubsystem: UserInfoSubsystem not available");
+        Logger::Error("Friends", "UserInfoSubsystem not available");
     }
 
     return friend_info;
@@ -148,47 +149,47 @@ String FriendsSubsystem::GetFriendProductId(const String& friend_id) const {
 }
 
 bool FriendsSubsystem::QueryFriendInfo(const String& friend_id) {
-    UtilityFunctions::print("FriendsSubsystem: Starting friend info query for: " + friend_id);
+    Logger::Info("Friends", "Starting friend info query for: " + friend_id);
 
     auto auth = Get<IAuthenticationSubsystem>();
     if (!auth || !auth->IsLoggedIn()) {
-        UtilityFunctions::push_warning("FriendsSubsystem: AuthenticationSubsystem not available or user not logged in");
+        Logger::Warning("Friends", "AuthenticationSubsystem not available or user not logged in");
         return false;
     }
 
     auto userinfo = Get<IUserInfoSubsystem>();
     if (!userinfo) {
-        UtilityFunctions::printerr("FriendsSubsystem: UserInfoSubsystem not available");
+        Logger::Error("Friends", "UserInfoSubsystem not available");
         return false;
     }
 
     // Convert string friend_id to EOS_EpicAccountId
     EOS_EpicAccountId target_user_id = FAccountHelpers::EpicAccountIDFromString(friend_id.utf8().get_data());
     if (!target_user_id) {
-        UtilityFunctions::push_warning("FriendsSubsystem: Invalid friend ID format");
+        Logger::Warning("Friends", "Invalid friend ID format");
         return false;
     }
 
     // Use UserInfoSubsystem to query user info
     if (!userinfo->QueryUserInfo(auth->GetEpicAccountId(), target_user_id)) {
-        UtilityFunctions::printerr("FriendsSubsystem: Failed to initiate user info query");
+        Logger::Error("Friends", "Failed to initiate user info query");
         return false;
     }
     return true;
 }
 
 bool FriendsSubsystem::QueryAllFriendsInfo() {
-    UtilityFunctions::print("FriendsSubsystem: Starting query for all friends info");
+    Logger::Info("Friends", "Starting query for all friends info");
 
     auto auth = Get<IAuthenticationSubsystem>();
     if (!auth || !auth->IsLoggedIn()) {
-        UtilityFunctions::push_warning("FriendsSubsystem: AuthenticationSubsystem not available or user not logged in");
+        Logger::Warning("Friends", "AuthenticationSubsystem not available or user not logged in");
         return false;
     }
 
     auto userinfo = Get<IUserInfoSubsystem>();
     if (!userinfo) {
-        UtilityFunctions::printerr("FriendsSubsystem: UserInfoSubsystem not available");
+        Logger::Error("Friends", "UserInfoSubsystem not available");
         return false;
     }
 
@@ -211,7 +212,7 @@ bool FriendsSubsystem::QueryAllFriendsInfo() {
         }
     }
 
-    UtilityFunctions::print("FriendsSubsystem: Querying user info for " + String::num_int64(query_count) + " friends");
+    Logger::Info("Friends", "Querying user info for " + String::num_int64(query_count) + " friends");
     return query_count > 0;
 }
 
@@ -228,19 +229,19 @@ void FriendsSubsystem::update_friends_list() {
 
     auto auth = Get<IAuthenticationSubsystem>();
     if (!auth || !auth->IsLoggedIn()) {
-        UtilityFunctions::push_warning("FriendsSubsystem: AuthenticationSubsystem not available or user not logged in");
+        Logger::Warning("Friends", "AuthenticationSubsystem not available or user not logged in");
         return;
     }
 
     auto platform = Get<IPlatformSubsystem>();
     if (!platform || !platform->GetPlatformHandle()) {
-        UtilityFunctions::push_warning("FriendsSubsystem: Platform not initialized");
+        Logger::Warning("Friends", "Platform not initialized");
         return;
     }
 
     EOS_HFriends friends_handle = EOS_Platform_GetFriendsInterface(platform->GetPlatformHandle());
     if (!friends_handle) {
-        UtilityFunctions::printerr("FriendsSubsystem: Failed to get Friends interface");
+        Logger::Error("Friends", "Failed to get Friends interface");
         return;
     }
 
@@ -289,7 +290,7 @@ void FriendsSubsystem::update_friends_list() {
         mapping_options.ExternalAccountIdCount = context->OutstandingExternalAccountsToQueryChars.size();
         mapping_options.ExternalAccountIds = context->OutstandingExternalAccountsToQueryChars.data();
 
-        UtilityFunctions::print("FriendsSubsystem: Querying external account mappings for " + String::num_int64(mapping_options.ExternalAccountIdCount) + " friends");
+        Logger::Info("Friends", "Querying external account mappings for " + String::num_int64(mapping_options.ExternalAccountIdCount) + " friends");
 
         EOS_Connect_QueryExternalAccountMappings(connect_handle, &mapping_options, context, on_query_external_account_mappings);
     }
@@ -362,7 +363,7 @@ void EOS_CALL FriendsSubsystem::on_query_external_account_mappings(const EOS_Con
 
 
     if (data->ResultCode == EOS_EResult::EOS_Success) {
-        UtilityFunctions::print("FriendsSubsystem: External account mappings query successful");
+        Logger::Info("Friends", "External account mappings query successful");
 
         std::vector<FEpicAccountId> MappingsReceived;
         for (const FEpicAccountId& NextId : context->OutstandingExternalAccountsToQueryEpicIDs)
@@ -386,7 +387,7 @@ void EOS_CALL FriendsSubsystem::on_query_external_account_mappings(const EOS_Con
                     if (friend_dict["id"] == friend_id_str) {
                         friend_dict["product_id"] = product_id_str;
                         subsystem->friends_list[i] = friend_dict; // update the array
-                        UtilityFunctions::print("FriendsSubsystem: Updated friend " + friend_id_str + " with product_id " + product_id_str);
+                        Logger::Info("Friends", "Updated friend " + friend_id_str + " with product_id " + product_id_str);
                         break;
                     }
                 }
@@ -395,8 +396,8 @@ void EOS_CALL FriendsSubsystem::on_query_external_account_mappings(const EOS_Con
         
 
     } else {
-        String error_msg = "FriendsSubsystem: External account mappings query failed: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
-        UtilityFunctions::printerr(error_msg);
+        String error_msg = "External account mappings query failed: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
+        Logger::Error("Friends", error_msg);
     }
 
     delete context;
@@ -412,7 +413,7 @@ void EOS_CALL FriendsSubsystem::on_friends_query_complete(const EOS_Friends_Quer
     FriendsSubsystem* subsystem = static_cast<FriendsSubsystem*>(data->ClientData);
 
     if (data->ResultCode == EOS_EResult::EOS_Success) {
-        UtilityFunctions::print("FriendsSubsystem: Friends query successful - updating friends list");
+        Logger::Info("Friends", "Friends query successful - updating friends list");
         subsystem->update_friends_list();
 
         // Emit callback if set
@@ -420,8 +421,8 @@ void EOS_CALL FriendsSubsystem::on_friends_query_complete(const EOS_Friends_Quer
             subsystem->friends_query_callback.call(true, subsystem->friends_list);
         }
     } else {
-        String error_msg = "FriendsSubsystem: Friends query failed: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
-        UtilityFunctions::printerr(error_msg);
+        String error_msg = "Friends query failed: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
+        Logger::Error("Friends", error_msg);
 
         // Emit callback with failure
         if (subsystem->friends_query_callback.is_valid()) {

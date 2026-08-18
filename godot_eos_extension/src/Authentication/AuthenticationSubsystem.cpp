@@ -6,11 +6,10 @@
 #include <eos_base.h>
 #include <eos_auth.h>
 #include <eos_connect.h>
-#include <eos_logging.h>
-#include <godot_cpp/core/error_macros.hpp>
 #include <godot_cpp/classes/os.hpp>
 #include <cassert>
 #include "../Utils/AccountHelpers.h"
+#include "../Utils/Logger.h"
 
 /**
  * User context passed to EOS_Connect_Login, so we know what AccountId is logging in
@@ -47,18 +46,18 @@ AuthenticationSubsystem::~AuthenticationSubsystem() {
 }
 
 bool AuthenticationSubsystem::Init() {
-    UtilityFunctions::print("AuthenticationSubsystem: Initializing...");
+    Logger::Info("Auth", "Initializing...");
 
     // Get and validate platform
     auto platform = Get<IPlatformSubsystem>();
     if (!platform || !platform->IsOnline()) {
-        UtilityFunctions::printerr("AuthenticationSubsystem: Platform not available or offline");
+        Logger::Error("Auth", "Platform not available or offline");
         return false;
     }
 
     EOS_HPlatform platform_handle = platform->GetPlatformHandle();
     if (!platform_handle) {
-        UtilityFunctions::printerr("AuthenticationSubsystem: Invalid platform handle");
+        Logger::Error("Auth", "Invalid platform handle");
         return false;
     }
 
@@ -67,12 +66,12 @@ bool AuthenticationSubsystem::Init() {
     connect_handle = EOS_Platform_GetConnectInterface(platform_handle);
 
     if (!auth_handle || !connect_handle) {
-        UtilityFunctions::printerr("AuthenticationSubsystem: Failed to get auth/connect interfaces");
+        Logger::Error("Auth", "Failed to get auth/connect interfaces");
         return false;
     }
 
     setup_notifications();
-    UtilityFunctions::print("AuthenticationSubsystem: Initialized successfully");
+    Logger::Info("Auth", "Initialized successfully");
     return true;
 }
 
@@ -83,11 +82,11 @@ void AuthenticationSubsystem::Tick(float delta_time) {
 
 void AuthenticationSubsystem::Shutdown() {
     if (!auth_handle && !connect_handle) {
-        UtilityFunctions::print("AuthenticationSubsystem: Already shut down, skipping");
+        Logger::Info("Auth", "Already shut down, skipping");
         return;
     }
 
-    UtilityFunctions::print("AuthenticationSubsystem: Starting shutdown...");
+    Logger::Info("Auth", "Starting shutdown...");
 
     // First, clean up notifications while handles are still valid
     cleanup_notifications();
@@ -96,10 +95,10 @@ void AuthenticationSubsystem::Shutdown() {
     auto platform_subsystem = Get<IPlatformSubsystem>();
     if (platform_subsystem && platform_subsystem->GetPlatformHandle() &&
         (is_logged_in || EOS_ProductUserId_IsValid(local_user_id) || EOS_EpicAccountId_IsValid(epic_account_id))) {
-        UtilityFunctions::print("AuthenticationSubsystem: Active session detected, logging out...");
+        Logger::Info("Auth", "Active session detected, logging out...");
         Logout();
     } else {
-        UtilityFunctions::print("AuthenticationSubsystem: Skipping logout - platform unavailable or no active session");
+        Logger::Info("Auth", "Skipping logout - platform unavailable or no active session");
     }
 
     is_logged_in = false;
@@ -114,12 +113,12 @@ void AuthenticationSubsystem::Shutdown() {
     auth_handle = nullptr;
     connect_handle = nullptr;
 
-    UtilityFunctions::print("AuthenticationSubsystem: Shutdown complete");
+    Logger::Info("Auth", "Shutdown complete");
 }
 
 bool AuthenticationSubsystem::Login(const String& login_type, const Dictionary& credentials) {
     if (!auth_handle || !connect_handle) {
-        UtilityFunctions::push_warning("AuthenticationSubsystem: Not initialized");
+        Logger::Warning("Auth", "Not initialized");
         return false;
     }
 
@@ -127,7 +126,7 @@ bool AuthenticationSubsystem::Login(const String& login_type, const Dictionary& 
         return true;
     }
 
-    UtilityFunctions::print("AuthenticationSubsystem: Starting login with type: " + login_type);
+    Logger::Info("Auth", "Starting login with type: " + login_type);
 
     if (login_type == "epic_account") {
         return perform_epic_account_login(credentials);
@@ -146,31 +145,31 @@ bool AuthenticationSubsystem::Login(const String& login_type, const Dictionary& 
     } else if (login_type == "developer") {
         return perform_developer_login(credentials);
     } else {
-        UtilityFunctions::printerr("AuthenticationSubsystem: Unknown login type: " + login_type);
+        Logger::Error("Auth", "Unknown login type: " + login_type);
         return false;
     }
 }
 
 bool AuthenticationSubsystem::Logout() {
 	if (!auth_handle && !connect_handle) {
-		UtilityFunctions::push_warning("AuthenticationSubsystem: Logout requested but subsystem not initialized");
+		Logger::Warning("Auth", "Logout requested but subsystem not initialized");
 		return false;
 	}
 
 	if (logout_in_progress) {
-		UtilityFunctions::push_warning("AuthenticationSubsystem: Logout already in progress");
+		Logger::Warning("Auth", "Logout already in progress");
 		return false;
 	}
 
 	const bool has_active_session = is_logged_in || EOS_ProductUserId_IsValid(local_user_id) || EOS_EpicAccountId_IsValid(epic_account_id);
 	if (!has_active_session) {
-		UtilityFunctions::print("AuthenticationSubsystem: Logout requested with no active session");
+		Logger::Info("Auth", "Logout requested with no active session");
 		logout_in_progress = true;
 		finalize_logout_if_ready();
 		return true;
 	}
 
-	UtilityFunctions::print("AuthenticationSubsystem: Logging out...");
+	Logger::Info("Auth", "Logging out...");
 
 	logout_in_progress = true;
 	auth_logout_attempted = false;
@@ -201,12 +200,12 @@ bool AuthenticationSubsystem::Logout() {
 	}
 
 	if (!auth_logout_attempted && !connect_logout_attempted) {
-		UtilityFunctions::print("AuthenticationSubsystem: No active interfaces required logout. Completing immediately.");
+		Logger::Info("Auth", "No active interfaces required logout. Completing immediately.");
 	}
 
 	finalize_logout_if_ready();
 
-	UtilityFunctions::print("AuthenticationSubsystem: Logout initiated");
+	Logger::Info("Auth", "Logout initiated");
 	return true;
 }
 
@@ -269,19 +268,19 @@ void AuthenticationSubsystem::setup_notifications() {
 
     if (auth_login_status_changed_id != EOS_INVALID_NOTIFICATIONID &&
         connect_login_status_changed_id != EOS_INVALID_NOTIFICATIONID) {
-        UtilityFunctions::print("AuthenticationSubsystem: Status change notifications registered");
+        Logger::Info("Auth", "Status change notifications registered");
     } else {
-        UtilityFunctions::printerr("AuthenticationSubsystem: Failed to register status change notifications");
+        Logger::Error("Auth", "Failed to register status change notifications");
     }
 }
 
 void AuthenticationSubsystem::cleanup_notifications() {
-    UtilityFunctions::print("AuthenticationSubsystem: Cleaning up notifications...");
+    Logger::Info("Auth", "Cleaning up notifications...");
 
     // Check if platform is still valid before trying to remove notifications
     auto platform_subsystem = Get<IPlatformSubsystem>();
     if (!platform_subsystem || !platform_subsystem->GetPlatformHandle()) {
-        UtilityFunctions::print("AuthenticationSubsystem: Platform already shut down, skipping notification cleanup");
+        Logger::Info("Auth", "Platform already shut down, skipping notification cleanup");
         auth_login_status_changed_id = EOS_INVALID_NOTIFICATIONID;
         connect_login_status_changed_id = EOS_INVALID_NOTIFICATIONID;
         return;
@@ -290,16 +289,16 @@ void AuthenticationSubsystem::cleanup_notifications() {
     if (auth_handle && auth_login_status_changed_id != EOS_INVALID_NOTIFICATIONID) {
         EOS_Auth_RemoveNotifyLoginStatusChanged(auth_handle, auth_login_status_changed_id);
         auth_login_status_changed_id = EOS_INVALID_NOTIFICATIONID;
-        UtilityFunctions::print("AuthenticationSubsystem: Auth login status notification removed");
+        Logger::Info("Auth", "Auth login status notification removed");
     }
 
     if (connect_handle && connect_login_status_changed_id != EOS_INVALID_NOTIFICATIONID) {
         EOS_Connect_RemoveNotifyLoginStatusChanged(connect_handle, connect_login_status_changed_id);
         connect_login_status_changed_id = EOS_INVALID_NOTIFICATIONID;
-        UtilityFunctions::print("AuthenticationSubsystem: Connect login status notification removed");
+        Logger::Info("Auth", "Connect login status notification removed");
     }
 
-    UtilityFunctions::print("AuthenticationSubsystem: Notification cleanup complete");
+    Logger::Info("Auth", "Notification cleanup complete");
 }
 
 void AuthenticationSubsystem::reset_logout_state() {
@@ -332,7 +331,7 @@ void AuthenticationSubsystem::finalize_logout_if_ready() {
 	}
 
 	if (success) {
-		UtilityFunctions::print("AuthenticationSubsystem: Logout completed successfully");
+		Logger::Info("Auth", "Logout completed successfully");
 		is_logged_in = false;
 		login_status = EOS_ELoginStatus::EOS_LS_NotLoggedIn;
 		local_user_id = nullptr;
@@ -346,7 +345,7 @@ void AuthenticationSubsystem::finalize_logout_if_ready() {
 		if (connect_logout_attempted) {
 			error_details += " connect=" + String::num_int64(static_cast<int64_t>(connect_logout_result));
 		}
-		UtilityFunctions::printerr("AuthenticationSubsystem: Logout failed" + error_details);
+		Logger::Error("Auth", "Logout failed" + error_details);
 	}
 
 	reset_logout_state();
@@ -354,7 +353,7 @@ void AuthenticationSubsystem::finalize_logout_if_ready() {
 	if (logout_callback.is_valid()) {
 		logout_callback.call(success);
 	} else {
-		UtilityFunctions::printerr("AuthenticationSubsystem: Logout callback is not valid - cannot emit completion signal");
+		Logger::Error("Auth", "Logout callback is not valid - cannot emit completion signal");
 	}
 }
 
@@ -363,7 +362,7 @@ bool AuthenticationSubsystem::perform_epic_account_login(const Dictionary& crede
     String password = credentials.get("password", "");
 
     if (email.is_empty() || password.is_empty()) {
-        UtilityFunctions::push_warning("AuthenticationSubsystem: Email and password required for Epic account login");
+        Logger::Warning("Auth", "Email and password required for Epic account login");
         return false;
     }
 
@@ -404,7 +403,7 @@ bool AuthenticationSubsystem::perform_device_id_login() {
 
 bool AuthenticationSubsystem::perform_exchange_code_login(const String& exchange_code) {
     if (exchange_code.is_empty()) {
-        UtilityFunctions::push_warning("AuthenticationSubsystem: Exchange code required");
+        Logger::Warning("Auth", "Exchange code required");
         return false;
     }
 
@@ -461,7 +460,7 @@ bool AuthenticationSubsystem::perform_developer_login(const Dictionary& credenti
     String token = credentials.get("token", "");
 
     if (id.is_empty()) {
-        UtilityFunctions::push_warning("AuthenticationSubsystem: ID required for developer login");
+        Logger::Warning("Auth", "ID required for developer login");
         return false;
     }
 
@@ -485,52 +484,18 @@ bool AuthenticationSubsystem::perform_developer_login(const Dictionary& credenti
     return true;
 }
 
-void EOS_CALL AuthenticationSubsystem::logging_callback(const EOS_LogMessage* message) {
-	if (!message || !message->Message) {
-		return;
-	}
-
-	String log_text = String::utf8(message->Message);
-	String category = message->Category ? String::utf8(message->Category) : "EOS";
-
-	switch (message->Level) {
-		case EOS_ELogLevel::EOS_LOG_Fatal:
-		case EOS_ELogLevel::EOS_LOG_Error:
-			{
-				String log_msg = String("[") + category + "] " + log_text;
-				UtilityFunctions::printerr(log_msg);
-			}
-			break;
-		case EOS_ELogLevel::EOS_LOG_Warning:
-			{
-				String log_msg = String("[") + category + "] " + log_text;
-				WARN_PRINT(log_msg);
-			}
-			break;
-		case EOS_ELogLevel::EOS_LOG_Info:
-		case EOS_ELogLevel::EOS_LOG_Verbose:
-		case EOS_ELogLevel::EOS_LOG_VeryVerbose:
-		default:
-			{
-				String log_msg = String("[") + category + "] " + log_text;
-				UtilityFunctions::print(log_msg);
-			}
-			break;
-	}
-}
-
 void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginCallbackInfo* data) {
 
 	assert(data != NULL);
 
 	AuthenticationSubsystem* instance = static_cast<AuthenticationSubsystem*>(data->ClientData);
 	if (!data) {
-		UtilityFunctions::printerr("AuthenticationSubsystem: auth_login_callback - data is null");
+		Logger::Error("Auth", "auth_login_callback - data is null");
 		return;
 	}
 
 	if (!instance) {
-		UtilityFunctions::printerr("AuthenticationSubsystem: auth_login_callback - instance (ClientData) is null");
+		Logger::Error("Auth", "auth_login_callback - instance (ClientData) is null");
 		return;
 	}
 
@@ -539,7 +504,7 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 
 	if (data->ResultCode == EOS_EResult::EOS_Success)
 	{
-		UtilityFunctions::print("AuthenticationSubsystem: Auth login successful");
+		Logger::Info("Auth", "Auth login successful");
 
 		// User Logged In event
 		FEpicAccountId UserId = data->LocalUserId;
@@ -556,7 +521,7 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 
 			if (instance->display_name.is_empty()) {
 				// Not cached yet, query it explicitly
-				UtilityFunctions::print("AuthenticationSubsystem: Querying user info for display name...");
+				Logger::Info("Auth", "Querying user info for display name...");
 				userinfo->QueryUserInfo(UserId.AccountId, UserId.AccountId);
 			}
 		}
@@ -571,7 +536,7 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 		}
 		else
 		{
-			UtilityFunctions::printerr("AuthenticationSubsystem: Failed to copy user auth token");
+			Logger::Error("Auth", "Failed to copy user auth token");
 		}
 
 		// Call connect login here to enable cross-platform features
@@ -603,7 +568,7 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 		}
 		else
 		{
-			UtilityFunctions::printerr("AuthenticationSubsystem: Failed to copy Auth Token for Connect login - skipping Connect service");
+			Logger::Error("Auth", "Failed to copy Auth Token for Connect login - skipping Connect service");
 
 			// Emit success anyway since Auth login succeeded, but without Connect features
 			Dictionary user_info;
@@ -615,12 +580,12 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 			if (instance->login_callback.is_valid()) {
 				instance->login_callback.call(true, user_info);
 			} else {
-				UtilityFunctions::printerr("AuthenticationSubsystem: login_callback is not valid");
+				Logger::Error("Auth", "login_callback is not valid");
 			}
 		}
 	} else {
 		// Handle specific error cases with helpful messages
-		String error_msg = "AuthenticationSubsystem: auth_login_callback - Login failed with error: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
+		String error_msg = "auth_login_callback - Login failed with error: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
 
 		switch (data->ResultCode) {
 			case EOS_EResult::EOS_InvalidCredentials:
@@ -643,7 +608,7 @@ void EOS_CALL AuthenticationSubsystem::auth_login_callback(const EOS_Auth_LoginC
 				break;
 		}
 
-		UtilityFunctions::printerr(error_msg);
+		Logger::Error("Auth", error_msg);
 
 		// Emit failure signal
 		if (instance->login_callback.is_valid()) {
@@ -668,12 +633,12 @@ void EOS_CALL AuthenticationSubsystem::auth_logout_callback(const EOS_Auth_Logou
 		instance->is_logged_in = false;
 		instance->display_name = "";
 
-		UtilityFunctions::print("Logout successful");
+		Logger::Info("Auth", "Logout successful");
 
 		// Note: Logout completion is handled by the caller
 	} else {
 		String error_msg = "Logout failed: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
-		UtilityFunctions::printerr(error_msg);
+		Logger::Error("Auth", error_msg);
 
 		// Note: Logout completion is handled by the caller
 	}
@@ -682,13 +647,13 @@ void EOS_CALL AuthenticationSubsystem::auth_logout_callback(const EOS_Auth_Logou
 void EOS_CALL AuthenticationSubsystem::connect_login_callback(const EOS_Connect_LoginCallbackInfo* data) {
 	std::unique_ptr<FConnectLoginContext> ClientData(static_cast<FConnectLoginContext*>(data->ClientData));
 	if (!ClientData) {
-		UtilityFunctions::printerr("AuthenticationSubsystem: connect_login_callback - ClientData is null");
+		Logger::Error("Auth", "connect_login_callback - ClientData is null");
 		return;
 	}
 
 	IAuthenticationSubsystem* authIterface = Get<IAuthenticationSubsystem>();
 	if(authIterface == nullptr) {
-		UtilityFunctions::printerr("AuthenticationSubsystem: connect_login_callback - Get<IAuthenticationSubsystem>() returned null");
+		Logger::Error("Auth", "connect_login_callback - Get<IAuthenticationSubsystem>() returned null");
 		return;
 	}
 
@@ -712,10 +677,10 @@ void EOS_CALL AuthenticationSubsystem::connect_login_callback(const EOS_Connect_
 		user_info["product_user_id"] = product_user_id_str;
 
 		if (login_callback.is_valid()) {
-			UtilityFunctions::print("AuthenticationSubsystem: Login completed successfully");
+			Logger::Info("Auth", "Login completed successfully");
 			login_callback.call(true, user_info);
 		} else {
-			UtilityFunctions::printerr("AuthenticationSubsystem: Login callback is not valid - cannot emit success signal");
+			Logger::Error("Auth", "Login callback is not valid - cannot emit success signal");
 		}
 	} else {
 		String error_msg = "Connect login failed: ";
@@ -750,7 +715,7 @@ void EOS_CALL AuthenticationSubsystem::connect_login_callback(const EOS_Connect_
 				error_msg += String::num_int64(static_cast<int64_t>(data->ResultCode));
 				break;
 		}
-		UtilityFunctions::printerr(error_msg);
+		Logger::Error("Auth", error_msg);
 
 		// Connect failed, but Auth succeeded - still emit login signal but without product_user_id
 		Dictionary user_info;
@@ -777,10 +742,10 @@ void EOS_CALL AuthenticationSubsystem::on_auth_logout_complete(const EOS_Auth_Lo
 	instance->auth_logout_pending = false;
 
 	if (data->ResultCode == EOS_EResult::EOS_Success) {
-		UtilityFunctions::print("AuthenticationSubsystem: Auth logout callback completed");
+		Logger::Info("Auth", "Auth logout callback completed");
 	} else {
 		String error_msg = "Auth logout failed: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
-		UtilityFunctions::printerr(error_msg);
+		Logger::Error("Auth", error_msg);
 	}
 
 	instance->finalize_logout_if_ready();
@@ -797,10 +762,10 @@ void EOS_CALL AuthenticationSubsystem::on_connect_logout_complete(const EOS_Conn
 	instance->connect_logout_pending = false;
 
 	if (data->ResultCode == EOS_EResult::EOS_Success) {
-		UtilityFunctions::print("AuthenticationSubsystem: Connect logout callback completed");
+		Logger::Info("Auth", "Connect logout callback completed");
 	} else {
 		String error_msg = "Connect logout failed: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
-		UtilityFunctions::printerr(error_msg);
+		Logger::Error("Auth", error_msg);
 	}
 
 	instance->finalize_logout_if_ready();
@@ -809,13 +774,13 @@ void EOS_CALL AuthenticationSubsystem::on_connect_logout_complete(const EOS_Conn
 void EOS_CALL AuthenticationSubsystem::on_auth_login_status_changed(const EOS_Auth_LoginStatusChangedCallbackInfo* data) {
     if (!data) return;
 
-    UtilityFunctions::print("AuthenticationSubsystem: Auth login status changed: " + String::num_int64((int64_t)data->CurrentStatus));
+    Logger::Info("Auth", "Auth login status changed: " + String::num_int64((int64_t)data->CurrentStatus));
 }
 
 void EOS_CALL AuthenticationSubsystem::on_connect_login_status_changed(const EOS_Connect_LoginStatusChangedCallbackInfo* data) {
     if (!data) return;
 
-    UtilityFunctions::print("AuthenticationSubsystem: Connect login status changed: " + String::num_int64((int64_t)data->CurrentStatus));
+    Logger::Info("Auth", "Connect login status changed: " + String::num_int64((int64_t)data->CurrentStatus));
 }
 
 } // namespace godot

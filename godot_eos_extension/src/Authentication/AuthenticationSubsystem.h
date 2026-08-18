@@ -5,7 +5,6 @@
 #include <eos_base.h>
 #include <eos_auth.h>
 #include <eos_connect.h>
-#include <eos_logging.h>
 #include <godot_cpp/variant/string.hpp>
 #include <godot_cpp/variant/callable.hpp>
 
@@ -78,7 +77,6 @@ private:
     bool perform_developer_login(const Dictionary& credentials);
 
     // Static callback implementations
-    static void EOS_CALL logging_callback(const EOS_LogMessage* message);
     static void EOS_CALL auth_login_callback(const EOS_Auth_LoginCallbackInfo* data);
     static void EOS_CALL auth_logout_callback(const EOS_Auth_LogoutCallbackInfo* data);
     static void EOS_CALL connect_login_callback(const EOS_Connect_LoginCallbackInfo* data);

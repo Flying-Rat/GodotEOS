@@ -4,6 +4,7 @@
 #include "../Utils/AccountHelpers.h"
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/core/error_macros.hpp>
+#include "../Utils/Logger.h"
 
 namespace godot {
 
@@ -18,28 +19,28 @@ UserInfoSubsystem::~UserInfoSubsystem() {
 }
 
 bool UserInfoSubsystem::Init() {
-    UtilityFunctions::print("UserInfoSubsystem: Initializing...");
+    Logger::Info("UserInfo", "Initializing...");
 
     // Get and validate platform
     auto platform = Get<IPlatformSubsystem>();
     if (!platform || !platform->IsOnline()) {
-        UtilityFunctions::printerr("UserInfoSubsystem: Platform not available or offline");
+        Logger::Error("UserInfo", "Platform not available or offline");
         return false;
     }
 
     EOS_HPlatform platform_handle = platform->GetPlatformHandle();
     if (!platform_handle) {
-        UtilityFunctions::printerr("UserInfoSubsystem: Invalid platform handle");
+        Logger::Error("UserInfo", "Invalid platform handle");
         return false;
     }
 
     userinfo_handle = EOS_Platform_GetUserInfoInterface(platform_handle);
     if (!userinfo_handle) {
-        UtilityFunctions::printerr("UserInfoSubsystem: Failed to get UserInfo interface");
+        Logger::Error("UserInfo", "Failed to get UserInfo interface");
         return false;
     }
 
-    UtilityFunctions::print("UserInfoSubsystem: Initialized successfully");
+    Logger::Info("UserInfo", "Initialized successfully");
     return true;
 }
 
@@ -52,27 +53,27 @@ void UserInfoSubsystem::Shutdown() {
         return;
     }
 
-    UtilityFunctions::print("UserInfoSubsystem: Shutting down...");
+    Logger::Info("UserInfo", "Shutting down...");
     
     ClearCache();
     userinfo_handle = nullptr;
 
-    UtilityFunctions::print("UserInfoSubsystem: Shutdown complete");
+    Logger::Info("UserInfo", "Shutdown complete");
 }
 
 bool UserInfoSubsystem::QueryUserInfo(EOS_EpicAccountId local_user_id, EOS_EpicAccountId target_user_id) {
     if (!userinfo_handle) {
-        UtilityFunctions::printerr("UserInfoSubsystem: Not initialized");
+        Logger::Error("UserInfo", "Not initialized");
         return false;
     }
 
     if (!EOS_EpicAccountId_IsValid(local_user_id)) {
-        UtilityFunctions::printerr("UserInfoSubsystem: Invalid local user ID");
+        Logger::Error("UserInfo", "Invalid local user ID");
         return false;
     }
 
     if (!EOS_EpicAccountId_IsValid(target_user_id)) {
-        UtilityFunctions::printerr("UserInfoSubsystem: Invalid target user ID");
+        Logger::Error("UserInfo", "Invalid target user ID");
         return false;
     }
 
@@ -157,7 +158,7 @@ bool UserInfoSubsystem::IsUserInfoCached(EOS_EpicAccountId local_user_id, EOS_Ep
 void UserInfoSubsystem::ClearCache() {
     // Note: EOS SDK manages its own cache internally
     // We don't maintain a separate cache here
-    UtilityFunctions::print("UserInfoSubsystem: Cache cleared (EOS manages cache internally)");
+    Logger::Info("UserInfo", "Cache cleared (EOS manages cache internally)");
 }
 
 void UserInfoSubsystem::SetUserInfoQueryCallback(const Callable& callback) {
@@ -209,20 +210,20 @@ Dictionary UserInfoSubsystem::copy_user_info_to_dictionary(EOS_EpicAccountId loc
 
 void EOS_CALL UserInfoSubsystem::on_query_user_info_complete(const EOS_UserInfo_QueryUserInfoCallbackInfo* data) {
     if (!data) {
-        UtilityFunctions::printerr("UserInfoSubsystem: Query callback data is null");
+        Logger::Error("UserInfo", "Query callback data is null");
         return;
     }
 
     std::unique_ptr<QueryUserInfoContext> context(static_cast<QueryUserInfoContext*>(data->ClientData));
     if (!context || !context->subsystem) {
-        UtilityFunctions::printerr("UserInfoSubsystem: Invalid context in callback");
+        Logger::Error("UserInfo", "Invalid context in callback");
         return;
     }
 
     UserInfoSubsystem* subsystem = context->subsystem;
 
     if (data->ResultCode == EOS_EResult::EOS_Success) {
-        UtilityFunctions::print("UserInfoSubsystem: User info query successful");
+        Logger::Info("UserInfo", "User info query successful");
 
         // Create dictionary with user info data
         Dictionary user_info = subsystem->copy_user_info_to_dictionary(context->local_user_id, context->target_user_id);
@@ -232,8 +233,8 @@ void EOS_CALL UserInfoSubsystem::on_query_user_info_complete(const EOS_UserInfo_
             subsystem->user_info_query_callback.call(true, user_info);
         }
     } else {
-        String error_msg = "UserInfoSubsystem: User info query failed: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
-        UtilityFunctions::printerr(error_msg);
+        String error_msg = "User info query failed: " + String::num_int64(static_cast<int64_t>(data->ResultCode));
+        Logger::Error("UserInfo", error_msg);
 
         // Emit callback with failure
         if (subsystem->user_info_query_callback.is_valid()) {
